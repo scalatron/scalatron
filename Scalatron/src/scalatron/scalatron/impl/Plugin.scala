@@ -67,7 +67,7 @@ object Plugin {
       * @param fileTime milliseconds since the epoch, as returned by File.lastModified()
       * @param exception the exception that caused/explains the load failure
       */
-    case class LoadFailure(dirPath: String, filePath: String, fileTime: Long, exception: Exception) extends DiskInfo {
+    case class LoadFailure(dirPath: String, filePath: String, fileTime: Long, exception: Throwable) extends DiskInfo {
         override def toString = exception + ": " + filePath
     }
 
@@ -81,9 +81,10 @@ object Plugin {
         pluginFile: File,
         factoryClassPackage: String,
         factoryClassName: String,
-        verbose: Boolean): Either[() => ( String => String ), Exception] = {
+        verbose: Boolean): Either[() => ( String => String ), Throwable] =
+    {
         try {
-            val classLoader = new URLClassLoader(Array(pluginFile.toURI.toURL))
+            val classLoader = new URLClassLoader(Array(pluginFile.toURI.toURL), this.getClass.getClassLoader)
 
             // try the fully qualified package + class name first
             val fullFactoryClassName = factoryClassPackage + "." + factoryClassName
@@ -91,17 +92,17 @@ object Plugin {
                 try {
                     Class.forName(fullFactoryClassName, true, classLoader)
                 } catch {
-                    case e: Exception =>
+                    case t: Throwable =>
                         try {
                             if( verbose ) {
-                                println("info: failed to load fully qualified factory from plug-in '" + pluginFile.getAbsolutePath + "':" + e)
+                                println("info: failed to load fully qualified factory from plug-in '" + pluginFile.getAbsolutePath + "':" + t)
                                 println("info: trying unqualified factory class name... (" + factoryClassName + ")")
                             }
                             Class.forName(factoryClassName, true, classLoader)
                         } catch {
-                            case e: Exception =>
-                                System.err.println("failed to load either qualified or unqualified factory from plug-in '" + pluginFile.getAbsolutePath + "':" + e)
-                                throw e
+                            case t: Throwable =>
+                                System.err.println("failed to load either qualified or unqualified factory from plug-in '" + pluginFile.getAbsolutePath + "':" + t)
+                                throw t
                         }
                 }
 
@@ -113,7 +114,7 @@ object Plugin {
 
             Left(factoryFunction)
         } catch {
-            case e: Exception => Right(e)
+            case t: Throwable => Right(t)
         }
     }
 

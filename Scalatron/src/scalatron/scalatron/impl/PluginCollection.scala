@@ -57,7 +57,7 @@ case class PluginCollection(
         val pluginDirectories = pluginParentDirectory.listFiles()
 
         if( pluginDirectories == null ) {
-            println("Plug-in parent directory not valid: '" + pluginDirectoryPath + "'")
+            System.err.println("Plug-in parent directory not valid: '" + pluginDirectoryPath + "'")
             PluginCollection(pluginDirectoryPath, loadSpec, verbose)
         } else {
             // filter out directories like ".info"
@@ -103,12 +103,12 @@ case class PluginCollection(
 
                             Some(eitherPluginOrLoadFailure)
                         } else {
-                            println("Warning: plug-in file does not exist: " + pluginJarFilePath)
+                            println("warning: plug-in file does not exist: " + pluginJarFilePath)
                             None
                         }
                     } catch {
-                        case e: Exception =>
-                            println("Warning: exception while examining plug-in file: " + pluginJarFilePath)
+                        case t: Throwable =>
+                            System.err.println("warning: exception while examining plug-in file: " + pluginJarFilePath)
                             None
                     }
                 })
@@ -159,12 +159,12 @@ case class PluginCollection(
 
                             Some(eitherPluginOrLoadFailure)
                         } else {
-                            println("Warning: plug-in file does not exist: " + pluginFilePath)
+                            System.err.println("warning: plug-in file does not exist: " + pluginFilePath)
                             None
                         }
                     } catch {
-                        case e: Exception =>
-                            println("Warning: exception while examining plug-in file: " + pluginFilePath)
+                        case t: Throwable =>
+                            System.err.println("warning: exception while examining plug-in file: " + pluginFilePath)
                             None
                     }
                 })

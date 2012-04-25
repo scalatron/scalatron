@@ -24,8 +24,7 @@ case object AugmentedDynamics extends ((State,Random,Iterable[(Entity.Id,Iterabl
                     case _ => throw new IllegalStateException("expected master bot")
                 }
             } catch {
-                case e: Exception => println("Bot '" + bot.name + "' caused an error in 'Goodbye': " + e)
-                case _ => println("Bot '" + bot.name + "' caused an error in 'Goodbye'")
+                case t: Throwable => System.err.println("Bot '" + bot.name + "' caused an error in 'Goodbye': " + t)
             })
 
             return Right(TournamentRoundResult(namesAndScores))

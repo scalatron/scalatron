@@ -172,10 +172,8 @@ object Board
                 val position = updatedBoard.emptyRandomPos(rnd, boardSize)
                 updatedBoard = updatedBoard.addBotThatIsMaster(position, time, controlFunction, plugin)
             } catch {
-                case e: Exception =>
-                    println("Exception while instantiating control function of plugin '" + plugin.name + "': " + e)
-                case _ =>
-                    println("Error while instantiating control function of plugin '" + plugin.name)
+                case t: Throwable =>
+                    System.err.println("error: exception while instantiating control function of plugin '" + plugin.name + "': " + t)
             }
         } )
 
