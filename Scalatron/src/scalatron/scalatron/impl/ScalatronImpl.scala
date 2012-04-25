@@ -113,8 +113,8 @@ object ScalatronImpl
         val withoutFilePrefix = if(scalatronJarFilePath.startsWith("file:")) scalatronJarFilePath.drop(5) else scalatronJarFilePath
 
         // truncate at "!"
-        val indexOfExclamation = withoutFilePrefix.indexOf('!')
-        val truncatedAtExclamation = if(indexOfExclamation>0) withoutFilePrefix.take(indexOfExclamation) else withoutFilePrefix
+        val indexOfJarContentMarker = withoutFilePrefix.toLowerCase.indexOf(".jar!/")   // safer than just '!', think about paths like ".../!TEST!/..."
+        val truncatedAtExclamation = if(indexOfJarContentMarker>0) withoutFilePrefix.take(indexOfJarContentMarker+4) else withoutFilePrefix
 
         // we expect this to be a '.jar' file
         if(!truncatedAtExclamation.toLowerCase.endsWith(".jar")) {
