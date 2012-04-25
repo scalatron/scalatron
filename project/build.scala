@@ -60,10 +60,16 @@ object build extends Build {
     val dist = TaskKey[Unit]("dist", "Makes the distribution zip file")
     val distTask = dist <<= (scalaVersion) map { (version) =>
         val distDir = file("dist")
+
+	// clean distribution directory
         println("Deleting dist directory")
         IO delete distDir
+
+	// create new distribution directory
         IO createDirectory distDir
         val scalatronDir = file("Scalatron")
+
+	// generate HTML from Markdown, for /doc and /devdoc
         for (dir <- List("doc", "devdoc")) {
             val docDir = scalatronDir / dir
             val htmlDir = distDir / dir / "html"
@@ -73,6 +79,11 @@ object build extends Build {
                 Seq("java", "-Xmx1G", "-jar", "ScalaMarkdown/target/scala-" + version + "/scalamarkdown.jar", doc.getPath, htmlDir.getPath) !
             }
         }
+
+	// TODO: generate Tutorial HTML from Markdown, from /doc/tutorial to /webui/tutorial
+        // TODO: maybe best to remove /webui/tutorial from the /Scalatron source folder, then
+        // this is not good: IO.copyDirectory(scalatronDir / "doc/tutorial", distDir / "webui/tutorial")
+
         for (fileToCopy <- List("Readme.txt", "License.txt")) {
             IO.copyFile(scalatronDir / fileToCopy, distDir / fileToCopy)
         }
@@ -80,11 +91,12 @@ object build extends Build {
             println("Copying " + dirToCopy)
             IO.copyDirectory(scalatronDir / dirToCopy, distDir / dirToCopy)
         }
-        IO.copyDirectory(scalatronDir / "doc/tutorial", distDir / "webui/tutorial")
         val versionString = "scala-" + version
         for (jar <- List("Scalatron", "ScalatronCLI")) {
             IO.copyFile(file(jar) / "target" / versionString / (jar.toLowerCase + ".jar"), distDir / "bin" / (jar + ".jar"))
         }
+
+        // TODO: zip into something like "scalatron-0.9.8.4.zip" when done
     } dependsOn (oneJar in main, oneJar in cli, oneJar in markdown)
 
 }
