@@ -88,7 +88,7 @@ DebuggerHelper = {
             text: "Restart",
 
             afterDestroy: function() {
-                API.newSandbox({
+                API.createSandbox({
                     jsonData:{
                         config: {
                             "-x":"50",
@@ -108,7 +108,7 @@ DebuggerHelper = {
             },
 
             handler:function (c) {
-                API.destroySandbox({
+                API.destroySandboxes({
                     failure: this.afterDestroy,
                     success: this.afterDestroy
                 });

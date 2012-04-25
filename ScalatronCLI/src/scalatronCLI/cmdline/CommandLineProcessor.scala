@@ -127,39 +127,10 @@ object CommandLineProcessor {
                         System.exit(-1)
                 }
 
-            case None => println("no command provided")
+            case None =>
+                System.err.println("no command provided")
+                System.exit(-1)
         }
-
-
-        /*
-                // pick a particular user (no round-trip)
-                val regularUser = users.user("Krax").get
-
-                // log on as that user (1 round-trip)
-                regularUser.logOn("a")
-
-                // get user's source code from workspace (1 round-trip)
-                val sourceFiles = regularUser.getSourceFiles
-                // println(sourceFiles.mkString(","))
-
-                // update user's source code in workspace (1 round-trip)
-                val sourceCode = """
-                // updated!
-                class ControlFunctionFactory { def create = new Bot().respond _ }
-                class Bot { def respond(input: String) = "Log(text=This is a test 1\nThis is a test 2\nThis is a test 3)" }
-                """
-                val newSourceFiles = Iterable(ScalatronRemote.SourceFile("Bot.scala", sourceCode))
-                regularUser.updateSourceFiles(newSourceFiles)
-
-                // build user's source code in workspace into unpublished .jar (1 round-trip)
-                val buildResult = regularUser.buildSources()
-
-                // publish unpublished .jar into tournament loop (1 round-trip)
-                regularUser.publish()
-
-                // log off as that user (1 round-trip)
-                regularUser.logOff()
-        */
     }
 
 
@@ -518,7 +489,8 @@ object CommandLineProcessor {
                                         )
                                     )
 
-                                val finalSandbox = sandbox.step(5000)
+                                val initialState = sandbox.initialState
+                                val finalSandbox = initialState.step(5000)
                                 finalSandbox.entities.filter(_.isMaster).foreach(e => {
                                     if(connectionConfig.verbose) {
                                         println("Simulated until time = " + finalSandbox.time)
@@ -527,6 +499,9 @@ object CommandLineProcessor {
                                         println(e.mostRecentControlFunctionInput.params.getOrElse("energy", "?"))
                                     }
                                 })
+
+                                // delete the sandbox
+                                sandbox.delete()
                             }
                         }
                     }

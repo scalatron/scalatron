@@ -57,7 +57,7 @@ object SessionResource {
             Array(
                 SessionResource.ResourceLink("Sources", "/api/users/%s/sources".format(userName)),
                 SessionResource.ResourceLink("Build", "/api/users/%s/sources/build".format(userName)),
-                SessionResource.ResourceLink("Sandbox", "/api/users/%s/sandbox".format(userName)),
+                SessionResource.ResourceLink("Sandboxes", "/api/users/%s/sandboxes".format(userName)),
                 SessionResource.ResourceLink("Publish", "/api/users/%s/unpublished/publish".format(userName)),
                 SessionResource.ResourceLink("Published", "/api/users/%s/published".format(userName)),
                 SessionResource.ResourceLink("Unpublished", "/api/users/%s/unpublished".format(userName)),

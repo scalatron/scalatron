@@ -10,11 +10,11 @@ import scalatron.scalatron.api.Scalatron
 import scalatron.scalatron.api.Scalatron.SandboxState
 
 
-case class ScalatronSandboxState(id: Int, user: ScalatronUser, simState: BotWarSimulation.SimState) extends Scalatron.SandboxState {
+case class ScalatronSandboxState(sandbox: ScalatronSandbox, simState: BotWarSimulation.SimState) extends Scalatron.SandboxState {
     def time = simState.gameState.time.toInt      // CBB: warn on truncation from Long to Int
 
     def step(count: Int): SandboxState = {
-        implicit val actorSystem = user.scalatron.actorSystem
+        implicit val actorSystem = sandbox.user.scalatron.actorSystem
         var updatedState = simState
         for( i <- 0 until count ) {
             updatedState.step match {
@@ -32,7 +32,7 @@ case class ScalatronSandboxState(id: Int, user: ScalatronUser, simState: BotWarS
     def entities = {
         val gameState = simState.gameState
         val board = gameState.board
-        val entities = board.entitiesOfPlayer(user.name)
+        val entities = board.entitiesOfPlayer(sandbox.user.name)
         entities.map(e => ScalatronSandboxEntity(e, this))
     }
 }

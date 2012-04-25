@@ -10,7 +10,7 @@
         close: function() {
             this.stopPlayback();
 
-            API.destroySandbox({
+            API.destroySandboxes({
                 failure:function (response) {
                     DebuggerHelper.showError(response);
                 }

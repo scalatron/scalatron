@@ -185,7 +185,7 @@ object ScalatronDemo
             //------------------------------------------------------------------------------------------
 
             // create a sandbox game
-            val initialSandboxState = user.createSandbox(
+            val sandbox = user.createSandbox(
                 Map(
                     ( "-x" -> "50" ),
                     ( "-y" -> "50" ),
@@ -199,6 +199,7 @@ object ScalatronDemo
             )
 
             // simulate the sandbox game by performing 10 single-steps
+            val initialSandboxState = sandbox.initialState
             val sandboxState = initialSandboxState.step(10)
 
             // verify the sandbox game state after 100 steps

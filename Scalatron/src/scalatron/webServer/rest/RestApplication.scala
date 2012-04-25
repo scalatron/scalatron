@@ -30,7 +30,7 @@ case class RestApplication(scalatron: Scalatron, verbose: Boolean) extends javax
     resourcesCls.add(classOf[ApiResource])
     resourcesCls.add(classOf[UsersResource])
     resourcesCls.add(classOf[SessionResource])
-    resourcesCls.add(classOf[SandboxResource])
+    resourcesCls.add(classOf[SandboxesResource])
     resourcesCls.add(classOf[SourcesResource])
     resourcesCls.add(classOf[VersionsResource])
     resourcesCls.add(classOf[UnpublishedPublishResource])

@@ -14,24 +14,25 @@ import scalatron.scalatron.api.Scalatron
 
 @Produces(Array(MediaType.APPLICATION_JSON))
 @Consumes(Array(MediaType.APPLICATION_JSON))
-@Path("users/{user}/sandbox")
-class SandboxResource extends ResourceWithUser {
+@Path("users/{user}/sandboxes")
+class SandboxesResource extends ResourceWithUser {
     @POST
-    def create(startConfig: SandboxResource.StartConfig) = {
+    def create(startConfig: SandboxesResource.StartConfig) = {
         if(!userSession.isLoggedOnAsUserOrAdministrator(userName)) {
             Response.status(CustomStatusType(HttpStatus.UNAUTHORIZED_401, "must be logged on as '" + userName + "' or '" + Scalatron.Constants.AdminUserName + "'")).build()
         } else {
             try {
                 scalatron.user(userName) match {
                     case Some(user) =>
-                        delete()
+                        userSession -= SandboxAttributeKey
 
                         // extract the arguments, like Map("-x" -> 50, "-y" -> 50)
                         val argMap = JMapWrapper(startConfig.getConfig).toMap
-                        val state = user.createSandbox(argMap)
+                        val sandbox = user.createSandbox(argMap)
+                        val state = sandbox.initialState
                         userSession += SandboxAttributeKey -> state
 
-                        Response.ok(SandboxResource.createSandboxResult(userName, state)).build()
+                        Response.ok(SandboxesResource.createSandboxResult(userName, state)).build()
 
                     case None =>
                         Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, "user '" + userName + "' does not exist")).build()
@@ -45,7 +46,24 @@ class SandboxResource extends ResourceWithUser {
     }
 
     @DELETE
-    def delete() {
+    def deleteAll() {
+        if(!userSession.isLoggedOnAsUserOrAdministrator(userName)) {
+            Response.status(CustomStatusType(HttpStatus.UNAUTHORIZED_401, "must be logged on as '" + userName + "' or '" + Scalatron.Constants.AdminUserName + "'")).build()
+        } else {
+            scalatron.user(userName) match {
+                case Some(user) =>
+                    userSession -= SandboxAttributeKey
+                    Response.noContent().build()
+
+                case None =>
+                    Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, "user '" + userName + "' does not exist")).build()
+            }
+        }
+    }
+
+    @DELETE
+    @Path("{id}")
+    def deleteSingle() {
         if(!userSession.isLoggedOnAsUserOrAdministrator(userName)) {
             Response.status(CustomStatusType(HttpStatus.UNAUTHORIZED_401, "must be logged on as '" + userName + "' or '" + Scalatron.Constants.AdminUserName + "'")).build()
         } else {
@@ -74,21 +92,21 @@ class SandboxResource extends ResourceWithUser {
                             Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, "sandbox id=%d at time=%d for user '%s' does not exist".format(id, time, userName))).build()
 
                         case Some(currentSandboxState: SandboxState) =>
-                            val currentId = currentSandboxState.id
+                            val currentId = currentSandboxState.sandbox.id
                             if(currentId != id) {
                                 Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, "sandbox with id=%d does not exist for user '%s'".format(id, userName))).build()
                             } else {
                                 val currentTime = currentSandboxState.time
                                 val timeDelta = time - currentTime
                                 if(timeDelta == 0) {
-                                    Response.ok(SandboxResource.createSandboxResult(userName, currentSandboxState)).build()
+                                    Response.ok(SandboxesResource.createSandboxResult(userName, currentSandboxState)).build()
                                 } else
                                 if(timeDelta < 0) {
                                     Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, "cannot step sandbox with id=%d for user '%s' backwards in time".format(id, userName, timeDelta))).build()
                                 } else {
                                     val updatedSandboxState = currentSandboxState.step(timeDelta)
                                     userSession += SandboxAttributeKey -> updatedSandboxState
-                                    Response.ok(SandboxResource.createSandboxResult(userName, updatedSandboxState)).build()
+                                    Response.ok(SandboxesResource.createSandboxResult(userName, updatedSandboxState)).build()
                                 }
                             }
                     }
@@ -124,12 +142,12 @@ class SandboxResource extends ResourceWithUser {
                             CommandParser.splitCommandIntoOpcodeAndParameters(inputString)
                         }
 
-                    SandboxResource.EntityDto(
+                    SandboxesResource.EntityDto(
                         e.id,
                         e.name,
                         e.isMaster,
-                        SandboxResource.InputCommand(opcode, JavaConversions.asJavaMap(params)),
-                        SandboxResource.extractOutput(e.mostRecentControlFunctionOutput),
+                        SandboxesResource.InputCommand(opcode, JavaConversions.mapAsJavaMap(params)),
+                        SandboxesResource.extractOutput(e.mostRecentControlFunctionOutput),
                         e.debugOutput)
                 }).toArray
 
@@ -139,15 +157,15 @@ class SandboxResource extends ResourceWithUser {
 
 }
 
-object SandboxResource {
-    private def createSandboxResult(userName: String, state: Scalatron.SandboxState) : SandboxResource.SandboxCreationResult = {
-        val sandboxId = state.id
+object SandboxesResource {
+    private def createSandboxResult(userName: String, state: Scalatron.SandboxState) : SandboxesResource.SandboxCreationResult = {
+        val sandboxId = state.sandbox.id
         val sandboxTime = state.time
 
-        val timePlus0 = "/api/users/%s/sandbox/%d/%d".format(userName, sandboxId, sandboxTime)
-        val timePlus1 = "/api/users/%s/sandbox/%d/%d".format(userName, sandboxId, sandboxTime+1)
-        val timePlus2 = "/api/users/%s/sandbox/%d/%d".format(userName, sandboxId, sandboxTime+2)
-        val timePlus10 = "/api/users/%s/sandbox/%d/%d".format(userName, sandboxId, sandboxTime+10)
+        val timePlus0 = "/api/users/%s/sandboxes/%d/%d".format(userName, sandboxId, sandboxTime)
+        val timePlus1 = "/api/users/%s/sandboxes/%d/%d".format(userName, sandboxId, sandboxTime+1)
+        val timePlus2 = "/api/users/%s/sandboxes/%d/%d".format(userName, sandboxId, sandboxTime+2)
+        val timePlus10 = "/api/users/%s/sandboxes/%d/%d".format(userName, sandboxId, sandboxTime+10)
 
         val mappedEntities = state.entities.map(e => {
             val inputString = e.mostRecentControlFunctionInput
@@ -158,16 +176,16 @@ object SandboxResource {
                     CommandParser.splitCommandIntoOpcodeAndParameters(inputString)
                 }
 
-            SandboxResource.EntityDto(
+            SandboxesResource.EntityDto(
                 e.id,
                 e.name,
                 e.isMaster,
-                SandboxResource.InputCommand(opcode, JavaConversions.asJavaMap(params)),
+                SandboxesResource.InputCommand(opcode, JavaConversions.mapAsJavaMap(params)),
                 extractOutput(e.mostRecentControlFunctionOutput),
                 e.debugOutput)
         }).toArray
 
-        SandboxResource.SandboxCreationResult(
+        SandboxesResource.SandboxCreationResult(
             sandboxId,
             timePlus0, timePlus1, timePlus2, timePlus10,
             state.time,
@@ -175,11 +193,11 @@ object SandboxResource {
         )
     }
 
-    private def extractOutput(in: Iterable[(String, Iterable[(String, String)])]): Array[SandboxResource.InputCommand] =
+    private def extractOutput(in: Iterable[(String, Iterable[(String, String)])]): Array[SandboxesResource.InputCommand] =
         in.map(e => {
             val op = e._1
             val params = e._2
-            SandboxResource.InputCommand(op, JavaConversions.asJavaMap(params.toMap))
+            SandboxesResource.InputCommand(op, JavaConversions.mapAsJavaMap(params.toMap))
         }).toArray
 
 
@@ -228,17 +246,13 @@ object SandboxResource {
 
 
 
-case class SandboxResult(entities: Array[SandboxResource.EntityDto]) {
+case class SandboxResult(entities: Array[SandboxesResource.EntityDto]) {
     def getEntities = entities
 }
 
 
 class Steps(var i: Int) {
     def this() = this(0)
-
     def getSteps = i
-
-    def setSteps(s: Int) {
-        i = s
-    }
+    def setSteps(s: Int) { i = s }
 }

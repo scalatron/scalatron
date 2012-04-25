@@ -84,9 +84,9 @@ Important Note:
     tested  /api/users/{user}/unpublished/publish   PUT     -       -       204     401,404         Publish Unpublished Bot
     n/a     /api/users/{user}/published             PUT     jar     -       204     401,415         Publish Bot Via Upload
 
-    tested  /api/users/{user}/sandbox               POST    json    json    200     401,415         Create Sandbox
-    untstd  /api/users/{user}/sandbox               DELETE  -       -       204     401,404         Delete All Sandboxes
-    tested  /api/users/{user}/sandbox/{id}/{time}   GET     -       json    200     401,404         Get Sandbox State
+    tested  /api/users/{user}/sandboxes             POST    json    json    200     401,415         Create Sandbox
+    untstd  /api/users/{user}/sandboxes             DELETE  -       -       204     401,404         Delete All Sandboxes
+    tested  /api/users/{user}/sandboxes/{id}/{time} GET     -       json    200     401,404        Get Sandbox State
 
     tested  /api/users/{user}/versions              GET     -       json    200     401,404         Get Existing Versions
     tested  /api/users/{user}/versions              POST    json    url     201     401,415         Create Version
@@ -202,7 +202,7 @@ Response JSON example:
         [
             { "name" : "Sources",       "url" : "/api/users/{user}/sources" },
             { "name" : "Build",         "url" : "/api/users/{user}/sources/build" },
-            { "name" : "Sandbox",       "url" : "/api/users/{user}/sandbox" },
+            { "name" : "Sandboxes",     "url" : "/api/users/{user}/sandboxes" },
             { "name" : "Publish",       "url" : "/api/users/{user}/unpublished/publish" }
             { "name" : "Versions",      "url" : "/api/users/{user}/versions" },
             { "name" : "Unpublished",   "url" : "/api/users/{user}/unpublished" },
@@ -383,7 +383,7 @@ Request JSON example:
         [
             { "name" : "Sources",       "url" : "/api/users/{user}/sources" },
             { "name" : "Build",         "url" : "/api/users/{user}/sources/build" },
-            { "name" : "Sandbox",       "url" : "/api/users/{user}/sandbox" },
+            { "name" : "Sandboxes",     "url" : "/api/users/{user}/sandboxes" },
             { "name" : "Publish",       "url" : "/api/users/{user}/unpublished/publish" }
             { "name" : "Versions",      "url" : "/api/users/{user}/versions" },
             { "name" : "Unpublished",   "url" : "/api/users/{user}/unpublished" },
@@ -675,7 +675,7 @@ Note: you may need to update the user's bot beforehand, either by uploading a .j
 client-side via PUT to /api/users/{user}/unpublished or by building from sources (potentially
 also to be uploaded first) via PUT to /api/users/{user}/sources/build
 
-* URL:              /api/users/{user}/sandbox
+* URL:              /api/users/{user}/sandboxes
 * Method:           POST
 * Request Body:     JSON
 * Returns:
@@ -701,10 +701,10 @@ Result JSON example:
     {
         "id" : {id},    // the ID of the sandbox instance
 
-        "url":         "/api/users/{user}/sandbox/{id}/{time+0}",      // call to re-fetch this
-        "urlPlus1":    "/api/users/{user}/sandbox/{id}/{time+1}",      // call to single-step
-        "urlPlus2":    "/api/users/{user}/sandbox/{id}/{time+2}",      // call to step 2x
-        "urlPlus10":   "/api/users/{user}/sandbox/{id}/{time+10}",     // call to step 10x
+        "url":         "/api/users/{user}/sandboxes/{id}/{time+0}",      // call to re-fetch this
+        "urlPlus1":    "/api/users/{user}/sandboxes/{id}/{time+1}",      // call to single-step
+        "urlPlus2":    "/api/users/{user}/sandboxes/{id}/{time+2}",      // call to step 2x
+        "urlPlus10":   "/api/users/{user}/sandboxes/{id}/{time+10}",     // call to step 10x
 
         "time" : "0",
         "entities" :
@@ -768,7 +768,7 @@ any one time, namely those returned as follow-on URLs by a sandbox resource. Onc
 those resources was retrieved, only the next follow-on URLs returned there are valid
 options.
 
-* URL:              /api/users/{user}/sandbox/{id}/{time}
+* URL:              /api/users/{user}/sandboxes/{id}/{time}
 * Method:           GET
 * Returns:
     * 200 OK & Result
@@ -778,7 +778,7 @@ options.
 
 Result JSON example:
 
-    see Result JSON of "Create Sandbox" / POST to "/api/users/{user}/sandbox"
+    see Result JSON of "Create Sandbox" / POST to "/api/users/{user}/sandboxes"
 
 
 
@@ -786,7 +786,7 @@ Result JSON example:
 
 Deletes all private sandboxes currently held by the server for the given user.
 
-* URL:              /api/users/{user}/sandbox
+* URL:              /api/users/{user}/sandboxes
 * Method:           DELETE
 * Returns:
     * 204 No Cortent (success)

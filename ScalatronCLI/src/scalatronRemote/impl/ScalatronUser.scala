@@ -381,7 +381,7 @@ case class ScalatronUser(
     // sandbox management
     //----------------------------------------------------------------------------------------------
 
-    def createSandbox(argMap: Map[String, String] = Map.empty): SandboxState = {
+    def createSandbox(argMap: Map[String, String] = Map.empty): ScalatronSandbox = {
         try {
             /*
             {
@@ -393,7 +393,7 @@ case class ScalatronUser(
                 ]
             }
             */
-            val sandboxResource = resource("Sandbox")
+            val sandboxResource = resource("Sandboxes")
             val sandboxConfigJSon =
                 "{ " +
                     "\"config\" : {\n" +
@@ -403,7 +403,8 @@ case class ScalatronUser(
                     }).mkString(",\n") +
                     "} }"
             val jsonOpt = scalatron.connection.POST_json_json(sandboxResource, sandboxConfigJSon)
-            ScalatronSandboxState.fromJson(jsonOpt, this)
+            val stateData = ScalatronSandboxState.StateData.fromJson(jsonOpt)
+            ScalatronSandbox(stateData.id, stateData, this)
         } catch {
             case e: HttpFailureCodeException =>
                 e.httpCode match {

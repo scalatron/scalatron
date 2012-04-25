@@ -234,11 +234,11 @@ object ScalatronRemote {
           * The game can be configured by passing in a map of command line options, such as
           * Map("-steps" -> "1000", "-x" -> "50", "-y" -> "50")
           */
-        def createSandbox(argMap: Map[String, String] = Map.empty): SandboxState
+        def createSandbox(argMap: Map[String, String] = Map.empty): Sandbox
     }
 
 
-    /** Scalatron.SourceFile: trait that provides an interface for dealing with source code
+    /** ScalatronRemote.SourceFile: trait that provides an interface for dealing with source code
       * files handed through the API.
       * CBB: do we need to specify some particular kind of encoding?
       * @param filename the file name of the source file (e.g. "Bot.scala").
@@ -275,7 +275,7 @@ object ScalatronRemote {
     }
 
 
-    /** Scalatron.Sample: interface for dealing with source code samples.
+    /** ScalatronRemote.Sample: interface for dealing with source code samples.
       */
     trait Sample {
         /** Returns the name of this sample, e.g. "Tutorial Bot 01".
@@ -291,7 +291,7 @@ object ScalatronRemote {
     }
 
 
-    /** Scalatron.Version: interface for dealing with source code versions of a user.
+    /** ScalatronRemote.Version: interface for dealing with source code versions of a user.
       */
     trait Version {
         /** Returns the user-unique version ID of this version. */
@@ -315,15 +315,35 @@ object ScalatronRemote {
     }
 
 
-    /** Scalatron.SandboxState encapsulates the state of a web user's private sandbox game
-      * simulation.
+    /** ScalatronRemote.Sandbox encapsulates a private sandboxed game with a particular ID.
+      * Note that while the API is designed to allow for multiple currently valid sandboxes with unique IDs
+      * and access to arbitrary times, the current server implementation (v0.9.8.4) only retains a single state (time)
+      * of a single sandbox - the most recently created sandbox with the most recently returned state.
+      * So while that is the case, don't retain a sandbox reference once you created a new one - it won't be a valid
+      * resource any more.
       */
-    trait SandboxState {
+    trait Sandbox {
         /** Returns the user object with which this sandbox is associated. */
         def user: User
 
         /** Returns the unique id this sandbox. */
         def id: Int
+
+        /** Returns the initial state of this sandboxed game, corresponding to time zero. */
+        def initialState: SandboxState
+
+        /** Deletes this sandbox on the server. Note that the current implementation (0.9.8.4) calls the API
+          * that deletes all sandboxes on the server - not a big issue, since there is only this one. */
+        def delete()
+    }
+
+
+    /** ScalatronRemote.SandboxState encapsulates the state of a web user's private sandbox game
+      * simulation.
+      */
+    trait SandboxState {
+        /** Returns the sandbox instance with which this state is associated. */
+        def sandbox: Sandbox
 
         /** Returns the time (i.e., the step count) of this simulation state. */
         def time: Int

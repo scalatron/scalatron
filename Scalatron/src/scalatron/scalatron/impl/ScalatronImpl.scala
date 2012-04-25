@@ -82,7 +82,7 @@ object ScalatronImpl
 
         // Strategy B: use the path to the Scalatron.jar file
         val scalatronJarFilePath = classOf[ScalatronImpl].getProtectionDomain.getCodeSource.getLocation.getPath
-        if (verbose) println("Detected that Scalatron.jar resides in: " + scalatronJarFilePath)
+        if (verbose) println("Detected Scalatron class path to be: " + scalatronJarFilePath)
 
         val scalatronInstallationDirectoryPath =
             cleanJarFilePath(scalatronJarFilePath) match {

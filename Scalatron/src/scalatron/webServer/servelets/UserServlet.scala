@@ -83,7 +83,7 @@ case class UserServlet(context: WebContext) extends BaseServlet {
 
             case _ =>
                 serveErrorPage("unknown user task: '" + task + "'", request, response)
-                System.err.println("error: unknown user task: '" + task + "'")
+                System.err.println("error: unknown user task received from browser: '" + task + "'")
         }
     }
 

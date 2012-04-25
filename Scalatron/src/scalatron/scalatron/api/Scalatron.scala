@@ -314,16 +314,17 @@ object Scalatron {
         // sandbox management
         //----------------------------------------------------------------------------------------------
 
-        /** Starts a new, headless Scalatron BotWar game in a user-specific sandbox and returns
-          * a wrapper for the simulation state, which here contains the initial simulation state.
-          * Successor states can subsequently be computed using state.step(). The game
-          * will attempt to load the local version of the user's compiled-and-zipped plug-in (e.g. from
-          * "/Scalatron/users/{user}/bot/Scalatron.jar").
+        /** Creates a new private sandboxed simulation for this user. The returned instance is a
+          * container for a unique sandbox ID and the initial state of the simulation generated for
+          * that sandbox. See the notes on trait Sandbox for some caveats.
           *
-          * The game can be configured by passing in a map of command line options, such as
+          * The simulation will attempt to load the local version of the user's compiled-and-zipped
+          * plug-in (e.g. from "/Scalatron/users/{user}/bot/Scalatron.jar").
+          *
+          * The sandboxed simulation can be configured by passing in a map of command line options, such as
           * Map("-steps" -> "1000", "-x" -> "50", "-y" -> "50")
           */
-        def createSandbox(argMap: Map[String, String] = Map.empty): SandboxState
+        def createSandbox(argMap: Map[String, String] = Map.empty): Sandbox
     }
 
 
@@ -402,15 +403,34 @@ object Scalatron {
     }
 
 
-    /** Scalatron.SandboxState encapsulates the state of a web user's private sandbox game
-      * simulation.
+    /** Scalatron.Sandbox encapsulates a private sandboxed simulation with a particular ID. More specifically, it
+      * associates a unique sandbox ID with the first state of a simulation. To run the simulation, fetch the
+      * initial state and simulate from there.
+      * Caution: at the moment, certain plug-ins used by the simulation may not be stateless, in which case
+      * fetching multiple successor states from the same simulation state will lead to unpredictable results.
       */
-    trait SandboxState {
+    trait Sandbox {
         /** Returns the user object with which this sandbox is associated. */
         def user: User
 
-        /** Returns the unique id of this simulation state. */
+        /** Returns the unique id this sandbox. */
         def id: Int
+
+        /** Returns the initial state of this sandboxed game, corresponding to time zero.
+          * Successor states can subsequently be computed using state.step().
+          * */
+        def initialState: SandboxState
+    }
+
+
+
+    /** Scalatron.SandboxState encapsulates a particular state in time of a user's private, sandboxed simulation.
+      * Caution: at the moment, certain plug-ins used by the simulation may not be stateless, in which case
+      * fetching multiple successor states from the same simulation state will lead to unpredictable results.
+      */
+    trait SandboxState {
+        /** Returns the sandbox instance with which this state is associated. */
+        def sandbox: Sandbox
 
         /** Returns the time (i.e., the step count) of this simulation state. */
         def time: Int

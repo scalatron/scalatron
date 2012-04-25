@@ -391,7 +391,7 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
         val initialSimState = BotWar.startHeadless(plugins, permanentConfig, gameConfig)
         val sandboxId = nextSandboxId
         nextSandboxId += 1
-        ScalatronSandboxState(sandboxId, this, initialSimState)
+        ScalatronSandbox(sandboxId, this, initialSimState)
     }
 }
 

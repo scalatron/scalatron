@@ -78,7 +78,7 @@
 
             var sandbox = createPublishBuildAction('Run in Sandbox', function () {
                 Events.fireEvent("progressUpdate", { message: "Creating new sandbox" });
-                API.newSandbox({
+                API.createSandbox({
                     jsonData:{
                         config: {
                             "-x":"50",

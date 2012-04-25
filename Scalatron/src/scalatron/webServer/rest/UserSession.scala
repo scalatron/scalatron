@@ -10,7 +10,7 @@ import scalatron.scalatron.api.Scalatron
 /** Scala wrapper for Java HttpSession. */
 object UserSession {
     val UserAttributeKey = "user"
-    val SandboxAttributeKey = "sandBox"
+    val SandboxAttributeKey = "sandbox"
 }
 
 

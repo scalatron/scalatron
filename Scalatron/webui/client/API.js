@@ -68,7 +68,7 @@
         /*
          { "name" : "Sources",       "url" : "/api/users/{user}/sources" },
          { "name" : "Build",         "url" : "/api/users/{user}/sources/build" },
-         { "name" : "Sandbox",       "url" : "/api/users/{user}/sandbox" },
+         { "name" : "Sandboxes",     "url" : "/api/users/{user}/sandboxes" },
          { "name" : "Publish",       "url" : "/api/users/{user}/unpublished/publish" }
          { "name" : "Versions",      "url" : "/api/users/{user}/versions" },
          { "name" : "Unpublished",   "url" : "/api/users/{user}/unpublished" },
@@ -92,18 +92,18 @@
             Ext.Ajax.request(p);
         },
 
-        newSandbox: function(param) {
-            var p = this.applyDefault("POST", this.api.Sandbox, param);
+        createSandbox: function(param) {
+            var p = this.applyDefault("POST", this.api.Sandboxes, param);
             Ext.Ajax.request(p);
         },
 
-        destroySandbox: function(param) {
-            var p = this.applyDefault("DELETE", this.api.Sandbox, param);
+        destroySandboxes: function(param) {
+            var p = this.applyDefault("DELETE", this.api.Sandboxes, param);
             Ext.Ajax.request(p);
         },
 
         nextStep: function(param) {
-            var p = this.applyDefault("PUT", this.api.Sandbox, param);
+            var p = this.applyDefault("PUT", this.api.Sandboxes, param);
             p.jsonData = { steps: param.steps };
             Ext.Ajax.request(p);
         },

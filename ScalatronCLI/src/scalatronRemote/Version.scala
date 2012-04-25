@@ -4,5 +4,5 @@
 package scalatronRemote
 
 object Version {
-    val VersionString = "0.9.8.3" // version of this tool (not of remote server :-)
+    val VersionString = "0.9.8.5" // version of this tool (not of remote server :-)
 }
