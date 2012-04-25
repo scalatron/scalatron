@@ -1,0 +1,13 @@
+*.jar
+*.pdf
+*.class
+.idea
+.idea_modules
+target
+*.iml
+*.xml
+users/
+doc/html/
+devdoc/html/
+Scalatron/lib/
+__MACOSX
