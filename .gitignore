@@ -12,5 +12,6 @@ devdoc/html/
 Scalatron/lib/
 Scalatron/out/
 ScalatronCLI/out/
+ScalatronCLI/lib/
 ScalaMarkdown/out/
 __MACOSX
