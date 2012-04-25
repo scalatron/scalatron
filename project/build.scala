@@ -1,10 +1,12 @@
 import sbt._
 import Keys._
-import com.github.retronym.SbtOneJar._
+import sbtassembly.Plugin._
+import AssemblyKeys._
+
 
 object build extends Build {
-    def standardSettings = Seq(exportJars := true) ++ Defaults.defaultSettings ++ src ++ Seq (
-        artifactName in oneJar <<= moduleName(_ => (_,_,a) => "%s.%s" format (a.name, a.extension))
+    def standardSettings = Defaults.defaultSettings ++ src ++ assemblySettings ++ Seq (
+        mergeStrategy in assembly := {_ => MergeStrategy.first}
     )
 
     lazy val all = Project(
@@ -20,7 +22,7 @@ object build extends Build {
     )
 
     lazy val main = Project("Scalatron", file("Scalatron"),
-        settings = standardSettings ++ oneJarSettings ++ Seq(
+        settings = standardSettings ++ Seq(
             libraryDependencies ++= Seq(  
                 "org.scala-lang" % "scala-compiler" % "2.9.1",
                 "com.typesafe.akka" % "akka-actor" % "2.0",
@@ -32,14 +34,18 @@ object build extends Build {
                 "org.testng" % "testng" % "6.5.1" % "test"
             ),
             resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
+        ) ++ Seq (
+            jarName in assembly := "Scalatron.jar"
         )
     )
 
     lazy val cli = Project("ScalatronCLI", file("ScalatronCLI"),
-        settings = standardSettings ++ oneJarSettings ++ Seq(
+        settings = standardSettings ++ Seq(
             libraryDependencies ++= Seq(
                 "org.apache.httpcomponents" % "httpclient" % "4.1.3"
             )
+        ) ++ Seq (
+            jarName in assembly := "ScalatronCLI.jar"
         )
     )
 
@@ -48,12 +54,14 @@ object build extends Build {
           scalaSource in Compile <<= baseDirectory / "src",
           scalaSource in Test <<= baseDirectory / "test/scala",
           resourceDirectory in Test <<= baseDirectory / "test/resources"
-        ) ++ oneJarSettings ++ Seq(
+        ) ++ Seq(
             libraryDependencies ++= Seq(
                 "org.scala-tools.testing" %% "specs" % "1.6.9",
                 "commons-io" % "commons-io" % "2.1",
                 "commons-lang" % "commons-lang" % "2.6"
             )
+        ) ++ Seq (
+            jarName in assembly := "ScalaMarkdown.jar"
         )
     )
 
@@ -76,7 +84,7 @@ object build extends Build {
             IO createDirectory htmlDir
             for (doc <- file(docDir + "/markdown").listFiles if doc.getName.endsWith(".md")) {
                 println ("Generating html for " + doc.getName)
-                Seq("java", "-Xmx1G", "-jar", "ScalaMarkdown/target/scala-" + version + "/scalamarkdown.jar", doc.getPath, htmlDir.getPath) !
+                Seq("java", "-Xmx1G", "-jar", "ScalaMarkdown/target/ScalaMarkdown.jar", doc.getPath, htmlDir.getPath) !
             }
         }
 
@@ -91,12 +99,12 @@ object build extends Build {
             println("Copying " + dirToCopy)
             IO.copyDirectory(scalatronDir / dirToCopy, distDir / dirToCopy)
         }
-        val versionString = "scala-" + version
+
         for (jar <- List("Scalatron", "ScalatronCLI")) {
-            IO.copyFile(file(jar) / "target" / versionString / (jar.toLowerCase + ".jar"), distDir / "bin" / (jar + ".jar"))
+            IO.copyFile(file(jar) / "target" / (jar + ".jar"), distDir / "bin" / (jar + ".jar"))
         }
 
         // TODO: zip into something like "scalatron-0.9.8.4.zip" when done
-    } dependsOn (oneJar in main, oneJar in cli, oneJar in markdown)
+    } dependsOn (assembly in main, assembly in cli, assembly in markdown)
 
 }
