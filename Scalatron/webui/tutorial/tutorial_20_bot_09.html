@@ -1,0 +1,371 @@
+<p><div id='TutorialDocumentData' data-prev='/tutorial/tutorial&#95;20&#95;bot&#95;08.html' data-next='/tutorial/tutorial&#95;20&#95;bot&#95;10.html' /></p>
+
+<h1 id = "Bot__9:_Missile_Launcher_II">Bot #9: Missile Launcher II</h1>
+
+<h2 id = "Objective">Objective</h2>
+
+<p>The missile launcher in the preceding section
+<button class="LoadCodeButton" style="visibility: hidden;" data-url="/tutorial/tutorial&#95;20&#95;bot&#95;08&#95;sample&#95;1.scala">Load into Editor</button>
+was the second bot variant in which
+we had to work with X/Y coordinates. Obviously, for a bot navigating a two-dimensional environment,
+there'll be a lot more of this. So we will write a little class that makes dealing 
+with such X/Y coordinates more convenient.</p>
+
+<p>Departing from the style of the preceding examples for a moment we will not present
+the entire source code up front but rather develop it in several steps.</p>
+
+<h2 id = "Step_1:_using__Tuple_">Step 1: using 'Tuple'</h2>
+
+<p>Since we already know about <code>Tuple</code> and constructing tuples with Scala is so
+convenient, we might start out without introducing our own type and simply
+work with <code>Tuple2</code>. The only code we have so far for working with X/Y coordinates
+simply generates a random coordinate using an instance of a random number generator:</p>
+
+<pre><code>val dx = rnd.nextInt(3)-1
+val dy = rnd.nextInt(3)-1
+val direction = dx + ":" + dy // e.g. "-1:1"
+"Spawn(direction=" + direction + ",heading=" + direction + ")"</code></pre>
+
+<p>Note that we're omitting the <code>energy</code> parameter; the server will then simply use the
+minimum spawn-energy value (100 EU) as a default.</p>
+
+<p>Let's define a method that constructs a tuple instead of two separate values:</p>
+
+<pre><code>def random() = (rnd.nextInt(3)-1, rnd.nextInt(3)-1)</code></pre>
+
+<p>We could then rewrite our code as follows:
+<button class="LoadCodeButton" style="visibility: hidden;" data-url="/tutorial/tutorial&#95;20&#95;bot&#95;09&#95;sample&#95;1.scala">Load into Editor</button></p>
+
+<pre><code>def random() = (rnd.nextInt(3)-1, rnd.nextInt(3)-1)
+val xy = random()
+val direction = xy._1 + ":" + xy._2 // e.g. "-1:1"
+"Spawn(direction=" + direction + ",heading=" + direction + ")"</code></pre>
+
+<h2 id = "Detour:_parentheses_on_methods_with_no_arguments">Detour: parentheses on methods with no arguments</h2>
+
+<p>Just a very brief detour to talk about parentheses on invocations of methods that
+take no parameters, like <code>random()</code> above: the convention in Scala is to omit the
+parentheses if the method <strong>has no</strong> side effects, i.e. does not change any state (in
+most cases this means it does nothing beyond computing and returning a value). If 
+the method <strong>has</strong> side effects, we'll signal that by declaring and invoking it with 
+empty parentheses, as we do above.</p>
+
+<p>Why does the method have side effects, even though it looks like it just computes
+and returns a value? Well, invoking <code>nextInt(n)</code> changes the internal state of
+the randomizer, and this is a side effect of invoking our <code>random()</code> method. That
+is why we declared it with parentheses.</p>
+
+<h2 id = "Step_2:_moving_construction_to_an__code_object__code_">Step 2: moving construction to an <code>object</code></h2>
+
+<p>If the construction of pairs holding random values would be accessed from several
+call sites in our code, we'd have to supply the random number generator as a parameter
+instead of silently accessing the one in the surrounding object instance.</p>
+
+<p>Like this:
+<button class="LoadCodeButton" style="visibility: hidden;" data-url="/tutorial/tutorial&#95;20&#95;bot&#95;09&#95;sample&#95;2.scala">Load into Editor</button></p>
+
+<pre><code>def random(rnd: Random) = (rnd.nextInt(3)-1, rnd.nextInt(3)-1)</code></pre>
+
+<p>But now we have no reference to the <code>this</code> context at all, and the method could exist
+as a static factory function. To get a static function, we need an <code>object</code>, so let's
+define one:</p>
+
+<pre><code>object XY {
+    def random(rnd: Random) = (rnd.nextInt(3)-1, rnd.nextInt(3)-1)
+}</code></pre>
+
+<p>We can then update the code fragment within the <code>ControlFunction</code> to use this static
+method, as follows:
+<button class="LoadCodeButton" style="visibility: hidden;" data-url="/tutorial/tutorial&#95;20&#95;bot&#95;09&#95;sample&#95;3.scala">Load into Editor</button></p>
+
+<pre><code>val xy = XY.random(rnd)
+val direction = xy._1 + ":" + xy._2 // e.g. "-1:1"
+"Spawn(direction=" + direction + ",heading=" + direction + ")"</code></pre>
+
+<h2 id = "Step_3:_creating_our_own_class">Step 3: creating our own class</h2>
+
+<p>Now what if we wanted to transform an X/Y coordinate instance, for example by adding
+another X/Y value as an offset? We could extend <code>Tuple2</code> and add methods to it, but
+that is inadvisable for both technical reasons (<code>Tuple2</code> is a <code>case class</code>, more on
+those soon) and because we prefer composition over inheritance. We could also do some
+fancy footwork and provide new methods for the existing <code>Tuple2</code> type (using Scala's
+&ldquo;pimp my library&rdquo; approach), but that's not really called for if we expect to add a
+lot of methods.</p>
+
+<p>No, the natural path here is to define our own <code>class</code>, just like we would in Java:</p>
+
+<pre><code>class XY(val x: Int, val y: Int)</code></pre>
+
+<p>which is roughly equivalent to the following Java code:</p>
+
+<pre><code>class XY {
+    final int x;
+    final int y;
+
+    XY(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+}</code></pre>
+
+<p>We can now instantiate values of this class like this:
+<button class="LoadCodeButton" style="visibility: hidden;" data-url="/tutorial/tutorial&#95;20&#95;bot&#95;09&#95;sample&#95;4.scala">Load into Editor</button></p>
+
+<pre><code>val xy = new XY(1, 1)</code></pre>
+
+<h2 id = "Step_4:_adding_a_member_function">Step 4: adding a member function</h2>
+
+<p>Let's add a method called <code>add</code> that will add the x and y fields of a given
+<code>XY</code> instance to those of the current one:</p>
+
+<pre><code>class XY(val x: Int, val y: Int) {
+    def add(other: XY) = new XY(x+other.x, y+other.y)
+}</code></pre>
+
+<p>We can use this method as follows:</p>
+
+<pre><code>val xy1 = new XY(1, 1)
+val xy2 = new XY(2, 2)
+val xy3 = xy1.add(xy2)</code></pre>
+
+<p>Keep in mind that we're striving for immutability, i.e. methods like <code>add()</code>
+will always return a new instance rather than modifying the existing instance.</p>
+
+<p>In Scala, we can call our method almost whatever we want, including the naturally
+attractive <code>+</code>, so we'll use that:</p>
+
+<pre><code>class XY(val x: Int, val y: Int) {
+    def +(other: XY) = new XY(x+other.x, y+other.y)
+}</code></pre>
+
+<p>and use it as follows:</p>
+
+<pre><code>val xy1 = new XY(1, 1)
+val xy2 = new XY(2, 2)
+val xy3 = xy1 + xy2</code></pre>
+
+<p>As a side note, the ability to create methods that look like operators leads a lot
+of programmers to define methods that look like operators, resulting in libraries
+that define lots of methods that look like operators and are consequently completely 
+incomprehensible to anybody who does not know the operator symbols. Don't be put off
+by this, though: soon enough you'll know all the operator symbols you frequently use
+and will know how to look up the others. And you'll probably join the crowd of 
+programmers defining lots of methods that look like operators, although an argument
+could be made that code with short symbols is not necessarily better code.</p>
+
+<h2 id = "Step_5:_creating_a_factory_function">Step 5: creating a factory function</h2>
+
+<p>Let's assemble the code we have so far:
+<button class="LoadCodeButton" style="visibility: hidden;" data-url="/tutorial/tutorial&#95;20&#95;bot&#95;09&#95;sample&#95;5.scala">Load into Editor</button></p>
+
+<pre><code>class XY(val x: Int, val y: Int) {
+    def +(other: XY) = new XY(x+other.x, y+other.y)
+}
+object XY {
+    def random(rnd: Random) =
+        new XY(rnd.nextInt(3)-1, rnd.nextInt(3)-1)
+}</code></pre>
+
+<p>We have a <code>class</code> definition with a <code>+</code> method and a companion <code>object</code> with a
+<code>random()</code> factory function. Using the <code>new</code> keyword, we can construct class instances
+and using the factory methods we can generate random instances. Now, we know of the
+syntactic sugar we get with methods called <code>apply()</code>.</p>
+
+<p>So why don't we add one:
+<button class="LoadCodeButton" style="visibility: hidden;" data-url="/tutorial/tutorial&#95;20&#95;bot&#95;09&#95;sample&#95;6.scala">Load into Editor</button></p>
+
+<pre><code>...
+object XY {
+    def apply(x: Int, y: Int) = new XY(x, y)
+    def random(rnd: Random) =
+        XY(rnd.nextInt(3)-1, rnd.nextInt(3)-1)
+}</code></pre>
+
+<p>Now, instead of littering our code with <code>new XY(x,y)</code> we can say just <code>XY(x, y)</code> to 
+construct <code>XY</code> instances:</p>
+
+<pre><code>val xy3 = XY(1, 1) + XY(2, 2)</code></pre>
+
+<h2 id = "Step_6:_upgrading_to_a__code_case_class__code_">Step 6: upgrading to a <code>case class</code></h2>
+
+<p>Next, we'll &ldquo;upgrade&rdquo; our class definition to a <code>case class</code>:</p>
+
+<pre><code>case class XY(x: Int, y: Int)</code></pre>
+
+<p>The modifier keyword <code>case</code> before the <code>class</code> keyword basically instructs the compiler:
+&ldquo;add all the stuff to my class that a sane person will usually want&rdquo;. This includes:</p>
+
+<ul>
+<li>an immutable field for each parameter of the <code>class</code> definition <br/></li>
+<li>an <code>equals()</code> method that tests equality by checking each field</li>
+<li>a <code>hasCode</code> method that takes into account each field</li>
+<li>a <code>toString</code> method that takes into account each field</li>
+</ul>
+
+<p>as well as a few others. Upgrading a <code>class</code> to a <code>case class</code> also automatically 
+generates a companion object of the same name with an <code>apply()</code> function as a 
+factory function that takes the parameters of the <code>class</code> as its arguments.</p>
+
+<p>The new code in its entirety looks like this:
+<button class="LoadCodeButton" style="visibility: hidden;" data-url="/tutorial/tutorial&#95;20&#95;bot&#95;09&#95;sample&#95;7.scala">Load into Editor</button></p>
+
+<pre><code>case class XY(x: Int, y: Int) {
+    def +(other: XY) = XY(x+other.x, y+other.y)
+}
+object XY {
+    def random(rnd: Random) = XY(rnd.nextInt(3)-1, rnd.nextInt(3)-1)
+}</code></pre>
+
+<p>Where our hand-coded <code>apply()</code> was removed from the definition of <code>object XY</code>
+because the compiler now generates it automatically for us at compile time.</p>
+
+<p>We can now do stuff like this:</p>
+
+<pre><code>assert(XY(1,1) == XY(1,1))
+assert(XY(1,1) != XY(2,2))
+assert(XY(1,1).hashCode == XY(1,1).hashCode)
+assert(XY(1,1).toString == "XY(1,1)")
+assert(XY(1,1) + XY(2,2) = XY(3,3))</code></pre>
+
+<h2 id = "Step_7:_adding_a_few_other_methods">Step 7: adding a few other methods</h2>
+
+<p>We can add methods like the following to our <code>class</code>:
+<button class="LoadCodeButton" style="visibility: hidden;" data-url="/tutorial/tutorial&#95;20&#95;bot&#95;09&#95;sample&#95;8.scala">Load into Editor</button></p>
+
+<pre><code>case class XY(x: Int, y: Int) {
+    // ...
+    def isNonZero = x!=0 || y!=0
+    def isZero = x==0 &amp;&amp; y==0
+    def isNonNegative = x&gt;=0 &amp;&amp; y&gt;=0
+
+    def updateX(newX: Int) = XY(newX, y)
+    def updateY(newY: Int) = XY(x, newY)
+
+    def addToX(dx: Int) = XY(x+dx, y)
+    def addToY(dy: Int) = XY(x, y+dy)
+
+    def +(pos: XY) = XY(x+pos.x, y+pos.y)
+    def -(pos: XY) = XY(x-pos.x, y-pos.y)
+    def *(factor: Double) = XY((x*factor).intValue, (y*factor).intValue)
+
+    def distanceTo(pos: XY) : Double = (this-pos).length
+    def length : Double = math.sqrt(x*x + y*y)
+
+    def signum = XY(x.signum, y.signum)
+
+    def negate = XY(-x, -y)
+    def negateX = XY(-x, y)
+    def negateY = XY(x, -y)
+}</code></pre>
+
+<p>And we can expand out static code in <code>object</code> as well:</p>
+
+<pre><code>object XY {
+    val Zero = XY(0,0)
+    val One =  XY(1,1)
+
+    val Right      = XY( 1,  0)
+    val RightUp    = XY( 1, -1)
+    val Up         = XY( 0, -1)
+    val UpLeft     = XY(-1, -1)
+    val Left       = XY(-1,  0)
+    val LeftDown   = XY(-1,  1)
+    val Down       = XY( 0,  1)
+    val DownRight  = XY( 1,  1)
+}</code></pre>
+
+<h2 id = "Step_8:_the_modified_bot">Step 8: the modified bot</h2>
+
+<p>Using the <code>XY</code> class we just defined, we can update our bot's <code>respond()</code> method as follows:
+<button class="LoadCodeButton" style="visibility: hidden;" data-url="/tutorial/tutorial&#95;20&#95;bot&#95;09&#95;sample&#95;9.scala">Load into Editor</button></p>
+
+<pre><code>def respond(input: String): String = {
+    val (opcode, paramMap) = CommandParser(input)
+    if( opcode == "React" ) {
+        val generation = paramMap("generation").toInt
+        if( generation == 0 ) {
+            if( paramMap("energy").toInt &gt;= 100 &amp;&amp; rnd.nextDouble() &lt; 0.05 ) {
+                val heading = XY.random(rnd)
+                val headingStr = heading.x + ":" + heading.y // e.g. "-1:1"
+                "Spawn(direction=" + headingStr + ",heading=" + headingStr + ")"
+            } else ""
+        } else {
+            val headingStr = paramMap("heading")
+            val directions = headingStr.split(':').map(_.toInt) // e.g. "-1:1" =&gt; Array(-1,1)
+            "Move(direction=" + directions(0) + ":" + directions(1) + ")"
+        }
+    } else ""
+}</code></pre>
+
+<p>We notice that we could also shift the encoding and decoding of the <code>heading</code> state parameter
+into the <code>XY</code> class:</p>
+
+<pre><code>case class XY(x: Int, y: Int) {
+    // ...
+    override def toString = x + ":" + y
+}
+
+object XY {
+    // ...
+    def fromString(s: String) = {
+        val xy = s.split(':').map(_.toInt) // e.g. "-1:1" =&gt; Array(-1,1)
+        XY(xy(0), xy(1))
+    }
+}</code></pre>
+
+<p>Note the <code>override</code> modifier on the definition of <code>toString</code>. In Scala, overriding a method
+that is already defined in a base class or trait requires this modifier in order to keep
+you from inadvertently overriding a parent method you may not even have noticed was there,
+thus changing the behavior of the code in unexpected ways.</p>
+
+<p>We then obtain the almost-final variant of our <code>respond()</code> method:
+<button class="LoadCodeButton" style="visibility: hidden;" data-url="/tutorial/tutorial&#95;20&#95;bot&#95;09&#95;sample&#95;10.scala">Load into Editor</button></p>
+
+<pre><code>def respond(input: String): String = {
+    val (opcode, paramMap) = CommandParser(input)
+    if( opcode == "React" ) {
+        val generation = paramMap("generation").toInt
+        if( generation == 0 ) {
+            if( paramMap("energy").toInt &gt;= 100 &amp;&amp; rnd.nextDouble() &lt; 0.05 ) {
+                val heading = XY.random(rnd)
+                "Spawn(direction=" + heading + ",heading=" + heading + ")"
+            } else ""
+        } else {
+            val headingStr = paramMap("heading")
+            val heading = XY.fromString(headingStr)
+            "Move(direction=" + heading + ")"
+        }
+    } else ""
+}</code></pre>
+
+<p>Note that in the construction of the <code>Spawn</code> and <code>Move</code> response strings, we are not explicitly
+calling <code>XY.toString</code>. The compiler detects that, in order to assemble the concatenated values
+into a string, it needs to convert our <code>direction</code> values from type <code>XY</code> into type <code>String</code>
+and automatically inserts calls to <code>XY.toString</code> to accomplish that.</p>
+
+<h2 id = "Step_9:_changing__code_fromString__code__to__code_apply__code_">Step 9: changing <code>fromString</code> to <code>apply</code></h2>
+
+<p>The static method <code>XY.fromString()</code> is essentially a factory method that, instead of <code>Int</code> x and y
+coordinates, takes a specially formatted <code>String</code> value as a parameter. So it makes sense to also
+define an <code>apply()</code> function on <code>object XY</code>:</p>
+
+<pre><code>object XY {
+    def apply(s: String) : XY = {
+        val xy = s.split(':').map(_.toInt) // e.g. "-1:1" =&gt; Array(-1,1)
+        XY(xy(0), xy(1))
+    }
+}</code></pre>
+
+<p>As before, because the function is overloaded, we need to declare the return value explicitly to
+be of type <code>XY</code>.</p>
+
+<p>After making this change, we can change the earlier code:</p>
+
+<pre><code>val heading = XY.fromString(headingStr)</code></pre>
+
+<p>into this slightly more concise format:</p>
+
+<pre><code>val heading = XY(headingStr)</code></pre>
+
+<p>Here is the final result:
+<button class="LoadCodeButton" style="visibility: hidden;" data-url="/tutorial/tutorial&#95;20&#95;bot&#95;09&#95;sample&#95;11.scala">Load into Editor</button></p>

@@ -1,0 +1,32 @@
+#editor {
+  margin: 0;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+
+.login {
+    font-family:Helvetica,sans-serif;
+    font-size:14px;
+    font-weight:normal;
+}
+
+.login p {
+    font-size:14px;
+    font-weight:lighter;
+    line-height:120%;
+    margin: 2px 8px 10px 8px;
+}
+
+.login p strong {
+    font-weight:bold;
+    font-style: normal;
+}
+
+.login p em {
+    font-weight:normal;
+    font-style: italic;
+}

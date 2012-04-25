@@ -1,0 +1,20 @@
+<div>
+  This text should be left alone.
+  Even with all the `fancies`.
+  <div>
+  <!--#md-->
+But here comes the *magic*.
+
+    some code
+
+  * lists
+  * lists
+    * with lists inside
+  * and more lists
+
+        with code inside
+
+and that's it.
+  <!--~-->
+  </div>
+</div>

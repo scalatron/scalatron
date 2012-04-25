@@ -1,0 +1,36 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="/format.css">
+    <title>Welcome $UserName$</title>
+</head>
+
+<body onload="document.getElementById('Password1').focus();">
+<div class="login">
+    <table align="center">
+        <tr>
+            <td>
+                <h1>Login</h1>
+                <form name="loginForm" action="/user/$UserName$/login">
+                    <table align="center">
+                        <tr>
+                            <td>Name:</td>
+                            <td><strong>$UserName$</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Password:</td>
+                            <td><input id="Password1" type="password" name="password"/></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td><input type="submit" value="Login" /></td>
+                        </tr>
+                    </table>
+                </form>
+            </td>
+        </tr>
+    </table>
+</div>
+</body>
+</html>

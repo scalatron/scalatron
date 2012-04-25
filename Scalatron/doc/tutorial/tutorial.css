@@ -1,0 +1,128 @@
+/* Central Style Sheet */
+
+.tutorial {
+    font-family:Helvetica,sans-serif;
+    font-size:14px;
+    font-weight:normal;
+}
+
+.tutorial p {
+    font-size:14px;
+    font-weight:lighter;
+    line-height:120%;
+    margin: 2px 8px 10px 8px;
+}
+
+.tutorial p strong {
+    font-weight:bold;
+    font-style: normal;
+}
+
+.tutorial p em {
+    font-weight:normal;
+    font-style: italic;
+}
+
+
+
+
+/* links */
+
+.tutorial a:link { color:#5050B0; text-decoration:none; }
+.tutorial a:visited { color:#5050B0; text-decoration:none; }
+.tutorial a:active { color:#A0A0F0; text-decoration:none; }
+.tutorial a:hover { color:#A0A0F0; text-decoration:underline; }
+
+
+/* headings */
+
+.tutorial h1 {
+    font-size:18px;
+    font-weight:bold;
+    margin: 0px 8px 5px 4px;
+}
+
+.tutorial h2 {
+    font-size:16px;
+    font-weight:normal;
+    margin: 25px 8px 3px 8px;
+}
+
+.tutorial h3 {
+    font-size:15px;
+    font-weight:normal;
+    margin: 20px 8px 5px 8px;
+}
+
+.tutorial h4 {
+    font-size:14px;
+    font-weight:normal;
+    margin: 15px 8px 5px 8px;
+}
+
+
+/* code */
+
+.tutorial pre {
+    font-family:Courier,monospace;
+    font-size:12px;
+    font-weight:normal;
+    padding: 5px 5px 5px 5px;
+    margin: 10px 10px 5px 10px;
+    background-color: #EEEEEE;
+}
+
+
+.tutorial .LoadCodeButtonDiv {
+    font-size:12px;
+    font-weight:normal;
+    text-align: right;
+    margin: 1px 10px 1px 1px;
+}
+
+.tutorial .LoadCodeButton {
+    font-size:12px;
+    font-weight:normal;
+}
+
+
+
+/* bulleted lists */
+
+.tutorial ul {
+    margin: 2px 2px 10px 2px;
+}
+
+.tutorial ul li {
+    list-style: disc outside;
+}
+
+
+
+.tutorial ol {
+    margin: 2px 2px 10px 2px;
+}
+
+.tutorial ol li {
+    list-style: decimal outside;
+}
+
+
+.tutorial li {
+    font-size:14px;
+    font-weight:lighter;
+    line-height:120%;
+    margin: 2px 10px 6px 20px;
+    list-style: decimal outside;
+}
+
+
+.tutorial li strong {
+    font-weight:bold;
+    font-style: normal;
+}
+
+.tutorial li em {
+    font-weight:normal;
+    font-style: italic;
+}

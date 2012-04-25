@@ -1,0 +1,34 @@
+<p><div id='TutorialDocumentData' data-prev='/tutorial/tutorial&#95;80&#95;example&#95;01.html' data-next='/tutorial/tutorial&#95;80&#95;example&#95;03.html' /></p>
+
+<h1 id = "Example_Bot__2:_The_Tag_Team">Example Bot #2: The Tag Team</h1>
+
+<p><button class="LoadCodeButton" style="visibility: hidden;" data-url="/tutorial/tutorial&#95;80&#95;example&#95;02&#95;bot.scala">Load into Editor</button></p>
+
+<p>The &ldquo;Tag Team Bot&rdquo; illustrates how state parameters can be passed from a master bot to its
+mini-bots and how mini-bots can use them to control their behavior.</p>
+
+<h2 id = "Strategy">Strategy</h2>
+
+<p>The master bot spawns a collection of companion mini-bots at certain time intervals.
+The mini-bots strive to remain at a configurable offset relative to their master bot.
+The master bot simply runs in large circles.</p>
+
+<h2 id = "Implementation">Implementation</h2>
+
+<p>The implementation uses a small framework to simplify the processing of incoming and the
+assembly of outgoing commands. Most of the components of this framework were introduced over
+the course of the tutorial.</p>
+
+<p>The master bot uses the following state parameters:</p>
+
+<ul>
+<li><code>heading</code>: direction it is currently traveling</li>
+<li><code>lastRotationTime</code>: simulation time when the bot last rotated its heading</li>
+<li><code>lastSpawnTime</code>: simulation time when the last mini-bot was spawned</li>
+</ul>
+
+<p>The mini-bots use the following state parameters:</p>
+
+<ul>
+<li><code>offset</code>: the desired offset from the master, as seen by the master</li>
+</ul>

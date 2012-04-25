@@ -1,0 +1,130 @@
+<p><div id='TutorialDocumentData' data-prev='/tutorial/tutorial&#95;20&#95;bot&#95;04.html' data-next='/tutorial/tutorial&#95;20&#95;bot&#95;06.html' /></p>
+
+<h1 id = "Bot__5:_Creating_a_Command_Parser_Function">Bot #5: Creating a Command Parser Function</h1>
+
+<h2 id = "Objective">Objective</h2>
+
+<p>Having the somewhat complicated command parsing code in the middle of our control
+function will be distracting. So we will pull it out into a separate function,
+<code>parse()</code>. While we're at it, we'll also add some validation code.</p>
+
+<h2 id = "Source_Code__button_class__LoadCodeButton__style__visibility:_hidden___data-url___tutorial_tutorial__95_20__95_bot__95_05__95_sample__95_1_scala__Load_into_Editor__button_">Source Code <button class="LoadCodeButton" style="visibility: hidden;" data-url="/tutorial/tutorial&#95;20&#95;bot&#95;05&#95;sample&#95;1.scala">Load into Editor</button></h2>
+
+<pre><code>class ControlFunction {
+    def respond(input: String) = {
+        val parseResult = parse(input)
+        val opcode = parseResult._1
+        val paramMap = parseResult._2
+        if(opcode=="React") {
+            "Status(text=Energy:" + paramMap("energy") + ")"
+        } else {
+            ""
+        }
+    }
+
+    def parse(command: String) = {
+        def splitParam(param: String) = {
+            val segments = param.split('=')
+            if( segments.length != 2 )
+                throw new IllegalStateException("invalid key/value pair: " + param)
+            (segments(0),segments(1))
+        }
+
+        val segments = command.split('(')
+        if( segments.length != 2 )
+            throw new IllegalStateException("invalid command: " + command)
+
+        val params = segments(1).dropRight(1).split(',')
+        val keyValuePairs = params.map( splitParam ).toMap
+        (segments(0), keyValuePairs)
+    }
+}</code></pre>
+
+<h2 id = "What_is_going_on_">What is going on?</h2>
+
+<p>The code in the <code>respond()</code> method should by now be obvious. The primary change is that
+instead of parsing the input string locally, we invoke a newly defined function <code>parse()</code>.</p>
+
+<p>The parse function is defined within the body of our <code>ControlFunction</code> class, which makes it a
+method with access to the <code>ControlFunction</code> instance (via <code>this</code>) - something we do not really
+need here. It could just as well be a static function. In the next example we will
+make this change, but for now let's look at the method as it stands.</p>
+
+<h3 id = "What_is_the_Return_Type_of__code_parse____code__">What is the Return Type of <code>parse()</code>?</h3>
+
+<p>We might note that in the first line of the method definition</p>
+
+<pre><code>def parse(command: String) = {</code></pre>
+
+<p>no return type is specified. The <code>=</code> indicates to the compiler that a value will be
+returned, but we leave it up to the compiler to figure out what the return type is.
+After looking at the method definition (which we'll also do in just a minute) the
+compiler will infer it to be:</p>
+
+<pre><code>(String, Map[String, String])</code></pre>
+
+<p>i.e. a tuple (pair) containing a <code>String</code> as well as a <code>Map</code> from <code>String</code> to <code>String</code>.
+In the first element of the tuple <code>parse()</code> will return the opcode of the command.
+In the second element it will return the parameter map. Its keys are the parameter
+names and its values are the parameter values.</p>
+
+<p>Here is an example of what the <code>parse()</code> method expects as its input:</p>
+
+<pre><code>"React(generation=0,energy=100)"</code></pre>
+
+<p>and what it will return:</p>
+
+<pre><code>("React", Map( "generation" -&gt; "0", "energy" -&gt; "100") )</code></pre>
+
+<h3 id = "Why_is_there_a__code_def__code__in_the_body_of__code_parse____code__">Why is there a <code>def</code> in the body of <code>parse()</code>?</h3>
+
+<p>To structure our parsing code, we use a local helper function <code>splitParam()</code> to
+break apart the individual key/value pairs. Since this helper function is not
+used or useful anywhere else in our code, we can keep it private to the method
+that needs it. Scala allows us to nest functions as deeply as we want, so we
+simply defined <code>splitParam()</code> within <code>parse()</code>, keeping the symbol local to
+the function.</p>
+
+<h3 id = "Can_my_Bot_just_throw_an_exception_">Can my Bot just throw an exception?</h3>
+
+<p>Yes. The Scalatron game server will catch and process all exceptions thrown
+within the bots. It also won't send you any invalid commands, but knowing how
+to validate your inputs and how to throw an exception is useful.</p>
+
+<p>When an exception is thrown, just as in Java, control escalates up the call
+stack to the nearest exception handler. This is an instance where no value
+is returned from a function.</p>
+
+<p>Actually, just for reference, here is how you catch an exception in Scala:</p>
+
+<pre><code>try {
+    ... code that might throw an exception...
+} catch {
+    case e: Exception =&gt; ... code that handles the exception ...
+}</code></pre>
+
+<p>The code within the <code>catch</code> block uses pattern matching, a powerful feature
+that we will look at later on.</p>
+
+<p>Note that the entire code block above is also an expression. If no exception
+is thrown, it yields the value of the code within the <code>try</code> block. If an
+exception is thrown, it yields the value of the exception handler.</p>
+
+<h3 id = "What_does__code_map_splitParam___code__do_">What does <code>map(splitParam)</code> do?</h3>
+
+<p>It is another example of syntactic sugar offered by Scala to eliminate
+boilerplate and make your code more concise. The full line in the example
+reads:</p>
+
+<pre><code>val keyValuePairs = params.map( splitParam ).toMap</code></pre>
+
+<p>We already looked at how <code>map()</code> works: it expects a transformation function
+as its only parameter. Here, the transformation function is obviously <code>splitParams</code>,
+the local function we defined to take apart the key/value pairs. But the syntax
+we use here is new: it contains neither a named parameter nor an underscore as an
+anonymous placeholder. Instead, it exploits the fact that - in the frequently
+occurring case of a function whose body is simply another function that takes the
+input parameter of the outer function as its parameter - we can omit the parameter
+altogether. The verbose variant of the line above would be:</p>
+
+<pre><code>val keyValuePairs = params.map(s =&gt; splitParam(s)).toMap</code></pre>

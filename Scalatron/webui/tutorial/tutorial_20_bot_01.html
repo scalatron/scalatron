@@ -1,0 +1,177 @@
+<p><div id='TutorialDocumentData' data-prev='/tutorial/tutorial&#95;00&#95;30&#95;protocol.html' data-next='/tutorial/tutorial&#95;20&#95;bot&#95;02.html' /></p>
+
+<h1 id = "Bot__1:_Hello_World">Bot #1: Hello World</h1>
+
+<h2 id = "Objective">Objective</h2>
+
+<p>Create a minimal bot that compiles and appears in the game.</p>
+
+<h2 id = "Source_Code__button_class__LoadCodeButton__style__visibility:_hidden___data-url___tutorial_tutorial__95_20__95_bot__95_01__95_sample__95_1_scala__Load_into_Editor__button_">Source Code <button class="LoadCodeButton" style="visibility: hidden;" data-url="/tutorial/tutorial&#95;20&#95;bot&#95;01&#95;sample&#95;1.scala">Load into Editor</button></h2>
+
+<pre><code>class ControlFunctionFactory {
+    def create = new ControlFunction().respond _
+}
+
+class ControlFunction {
+    def respond(input: String) = "Status(text=Hello World)"
+}</code></pre>
+
+<h2 id = "Building_Your_Bot">Building Your Bot</h2>
+
+<p>To see your bot in action, follow these steps:</p>
+
+<ul>
+<li>click on the <button class="LoadCodeButton" style="visibility: hidden;" data-url="/tutorial/tutorial&#95;20&#95;bot&#95;01&#95;sample&#95;1.scala">Load into Editor</button> button
+next to the code you'd like to use, for example above the source code snippet just above. This will load the code into the editor at right.</li>
+<li>in the toolbar above the editor, click the <strong>Publish into Tournament</strong> button.
+This will upload the source code from the editor to the Scalatron server, compile it,
+compress it into a bot plug-in and publish that bot plug-in into the tournament loop.
+When the next tournament round starts, your bot will be picked up and appear on the screen.</li>
+</ul>
+
+<p>Later, you will generally want to test and debug your bot before you publish it into the
+tournament. Here's how would you do that:</p>
+
+<ul>
+<li>in the toolbar above the editor, click the <strong>Run in Sandbox</strong> button.
+This will upload the source code from the editor to the Scalatron server, compile it,
+compress it into a bot plug-in and launch a private, sandboxed game on the server that
+contains only your bot.</li>
+<li>if the bot compiled without errors, a panel will slide out on the right-hand side of the
+screen that lets you <strong>Run</strong> your bot inside the sandbox, <strong>Step</strong> through the simulation
+one-by one, <strong>Step 10</strong> iterations at once or <strong>Restart</strong> the simulation.</li>
+<li>the bot view shows that part of the arena which your bot can see at that point. Your bot is
+the colored dot in the middle. Below the bot view, you can see the <strong>Input</strong> that your bot
+received, the <strong>Output</strong> commands that your bot generated and any <strong>Log</strong> output your bot
+generated via the <code>Log()</code> command.</li>
+</ul>
+
+<p>Now let's look at the code in detail&hellip;</p>
+
+<h2 id = "What_is_going_on_">What is going on?</h2>
+
+<p>The code defines two classes, <code>ControlFunctionFactory</code> and <code>ControlFunction</code>. In each class, it defines one
+method. The method <code>ControlFunctionFactory.create()</code> constructs a new instance of the class <code>ControlFunction</code>
+and returns a reference to its <code>respond()</code> method. This is the control function that the game
+server will invoke to interact with the bot.</p>
+
+<p>The method <code>ControlFunction.respond()</code> receives a <code>String</code> parameter (which it ignores)
+and returns a constant string that contains a command for the game server, in this case the
+command Status() which asks the server to set the status text of the bot to &ldquo;Hello World&rdquo;.</p>
+
+<h2 id = "What_does__code_class__code__do_">What does <code>class</code> do?</h2>
+
+<p>The <code>class</code> keyword begins the definition of a new class.</p>
+
+<p>Examples in our bot:</p>
+
+<pre><code>class ControlFunctionFactory { ... }
+class ControlFunction { ... }</code></pre>
+
+<h2 id = "What_does__code_def__code__do_">What does <code>def</code> do?</h2>
+
+<p>The <code>def</code> keyword defines a function or method.</p>
+
+<p>Examples in our bot:</p>
+
+<ul>
+<li><code>def create = new ControlFunction().respond _</code>
+<ul>
+<li>defines a method create() in the class <code>ControlFunctionFactory</code></li>
+<li>that takes no parameters</li>
+<li>that returns a function of type <code>String =&gt; String</code></li>
+<li>the return type is inferred by the compiler from the method body</li>
+<li>the body uses new to create an instance of class <code>ControlFunction</code></li>
+<li>it then returns a reference to the <code>respond()</code> method of class <code>ControlFunction</code> whose execution context is the instance we just created</li>
+</ul></li>
+<li><code>def respond(input: String) = "Status(text=Hello World)"</code>
+<ul>
+<li>defines a method <code>respond()</code> in the class <code>ControlFunction</code></li>
+<li>that takes one parameter of type String called input</li>
+<li>that returns a String</li>
+<li>the return type is inferred by the compiler from the method body</li>
+<li>the body consists of the String constant <code>"Status(text=Hello World)"</code></li>
+</ul></li>
+</ul>
+
+<p>Other examples:</p>
+
+<pre><code>def foo: Int = 1                    // function without side-effects
+def foo = 1                         // Scala infers return type
+
+def bar(s: String): String = "Hello"
+def bar(s: String) = "Hello"        // Scala infers return type
+
+def bar(): Unit = { println(..)     // function with side-effects
+def bar() { ... }                   // Scala infers return type</code></pre>
+
+<h2 id = "How_are_types_specified_">How are types specified?</h2>
+
+<p>In Scala, names precede types:</p>
+
+<pre><code>def foo(input: String) : String = ""
+val bar: Int = 1
+val l: List[Int] = List(1, 2, 3)</code></pre>
+
+<p>Types can be omitted if they can be inferred by the compiler:</p>
+
+<pre><code>def foo(input: String) = ""
+val bar = 1
+val l = List(1, 2, 3)</code></pre>
+
+<h2 id = "What_types_are_available_in_Scala_">What types are available in Scala?</h2>
+
+<p>Scala has all the basic types of Java:</p>
+
+<ul>
+<li><code>String</code></li>
+<li><code>Int</code></li>
+<li><code>Double</code></li>
+<li><code>Char</code></li>
+<li><code>Array[T]</code></li>
+</ul>
+
+<p>Scala also has functions as values and has the appropriate types.
+Example: a function that takes a string and returns a string:</p>
+
+<pre><code>val foo: String =&gt; String = input =&gt; input + "."</code></pre>
+
+<p>If we want to omit the type on the left-hand side, we need to tell the compiler
+about it on the right-hand side:</p>
+
+<pre><code>val foo = (input: String) =&gt; input + "."</code></pre>
+
+<h2 id = "Why_is_there_no__code_return__code__statement_">Why is there no <code>return</code> statement?</h2>
+
+<p>In Scala, and in functional programming in general, you should think of methods and most
+code elements as expressions that yield the result of the expression as their value.
+Instead of writing, for example, code like:</p>
+
+<pre><code>int n = 0
+if(x.isEmpty) n=1 else n=2</code></pre>
+
+<p>we can write</p>
+
+<pre><code>val n = if(x.isEmpty) 1 else 2</code></pre>
+
+<p>Likewise, we can view entire methods as expressions that yield a value. Instead of writing</p>
+
+<pre><code>def respond(input: String) = { return "" }</code></pre>
+
+<p>we can write</p>
+
+<pre><code>def respond(input: String) = ""</code></pre>
+
+<p>Scala does have a <code>return</code> statement, but using it is frowned upon as poor functional
+programming practice and occurrences of <code>return</code> are considered by many as a &ldquo;code smell&rdquo;.
+If you do want to use return (for example to break out of a loop), note that you must
+explicitly specify the return type of the method from which you want to return.</p>
+
+<h2 id = "What_does_the_underscore_after__code_respond__code__mean_">What does the underscore after <code>respond</code> mean?</h2>
+
+<p>From the <code>create()</code> method, we want to return a function value, namely the method <code>respond()</code>
+of our newly created <code>ControlFunction</code> instance. The underscore, by appearing instead of the parameter
+list of <code>respond()</code>, tells the compiler that we do not wish to invoke the function but to
+turn it into a value. If you are not familiar with functional programming, this may be a
+bit confusing but don't be put off by it - you do not yet need to understand the details
+of this right now and it'll appear quite trivial later on.</p>

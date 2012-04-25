@@ -1,0 +1,108 @@
+<p><div id='TutorialDocumentData' data-prev='/tutorial/tutorial&#95;20&#95;bot&#95;02.html' data-next='/tutorial/tutorial&#95;20&#95;bot&#95;04.html' /></p>
+
+<h1 id = "Bot__3:_Checking_the_Opcode">Bot #3: Checking the Opcode</h1>
+
+<h2 id = "Objective">Objective</h2>
+
+<p>We now want to let the bot distinguish between the different commands that the game server
+may pass as input parameters into the control function, such as &ldquo;React&rdquo; versus &ldquo;Welcome&rdquo;.
+To do that, we need to parse the input string provided by the server. Here is a simplified
+input string (for details, check the Scalatron Protocol documentation):</p>
+
+<pre><code>React(generation=0,time=0,view=__W_W_W__,energy=100)</code></pre>
+
+<p>We will modify the control function to now only respond with a command if the server sends
+an input containing a <code>React()</code> opcode. To make the bot behavior a little more interesting,
+we will have it return a <code>Move()</code> command, prompting the bot to run towards the right.</p>
+
+<h2 id = "Source_Code__button_class__LoadCodeButton__style__visibility:_hidden___data-url___tutorial_tutorial__95_20__95_bot__95_03__95_sample__95_1_scala__Load_into_Editor__button_">Source Code <button class="LoadCodeButton" style="visibility: hidden;" data-url="/tutorial/tutorial&#95;20&#95;bot&#95;03&#95;sample&#95;1.scala">Load into Editor</button></h2>
+
+<p>The <code>ControlFunctionFactory</code> and <code>ControlFunction</code> boilerplate code remains unchanged from the
+previous example; we replace only the <code>respond()</code> method:</p>
+
+<pre><code>def respond(input: String) = {
+    val tokens = input.split('(')   // split at '(', returns Array[String]
+    if(tokens(0)=="React") {        // token(0): 0th element of array
+        "Move(direction=1:0)"       // response if true
+    } else {
+        ""                          // response if false
+    }
+}</code></pre>
+
+<h2 id = "What_is_going_on_">What is going on?</h2>
+
+<p>First, we need to extract the opcode from the command string. A simple way to achieve
+this is to use one of the library methods that Scala offers for values of type <code>String</code>.
+Namely, we use the <code>split()</code> method, which takes a value of type <code>Char</code> as a parameter,
+to break the string into a collection of sub-strings at all occurrences of that character
+value (here, occurrences of the opening parenthesis that immediately follows an opcode).</p>
+
+<p><code>String.split()</code> returns a result of type <code>Array[String]</code>. We extract the first array
+element, which should now contain the string representing the opcode, and compare it
+to the expected opcode. Unlike in Java, in Scala the comparison with <code>==</code> does what you
+expect.</p>
+
+<p>If the opcode is <code>React</code>, we return a <code>Move()</code> command. Otherwise we return an empty
+string.</p>
+
+<h3 id = "What_does__code_split____code__do_">What does <code>split()</code> do?</h3>
+
+<p><code>String.split()</code> breaks a string into a collection of sub-strings at occurrences of a given
+separator character. It is defined in the Scala library and has the following signature:</p>
+
+<pre><code>def split(separator: Char) : Array[String]</code></pre>
+
+<p>So it takes a value of type <code>Char</code> as a parameter (the separator) and returns a result of
+type <code>Array[String]</code> (the sub-strings).</p>
+
+<p>Example: <code>"a(b)".split('(')</code> returns <code>Array("a", "b)")</code></p>
+
+<h3 id = "What_are_some_other_methods_available_on__code_String__code__">What are some other methods available on <code>String</code>?</h3>
+
+<p>A good way to learn about the methods available at any point in your code is to use
+your IDE's auto-complete method. This is highly recommended, since e.g. the Scala
+plug-in for IntelliJ IDEA will also display methods available through implicit
+conversions, something that is extremely convenient but initially somewhat hard to
+fathom for people new to Scala.</p>
+
+<p>Here are a few more methods available on String:</p>
+
+<pre><code>val a = "Hello" + " " + "World"
+a.length            // = 11
+a.drop(6)           // = "World"
+a.dropRight(6)      // = "Hello"
+a.split(' ')        // = Array("Hello", "World")</code></pre>
+
+<h3 id = "How_does_the__code_if__code__statement_work_">How does the <code>if</code> statement work?</h3>
+
+<p>Remember that in Scala, you should think of your code components as expressions. Here,
+the if block is an expression whose result value is either the value of the true branch
+or the false branch:</p>
+
+<pre><code>if(condition) { true-block } else { false-block }</code></pre>
+
+<p>This is actually a bit similar to the '?:' operator, which is not
+necessary in Scala.</p>
+
+<p>Examples:</p>
+
+<pre><code>val b = if(true) true else false
+val a = if(b) false else true
+val not : Boolean =&gt; Boolean = in =&gt; if(in) false else true</code></pre>
+
+<h3 id = "What_does__code_tokens_0___code__do_">What does <code>tokens(0)</code> do?</h3>
+
+<p>In Scala, you retrieve a particular element of an array by specifying its (zero-based)
+index in simple parentheses. Since <code>tokens</code> is an <code>Array[String]</code> that was returned by
+<code>String.split()</code>, the expression <code>tokens(0)</code> returns the first element (at index zero)
+of that array.</p>
+
+<p>Assignment to array elements works in the same manner. Here are some additional examples
+of working with arrays:</p>
+
+<pre><code>val nums = Array(1, 2, 3)
+val strings = Array("Hello", "World")
+val empty = Array.empty[Int]
+
+val s0 = strings(0)     // read
+nums(1) = 9             // write</code></pre>

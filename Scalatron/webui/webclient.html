@@ -1,0 +1,54 @@
+<html>
+<head>
+
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+    <title>Scalatron Development Environment: $BotName$</title>
+
+    <link rel="stylesheet" type="text/css" href="/format.css">
+    <link rel="stylesheet" type="text/css" href="/tutorial/tutorial.css">
+
+    <script src="/ace/src/ace.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/ace/src/theme-textmate.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/ace/src/mode-scala.js" type="text/javascript" charset="utf-8"></script>
+
+    <link rel="stylesheet" type="text/css" href="/ext-4.0.7/resources/css/ext-all-gray.css"/>
+
+    <style type="text/css">
+        /** Enable cell line wrap for build/error consol    e **/
+        .wrap .x-grid-cell-inner {
+            white-space: normal;
+        }
+    </style>
+
+    <!--<script type="text/javascript" src="/ext-4.0.7/bootstrap.js"></script>-->
+    <script type="text/javascript" src="/ext-4.0.7/ext-all.js"></script>
+
+    <script type="text/javascript" src="/client/Events.js"></script>
+    <script type="text/javascript" src="/client/Sandbox.js"></script>
+    <script type="text/javascript" src="/client/BotView.js"></script>
+    <script type="text/javascript" src="/client/Tutorial.js"></script>
+    <script type="text/javascript" src="/client/EntityBox.js"></script>
+    <script type="text/javascript" src="/client/DebuggerHelper.js"></script>
+    <script type="text/javascript" src="/client/DebuggerInputGrid.js"></script>
+    <script type="text/javascript" src="/client/DebuggerOutputGrid.js"></script>
+    <script type="text/javascript" src="/client/Debugger.js"></script>
+    <script type="text/javascript" src="/client/ErrorConsole.js"></script>
+    <script type="text/javascript" src="/client/Editor.js"></script>
+    <script type="text/javascript" src="/client/API.js"></script>
+    <script type="text/javascript" src="/client/EditorToolbar.js"></script>
+
+    <script type="text/javascript" src="/client/Client.js"></script>
+</head>
+
+<body>
+<pre id="editor" style="color:white;visibility:hidden">$BotSourceCode$</pre>
+
+
+<div id=botviewContainer style="visibility:hidden">
+    <center><canvas id="botview" width="217" height="217"></canvas></center>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,61 @@
+<p><div id='TutorialDocumentData' data-prev='/tutorial/tutorial&#95;20&#95;bot&#95;06.html' data-next='/tutorial/tutorial&#95;20&#95;bot&#95;08.html' /></p>
+
+<h1 id = "Bot__7:_Brownian_Motion">Bot #7: Brownian Motion</h1>
+
+<h2 id = "Objective">Objective</h2>
+
+<p>Create a bot that will meander around the arena using random motions.</p>
+
+<h2 id = "Source_Code__button_class__LoadCodeButton__style__visibility:_hidden___data-url___tutorial_tutorial__95_20__95_bot__95_07__95_sample__95_1_scala__Load_into_Editor__button_">Source Code <button class="LoadCodeButton" style="visibility: hidden;" data-url="/tutorial/tutorial&#95;20&#95;bot&#95;07&#95;sample&#95;1.scala">Load into Editor</button></h2>
+
+<p>We will from now on omit the code for the <code>CommandParser</code> object, since we will never
+again change it. Just leave it in your source file, just like we did with the
+<code>ControlFunctionFactory</code> class.</p>
+
+<pre><code>import util.Random
+
+class ControlFunction {
+    val rnd = new Random()
+    def respond(input: String): String = {
+        val (opcode, paramMap) = CommandParser(input)
+        if( opcode == "React" ) {
+            val dx = rnd.nextInt(3)-1
+            val dy = rnd.nextInt(3)-1
+            "Move(direction=" + dx + ":" + dy + ")"
+        } else {
+            ""
+        }
+    }
+}</code></pre>
+
+<h2 id = "What_is_going_on_">What is going on?</h2>
+
+<p>In the first line, we add an <code>import</code> statement that will pull in the definition of the
+<code>scala.util.Random</code> class, a pseudo-random number generator (actually a Scala wrapper for
+<code>java.util.Random</code>):</p>
+
+<pre><code>import util.Random</code></pre>
+
+<p>This makes the symbol <code>Random</code> available to the code in our source file.</p>
+
+<p>We then add a new field called <code>rnd</code> to our <code>ControlFunction</code> class which will hold a reference to an
+instance of such a pseudo-random number generator, which we simply create with <code>new</code>:</p>
+
+<pre><code>val rnd = new Random()</code></pre>
+
+<p>Further down, we use the generator to produce random X and Y values for the movement
+direction of our bot:</p>
+
+<pre><code>val dx = rnd.nextInt(3)-1
+val dy = rnd.nextInt(3)-1</code></pre>
+
+<p>This code uses the member function <code>nextInt(n: Int)</code> of <code>Random</code>, which returns a 
+value in the range <code>0</code> to <code>(n-1)</code>. </p>
+
+<p>We then combine the generated coordinate values with the Scalatron command opcode 
+<code>Move</code> (see the Scalatron Protocol documentation) to assemble the bot's response:</p>
+
+<pre><code>"Move(direction=" + dx + ":" + dy + ")"</code></pre>
+
+<p>The result is a bot that, every time it is asked by the game server what it wants to do,
+requests the be moved once cell in some random direction.</p>

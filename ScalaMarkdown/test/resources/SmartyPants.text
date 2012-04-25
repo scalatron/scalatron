@@ -1,0 +1,11 @@
+Some SmartyPants stuff
+===============
+
+* copyright sign: (c), (C);
+* registered trademark sign: (r), (R);
+* trademark sign: (tm), (TM);
+* curly quotes: "this is some text";
+* dash: --;
+* horizontal ellipsis: ...;
+* ampersand wrapped into `span` for extra styling: &;
+* arrows: <- and ->.
