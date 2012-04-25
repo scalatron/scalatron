@@ -9,7 +9,6 @@ import akka.actor.Actor
 import scala.tools.nsc.{Global, Settings}
 import tools.nsc.reporters.StoreReporter
 import tools.nsc.util.Position
-import scalatron.main.Main
 
 
 /** We use Akka to manage the compiler queue. A single Scala compiler instance is held by
@@ -20,35 +19,83 @@ import scalatron.main.Main
 case class CompileActor(verbose: Boolean) extends Actor {
     var compilerGlobalOpt: Option[Global] = None
 
-    override def preStart() {
-        // before introducing onejar to package Scalatron.jar, we used this code:
-        // val scalaCompilerClassPath = classOf[Global].getProtectionDomain.getCodeSource.getLocation.getPath
-        // val scalaLibraryClassPath = classOf[List[_]].getProtectionDomain.getCodeSource.getLocation.getPath
-        // if( verbose ) {
-        //     println("Preparing Scala compiler...")
-        //     println("  detected class path of Scala compiler to be: " + scalaCompilerClassPath)
-        //     println("  detected class path of Scala library to be: " + scalaLibraryClassPath)
-        // }
-        // settings.classpath.append(scalaCompilerClassPath)
-        // settings.classpath.append(scalaLibraryClassPath)
-
-        // now that we introduced onejar to package Scalatron.jar, we need to used this code:
-        // determine the path of the scala-compiler.jar, e.g. "/Applications/typesafe-stack/lib/scala-compiler.jar"
-        val scalaCompilerClassPath = ScalatronImpl.detectScalatronJarFileDirectory(verbose)
-        val scalaCompilerClassPathOld = classOf[Global].getProtectionDomain.getCodeSource.getLocation.getPath
-
+    /** Returns a collection of one or more class paths to be appended to the classPath property of the
+      * Scala compiler settings. It tries to deal with the following scenarios:
+      * (a) running from unpackaged .class files:
+      *     "/Users/dev/Scalatron/Scalatron/out/production/Scalatron/"
+      * (b) running from a .jar produced by onejar:
+      *     "file:/Users/dev/Scalatron/dist/bin/Scalatron.jar!/main/scalatron_2.9.1-0.1-SNAPSHOT.jar"
+      * (c) running from a .jar produced by e.g. IDEA:
+      *     "/Users/dev/Scalatron/bin/Scalatron.jar"
+      *
+      * @return a collection of class paths to append to the classPath property of the Scala compiler
+      */
+    private def detectScalaClassPaths : Iterable[String] = {
+        val scalatronJarFilePath = classOf[CompileActor].getProtectionDomain.getCodeSource.getLocation.getPath
+        val scalaCompilerClassPath = classOf[Global].getProtectionDomain.getCodeSource.getLocation.getPath
+        val scalaLibraryClassPath = classOf[List[_]].getProtectionDomain.getCodeSource.getLocation.getPath
         if( verbose ) {
-            println("Preparing Scala compiler...")
-            println("  detected class path of Scala compiler to be: " + scalaCompilerClassPath)
-            println("  detected class path of Scala compiler B to be: " + scalaCompilerClassPathOld)
+            println("  detected class path for Scalatron: " + scalatronJarFilePath)
+            println("  detected class path for scala-compiler: " + scalaCompilerClassPath)
+            println("  detected class path for scala-library: " + scalaLibraryClassPath)
         }
+
+        // are we running from a .jar file produced by onejar?
+        val classPaths =
+            if(scalatronJarFilePath.toLowerCase.contains(".jar!/")) {
+                // case (b) -- running from a .jar produced by onejar. We have a path like
+                //             "file:/Users/dev/Scalatron/dist/bin/Scalatron.jar!/main/scalatron_2.9.1-0.1-SNAPSHOT.jar"
+                //             TODO: deal with this case, if we decide to keep onejar
+                System.err.println("warning: the way the .jar file is generated may result in the compile service failing")
+
+                // the following hack for dealing with onejar was kindly invented by Charles O'Farrell (@charleso)
+                // fortunately, we hopefully won't need it. Retained here for future reference.
+                def extractJar(name: String) = {
+                    var in = classOf[CompileActor].getResourceAsStream("/lib/" + name)
+                    val file = java.io.File.createTempFile(name, ".jar")
+                    if( verbose ) println("  detected class path of Scala %s to be: %s" format (name, file))
+                    file.deleteOnExit()
+                    file.getParentFile.mkdirs()
+                    sys.process.BasicIO.transferFully(in, new java.io.FileOutputStream(file))
+                    file.getAbsolutePath
+                }
+
+                Iterable(extractJar("scala-library.jar"), extractJar("scala-compiler.jar"))
+            } else {
+                // this is either a single .jar or a directory
+                ScalatronImpl.cleanJarFilePath(scalatronJarFilePath) match {
+                    case Left(filePath) =>
+                        // case (c) -- running from a .jar produced by e.g. IDEA. We have a path like
+                        //             "/Users/dev/Scalatron/bin/Scalatron.jar"
+                        //             in theory, the scala-library.jar and scala-compiler.jar should be in here
+                        if(scalaCompilerClassPath != scalatronJarFilePath)
+                            println("info: unexpectedly, scala-compiler is not inside the Scalatron.jar: " + scalaCompilerClassPath + " vs. " + scalatronJarFilePath)
+                        if(scalaLibraryClassPath != scalatronJarFilePath)
+                            println("info: unexpectedly, scala-library is not inside the Scalatron.jar: " + scalaLibraryClassPath + " vs. " + scalatronJarFilePath)
+                        Iterable(scalaCompilerClassPath, scalaLibraryClassPath)
+
+                    case Right(dirPath) =>
+                        // case (a): running from unpackaged .class files. We have a path like
+                        //           "/Users/dev/Scalatron/Scalatron/out/production/Scalatron/"
+                        //          in theory, the detected class paths for scala-library.jar and scala-compiler.jar
+                        //          will now point into wherever they are installed on the system
+                        Iterable(scalaCompilerClassPath, scalaLibraryClassPath)
+                }
+            }
+
+        if(verbose) classPaths.foreach(cp => println("  adding class path to Scala compiler: " + cp))
+
+        classPaths
+    }
+
+    override def preStart() {
+        val detectedScalaClassPaths = detectScalaClassPaths
 
         // called in the event of a compilation error
         def error(message: String) {println(message)}
 
         val settings = new Settings(error)
-        settings.classpath.append(scalaCompilerClassPath)
-        settings.classpath.append(scalaCompilerClassPathOld)
+        detectedScalaClassPaths.foreach(settings.classpath.append)
         settings.deprecation.value = true // enable detailed deprecation warnings
         settings.unchecked.value = true // enable detailed unchecked warnings
         settings.explaintypes.value = true // explain type errors

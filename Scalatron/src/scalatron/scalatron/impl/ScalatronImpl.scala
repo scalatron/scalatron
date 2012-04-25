@@ -81,10 +81,20 @@ object ScalatronImpl
         // val scalatronInstallationDirectoryPath = userDirectoryPath + "/.."
 
         // Strategy B: use the path to the Scalatron.jar file
-        val scalatronJarFilePath = detectScalatronJarFileDirectory(verbose)
-        val scalatronJarFile = new File(scalatronJarFilePath)
+        val scalatronJarFilePath = classOf[ScalatronImpl].getProtectionDomain.getCodeSource.getLocation.getPath
+        if (verbose) println("Detected that Scalatron.jar resides in: " + scalatronJarFilePath)
 
-        val scalatronInstallationDirectoryPath = scalatronJarFile.getParentFile.getParentFile.getAbsolutePath
+        val scalatronInstallationDirectoryPath =
+            cleanJarFilePath(scalatronJarFilePath) match {
+                case Left(filePath) =>
+                    // e.g. "/Scalatron/bin/Scalatron.jar" => "/Scalatron"
+                    val scalatronJarFile = new File(filePath)
+                    scalatronJarFile.getParentFile.getParentFile.getAbsolutePath
+                case Right(dirPath) =>
+                    // e.g. "/Scalatron/out/production/Scalatron/" => "/Scalatron"
+                    val scalatronOutDirectory = new File(dirPath)
+                    scalatronOutDirectory.getParentFile.getParentFile.getParentFile.getAbsolutePath
+            }
         if (verbose) println("Scalatron installation directory is: " + scalatronInstallationDirectoryPath)
 
         // as an added precaution, also check whether the installation directory exists
@@ -98,38 +108,46 @@ object ScalatronImpl
     }
 
 
-    // try to locate the path to the Scalatron.jar file
-    def detectScalatronJarFileDirectory(verbose: Boolean) =
+
+    /** This function helps in cleaning up .jar file paths. When you invoke:
+      *   val jarFilePath = classOf[ScalatronImpl].getProtectionDomain.getCodeSource.getLocation.getPath
+      * you may get back one of several possible results, including the following:
+      * (a) when running from unpackaged .class files: "/Users/dev/Scalatron/Scalatron/out/production/Scalatron/"
+      * (b) when running from a .jar produced by onejar: "file:/Users/dev/Scalatron/dist/bin/Scalatron.jar!/main/scalatron_2.9.1-0.1-SNAPSHOT.jar"
+      * (c) when running from a .jar produced by IDEA: "/Users/dev/Scalatron/bin/Scalatron.jar"
+      * This function returns:
+      *  Left(jarFilePath) in casees (b) and (c) -- but cleaned up to remove "file:" and the exclamation mark
+      *  Right(jarDirectoryPath) in case (a)
+      * It does not fail if the file or directory does not actually exist (returns Left()).
+      */
+    def cleanJarFilePath(jarFilePath: String) : Either[String,String] =
     {
-        val scalatronJarFilePath = classOf[ScalatronImpl].getProtectionDomain.getCodeSource.getLocation.getPath
-        if (verbose) println("Detected that Scalatron.jar resides in: " + scalatronJarFilePath)
+        // remove a leading "file:", if present:
+        val withoutFilePrefix = if(jarFilePath.startsWith("file:")) jarFilePath.drop(5) else jarFilePath
 
-        // without onejar: "/Users/dev/Scalatron/bin/Scalatron.jar"
-        // with onejar:    "file:/Users/dev/Scalatron/dist/bin/Scalatron.jar!/main/scalatron_2.9.1-0.1-SNAPSHOT.jar"
-
-        // handle the case of onejar repackaging:
-
-        // remove leading "file:"
-        val withoutFilePrefix = if(scalatronJarFilePath.startsWith("file:")) scalatronJarFilePath.drop(5) else scalatronJarFilePath
-
-        // truncate at "!"
+        // truncate at "!", if present in the form ".jar!/":
         val indexOfJarContentMarker = withoutFilePrefix.toLowerCase.indexOf(".jar!/")   // safer than just '!', think about paths like ".../!TEST!/..."
         val truncatedAtExclamation = if(indexOfJarContentMarker>0) withoutFilePrefix.take(indexOfJarContentMarker+4) else withoutFilePrefix
 
-        // we expect this to be a '.jar' file
-        if(!truncatedAtExclamation.toLowerCase.endsWith(".jar")) {
-            System.err.println("warning: cannot locate installation directory: detected class path does not point into .jar file: " + scalatronJarFilePath)
-            // but try it anyway...
-        }
-
-        // as an added precaution, also check whether the .jar file exists
-        val scalatronJarFile = new File(truncatedAtExclamation)
-        if(!scalatronJarFile.exists()) {
+        // now check whether the file or directory exists
+        val jarFile = new File(truncatedAtExclamation)
+        if(!jarFile.exists()) {
             System.err.println("warning: no .jar file found at detected class path: " + truncatedAtExclamation)
-            // but try it anyway...
+            Left(truncatedAtExclamation)
+        } else {
+            // we expect this to be a '.jar' file or a directory
+            if(new File(truncatedAtExclamation).isFile) {
+                // it is a file
+                if(!truncatedAtExclamation.toLowerCase.endsWith(".jar")) {
+                    System.err.println("warning: class path detected for Scalatron classes does not point into .jar file: " + truncatedAtExclamation)
+                    // but try it anyway...
+                }
+                Left(truncatedAtExclamation)
+            } else {
+                // it is a directory -- OK
+                Right(truncatedAtExclamation)
+            }
         }
-
-        truncatedAtExclamation
     }
 }
 
