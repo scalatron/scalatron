@@ -5,5 +5,5 @@ package scalatron
 
 object Version
 {
-    val VersionString = "0.9.8.5"
+    val VersionString = "0.9.9.0"
 }

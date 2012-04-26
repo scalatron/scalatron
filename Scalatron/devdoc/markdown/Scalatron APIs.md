@@ -3,7 +3,7 @@ http://scalatron.wordpress.com - Twitter: @scalatron / #scalatron
 This work is licensed under the Creative Commons Attribution 3.0 Unported License.
 
 Developer Documentation - Scalatron APIs
-Version 0.9.8 -- updated 2012-04-22
+Version 0.9.9 -- updated 2012-04-26
 
 
 

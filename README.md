@@ -1,10 +1,9 @@
 Scalatron - Learn Scala With Friends
 =========
 
-This is the main source code repository for Scalatron, an educational resource for groups of programmers that
-want to learn more about the Scala programming language or want to hone their Scala programming skills. It
-is based on Scalatron BotWar, a competitive multi-player programming game in which coders pit bot programs
-(written in Scala) against each other.
+This is the source code for Scalatron, a competitive multi-player programming game in which coders pit bot programs
+(written in Scala) against each other. It is an educational resource for groups of programmers or individuals that
+want to learn more about the Scala programming language or want to hone their Scala programming skills. 
 
 Follow Scalatron on Twitter at [@scalatron](http://twitter.com/scalatron).
 
@@ -25,7 +24,9 @@ This will generate a new directory called `dist` which contains the same content
 
 ## Contributing
 
-Fork Scalatron here on github and send pull requests. Before embarking on something major, you can [contact the maintainer](mailto:scalatron@hotmail.com) and ask for ideas, feedback or tips on where to get started.  
+[Fork Scalatron here on github](https://github.com/scalatron/scalatron/fork) and send pull requests. 
+Before embarking on something major, you can [contact the maintainer](mailto:scalatron@hotmail.com) and ask for ideas, 
+feedback or tips on where to get started.  
 
 
 ## License

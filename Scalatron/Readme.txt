@@ -46,13 +46,24 @@ in the public domain. Feel free to use, copy, and improve them!
 * check out `/devdoc` directory, in particular the API
 * check out the `Scalatron Contributor Guide'
 * check out the source code in the `/src` directory
-* send bugs, suggestions and fixes to `scalatron@rocketmail.com`
+* send bugs, suggestions and fixes to `scalatron@hotmail.com`
 * soon also on `http://github.com/scalatron`
 
 
 
 
 ## Version History
+
+### Version 0.9.9 -- 2012-04-26
+
+* restructured for move to github
+* bot processing ported from parallel collections to Akka
+* rendering code ported from double-buffering with raw threads to quad-buffering with Akka
+* RESTful API: resource "/users/{user}/sandbox" is now "/users/{user}/sandboxes"
+* Scalatron API: trait SandboxState is now accessible through new trait Sandbox
+* minor changes to the plug-in loading code to deal with the results of various jar assembly tools
+* installation directory is now detected via the class path, not the Java user directory (fixes HTTP 500 error)
+
 
 ### Version 0.9.8 -- 2012-04-22
 
