@@ -79,19 +79,17 @@ object build extends Build {
         IO createDirectory distDir
         val scalatronDir = file("Scalatron")
 
-	// generate HTML from Markdown, for /doc and /devdoc
-        for (dir <- List("doc", "devdoc")) {
-            val docDir = scalatronDir / dir
-            val htmlDir = distDir / dir / "html"
+        def markdown(docDir: File, htmlDir: File) = {
             IO createDirectory htmlDir
-            for (doc <- file(docDir + "/markdown").listFiles if doc.getName.endsWith(".md")) {
+            for (doc <- docDir.listFiles if doc.getName.endsWith(".md")) {
                 println ("Generating html for " + doc.getName)
                 Seq("java", "-Xmx1G", "-jar", "ScalaMarkdown/target/ScalaMarkdown.jar", doc.getPath, htmlDir.getPath) !
             }
         }
-
-	// TODO: generate Tutorial HTML from Markdown, from /doc/tutorial to /webui/tutorial
-        // this is not good: IO.copyDirectory(scalatronDir / "doc/tutorial", distDir / "webui/tutorial")
+	// generate HTML from Markdown, for /doc and /devdoc
+        for (dir <- List("doc", "devdoc")) {
+            markdown(scalatronDir / dir / "markdown", distDir / dir / "html")
+        }
 
         for (fileToCopy <- List("Readme.txt", "License.txt")) {
             IO.copyFile(scalatronDir / fileToCopy, distDir / fileToCopy)
@@ -100,6 +98,11 @@ object build extends Build {
             println("Copying " + dirToCopy)
             IO.copyDirectory(scalatronDir / dirToCopy, distDir / dirToCopy)
         }
+
+        for (file <- IO.listFiles(scalatronDir / "doc/tutorial") if !file.getName.endsWith(".md")) {
+            IO.copyFile(file, distDir / "webui/tutorial" / file.getName)
+        }
+        markdown(scalatronDir / "doc/tutorial", distDir / "webui/tutorial")
 
         for (jar <- List("Scalatron", "ScalatronCLI")) {
             IO.copyFile(file(jar) / "target" / (jar + ".jar"), distDir / "bin" / (jar + ".jar"))
