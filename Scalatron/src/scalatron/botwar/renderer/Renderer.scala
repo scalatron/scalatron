@@ -126,6 +126,12 @@ case class Renderer(permanentConfig: PermanentConfig, tournamentState: Tournamen
         val (remainingJobs, recyclableContexts) = resultList.partition(_.isLeft)
         pendingRenderJobs = remainingJobs.map(_.left.get)
         availableRenderContexts :::= recyclableContexts.map(_.right.get)
+
+
+        val startTime = System.currentTimeMillis
+        while( startTime + interactivelyAdjustableSettings.sleepTimeBetweenSteps > System.currentTimeMillis ) {
+            Thread.sleep(10)
+        }
     }
 }
 
