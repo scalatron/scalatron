@@ -25,8 +25,8 @@ This will generate a new directory called `dist` which contains the same content
 ## Contributing
 
 [Fork Scalatron here on github](https://github.com/scalatron/scalatron/fork) and send pull requests. 
-Before embarking on something major, you can [contact the maintainer](mailto:scalatron@hotmail.com) and ask for ideas, 
-feedback or tips on where to get started.  
+Bring your own ideas or check out the [list of open issues](https://github.com/scalatron/scalatron/issues?state=open). 
+Before embarking on something major, you can [contact the maintainer](mailto:scalatron@hotmail.com) and ask for feedback or tips on where to get started.  
 
 
 ## License
