@@ -84,6 +84,9 @@ object Plugin {
         verbose: Boolean): Either[() => ( String => String ), Throwable] =
     {
         try {
+            /** TODO: think about sandboxing plug-ins to prevent them from accessing sensitive stuff. See
+              * http://stackoverflow.com/questions/3947558/java-security-sandboxing-plugins-loaded-via-urlclassloader
+              */
             val classLoader = new URLClassLoader(Array(pluginFile.toURI.toURL), this.getClass.getClassLoader)
 
             // try the fully qualified package + class name first
