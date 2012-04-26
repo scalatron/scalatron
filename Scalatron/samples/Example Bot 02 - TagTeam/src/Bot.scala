@@ -119,10 +119,18 @@ case class BotImpl(inputParams: Map[String, String]) extends MiniBot {
     private def append(s: String) : Bot = { commands += (if(commands.isEmpty) s else "|" + s); this }
 
     /** Renders commands and stateParams into a control function return string. */
-    override def toString =
-        commands +
-            (if(stateParams.isEmpty) ""
-            else ("|" + stateParams.map(e => e._1 + "=" + e._2).mkString("Set(",",",")")))
+    override def toString = {
+        var result = commands
+        if(!stateParams.isEmpty) {
+            if(!result.isEmpty) result += "|"
+            result += stateParams.map(e => e._1 + "=" + e._2).mkString("Set(",",",")")
+        }
+        if(!debugOutput.isEmpty) {
+            if(!result.isEmpty) result += "|"
+            result += "Log(text=" + debugOutput + ")"
+        }
+        result
+    }
 
     def log(text: String) = { debugOutput += text + "\n"; this }
     def move(direction: XY) = append("Move(direction=" + direction + ")")
