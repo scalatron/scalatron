@@ -82,7 +82,8 @@ case class PluginCollection(
                                 existingRecyclableLoadResult(pluginJarFilePath, fileTime) match {
                                     case None =>
                                         // there is no recyclable existing plug-in
-                                        val eitherFactoryOrException = Plugin.loadFrom(pluginJarFile, loadSpec.factoryClassPackage, loadSpec.factoryClassName, verbose)
+                                        val userName = pluginDirectory.getName
+                                        val eitherFactoryOrException = Plugin.loadFrom(userName, pluginJarFile, loadSpec.factoryClassPackage, loadSpec.factoryClassName, verbose)
 
                                         eitherFactoryOrException match {
                                             case Left(controlFunctionFactory) =>
@@ -144,7 +145,8 @@ case class PluginCollection(
                         if( pluginFile.exists() ) {
                             val fileTime = pluginFile.lastModified
 
-                            val eitherFactoryOrException = Plugin.loadFrom(pluginFile, loadSpec.factoryClassPackage, loadSpec.factoryClassName, verbose)
+                            val userName = pluginDirectory.getName
+                            val eitherFactoryOrException = Plugin.loadFrom(userName, pluginFile, loadSpec.factoryClassPackage, loadSpec.factoryClassName, verbose)
 
                             val eitherPluginOrLoadFailure = eitherFactoryOrException match {
                                 case Left(controlFunctionFactory) =>

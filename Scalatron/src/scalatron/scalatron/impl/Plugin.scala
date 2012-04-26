@@ -73,11 +73,13 @@ object Plugin {
 
 
     /** Returns either a control function factory (success) or an exception (failure).
+      * @param userName the user name, will be tried as a package name
       * @param pluginFile a File object representing the plug-in (.jar) file
       * @param factoryClassPackage e.g. "scalatron.botwar.botPlugin"
       * @param factoryClassName e.g. "ControlFunctionFactory"
       * */
     def loadFrom(
+        userName: String,
         pluginFile: File,
         factoryClassPackage: String,
         factoryClassName: String,
@@ -89,23 +91,38 @@ object Plugin {
               */
             val classLoader = new URLClassLoader(Array(pluginFile.toURI.toURL), this.getClass.getClassLoader)
 
-            // try the fully qualified package + class name first
+            /** When multiple users want to leverage the compile service,
+             * We try the following package names in order:
+             * 1) package {username}
+             * 2) package scalatron.botwar.botPlugin
+             * 3) no package statement
+             */
+            val userSpecificFactoryClassName = userName + "." + factoryClassName
             val fullFactoryClassName = factoryClassPackage + "." + factoryClassName
             val factoryClass =
                 try {
-                    Class.forName(fullFactoryClassName, true, classLoader)
+                    Class.forName(userSpecificFactoryClassName, true, classLoader)
                 } catch {
                     case t: Throwable =>
                         try {
                             if( verbose ) {
-                                println("info: failed to load fully qualified factory from plug-in '" + pluginFile.getAbsolutePath + "':" + t)
+                                println("info: failed to load user-name-specific factory (" + userSpecificFactoryClassName + ") from plug-in '" + pluginFile.getAbsolutePath + "':" + t)
                                 println("info: trying unqualified factory class name... (" + factoryClassName + ")")
                             }
-                            Class.forName(factoryClassName, true, classLoader)
+                            Class.forName(fullFactoryClassName, true, classLoader)
                         } catch {
                             case t: Throwable =>
-                                System.err.println("failed to load either qualified or unqualified factory from plug-in '" + pluginFile.getAbsolutePath + "':" + t)
-                                throw t
+                                try {
+                                    if( verbose ) {
+                                        println("info: failed to load fully qualified factory from plug-in '" + pluginFile.getAbsolutePath + "':" + t)
+                                        println("info: trying unqualified factory class name... (" + factoryClassName + ")")
+                                    }
+                                    Class.forName(factoryClassName, true, classLoader)
+                                } catch {
+                                    case t: Throwable =>
+                                        System.err.println("failed to load either qualified or unqualified factory from plug-in '" + pluginFile.getAbsolutePath + "':" + t)
+                                        throw t
+                                }
                         }
                 }
 

@@ -357,6 +357,7 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
                 val loadSpec = scalatron.game.pluginLoadSpec
                 val eitherFactoryOrException =
                     Plugin.loadFrom(
+                        name,
                         localJarFile,
                         loadSpec.factoryClassPackage,
                         loadSpec.factoryClassName,
