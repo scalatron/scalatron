@@ -10,7 +10,10 @@ doc/html/
 devdoc/html/
 Scalatron/lib/
 Scalatron/out/
+Scalatron/src/META-INF
 ScalatronCLI/out/
 ScalatronCLI/lib/
+ScalatronCLI/src/META-INF
 ScalaMarkdown/out/
+ScalaMarkdown/src/META-INF
 __MACOSX
