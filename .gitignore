@@ -4,6 +4,7 @@
 target
 *.iml
 *.xml
+*.zip
 dist/
 users/
 doc/html/
