@@ -91,7 +91,6 @@ object build extends Build {
         }
 
 	// TODO: generate Tutorial HTML from Markdown, from /doc/tutorial to /webui/tutorial
-        // TODO: maybe best to remove /webui/tutorial from the /Scalatron source folder, then
         // this is not good: IO.copyDirectory(scalatronDir / "doc/tutorial", distDir / "webui/tutorial")
 
         for (fileToCopy <- List("Readme.txt", "License.txt")) {
