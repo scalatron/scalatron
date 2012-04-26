@@ -10,7 +10,7 @@ Follow Scalatron on Twitter at [@scalatron](http://twitter.com/scalatron).
 
 ## How to Run
 
-If you want to run Scalatron to play the game or to run a workshop with friends, simply [download the latest distribution version as a single .zip file](http://scalatron.wordpress.com/) - you do not need the source code. Unzip the downloaded file into a local directory, then look for the Readme.txt file to get started. Have fun!
+If you want to run Scalatron to play the game or to run a workshop with friends, simply [download the latest version](http://github.com/scalatron/scalatron/downloads) - you do not need the source code. Unzip the downloaded file into a local directory, then look for the Readme.txt file to get started. Have fun!
 
 
 ## How to Build
