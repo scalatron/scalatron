@@ -56,7 +56,7 @@ object ScalatronImpl
         val pluginBaseDirectoryPathFallback = scalatronInstallationDirectoryPath + "/" + TournamentBotsDirectoryName
         val pluginBaseDirectoryPathArg = argMap.get("-plugins").getOrElse(pluginBaseDirectoryPathFallback)
         val pluginBaseDirectoryPath = if(pluginBaseDirectoryPathArg.last == '/') pluginBaseDirectoryPathArg.dropRight(1) else pluginBaseDirectoryPathArg
-        println("Will search for sub-directories containing bot plug-ins in: " + pluginBaseDirectoryPath)
+        if(verbose) println("Will search for sub-directories containing bot plug-ins in: " + pluginBaseDirectoryPath)
 
 
         // prepare (but do not start) the Scalatron API entry point

@@ -233,7 +233,7 @@ object ScalatronDemo
 
         } finally {
             // delete the temporary directory
-            ScalatronUser.deleteRecursively(tmpDirPath, true)
+            ScalatronUser.deleteRecursively(tmpDirPath)
         }
     }
 }

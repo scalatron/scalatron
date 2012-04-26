@@ -31,7 +31,9 @@ object build extends Build {
                 "com.sun.jersey" % "jersey-bundle" % "1.12",
                 "javax.servlet" % "servlet-api" % "2.5",
                 "org.scalatest" %% "scalatest" % "1.7.2" % "test",
-                "org.testng" % "testng" % "6.5.1" % "test"
+                "org.testng" % "testng" % "6.5.1" % "test",
+                "org.specs2" %% "specs2" % "1.9" % "test",
+                "org.specs2" %% "specs2-scalaz-core" % "6.0.1"
             ),
             resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
         ) ++ Seq (
@@ -57,8 +59,8 @@ object build extends Build {
         ) ++ Seq(
             libraryDependencies ++= Seq(
                 "org.scala-tools.testing" %% "specs" % "1.6.9",
-                "commons-io" % "commons-io" % "2.1",
-                "commons-lang" % "commons-lang" % "2.6"
+                "commons-io" % "commons-io" % "2.3",
+                "org.apache.commons" % "commons-lang3" % "3.1"
             )
         ) ++ Seq (
             jarName in assembly := "ScalaMarkdown.jar"

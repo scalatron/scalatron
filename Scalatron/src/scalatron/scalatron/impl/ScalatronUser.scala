@@ -115,7 +115,7 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
 
     def updateSourceFiles(sourceFiles: Iterable[SourceFile]) {
         // delete existing content
-        deleteRecursively(sourceDirectoryPath, true)
+        deleteRecursively(sourceDirectoryPath, scalatron.verbose)
         new File(sourceDirectoryPath).mkdirs()
 
         // write source files to disk
@@ -433,7 +433,7 @@ object ScalatronUser {
     /** Recursively deletes the given directory and all of its contents (CAUTION!)
       * @throws IllegalStateException if there is a problem deleting a file or directory
       */
-    def deleteRecursively(directoryPath: String, verbose: Boolean) {
+    def deleteRecursively(directoryPath: String, verbose: Boolean = false) {
         val directory = new File(directoryPath)
         if( directory.exists ) {
             // caller handles exceptions

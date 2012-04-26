@@ -5,7 +5,7 @@ package org.fusesource.scalamd.test
 
 import org.specs.Specification
 import org.fusesource.scalamd.Markdown
-import org.apache.commons.lang.StringUtils
+import org.apache.commons.lang3.StringUtils
 import org.specs.matcher.Matcher
 import org.apache.commons.io.IOUtils
 
