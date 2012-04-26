@@ -68,7 +68,7 @@ object build extends Build {
     )
 
     val dist = TaskKey[Unit]("dist", "Makes the distribution zip file")
-    val distTask = dist <<= (scalaVersion) map { (version) =>
+    val distTask = dist <<= (version, scalaVersion) map { (scalatronVersion, version) =>
         val distDir = file("dist")
 
 	// clean distribution directory
@@ -108,7 +108,12 @@ object build extends Build {
             IO.copyFile(file(jar) / "target" / (jar + ".jar"), distDir / "bin" / (jar + ".jar"))
         }
 
-        // TODO: zip into something like "scalatron-0.9.8.4.zip" when done
+        // This is ridiculous, there has to be be an easier way to zip up a directory
+        def zip(srcDir: File, destFile: File, prepend: String) = {
+            val allDistFiles = (srcDir ** "*").get.filter(_.isFile).map { f => (f, prepend + IO.relativize(distDir, f).get)}
+            IO.zip(allDistFiles, destFile)
+        }
+        zip (distDir, file("./scalatron-%s.zip" format scalatronVersion), "Scalatron/")
     } dependsOn (assembly in main, assembly in cli, assembly in markdown)
 
 }
