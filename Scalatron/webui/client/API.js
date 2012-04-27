@@ -1,8 +1,10 @@
 (function () {
 
+    /* See webclient.html
     function getUserName() {
         return Ext.util.Cookies.get("scalatron-user");
     }
+    */
 
     Ext.define('API', {
         singleton:true,
