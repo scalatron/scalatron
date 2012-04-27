@@ -381,7 +381,9 @@ case class ScalatronImpl(
         })
     }
 
-    def isUserNameValid(name: String): Boolean = name.forall(c => !(".,|/\\\"'*?".contains(c)))
+    // TODO: use a white list, not a black list
+    // TODO: disallow leading numeric literals
+    def isUserNameValid(name: String): Boolean = name.forall(c => !(" -.,|/\\\"'*?".contains(c)))
 
 
     //----------------------------------------------------------------------------------------------

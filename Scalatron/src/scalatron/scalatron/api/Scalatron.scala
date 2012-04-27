@@ -73,8 +73,12 @@ trait Scalatron
     def createUser(name: String, password: String, initialSourceFiles: Iterable[SourceFile]): User
 
     /** Checks if the given string would represent a valid user name by examining the characters
-      * in the string. A variety of characters are not allowed, partly for security reasons
-      * (e.g. to prevent "../", etc). */
+      * in the string. A variety of characters are not allowed primarily for the following reasons:
+      * (a) the user names are used as components of path names on disk;
+      *     this poses a security problem if we allow names that include substrings like "../"
+      * (b) the user names are used as components of package names in Scala source files;
+      *     we need to obey Scala's rules. This rules out space, dash, leading numbers, etc.
+      */
     def isUserNameValid(name: String): Boolean
 
 
@@ -243,10 +247,28 @@ object Scalatron {
           * */
         def updateSourceFiles(sourceFiles: Iterable[SourceFile])
 
+        /** Builds a local (unpublished) .jar bot plug-in from the given (in-memory) source files.
+          *
+          * Internals:
+          * - patches up the package statements to make the fully-qualified class names user-specific
+          * - compiles those source files into a temporary output directory (e.g. "/Scalatron/users/{user}/out")
+          * - if successful, zips the resulting .class files into a .jar archive in the user's bot
+          *   directory (e.g. as "/Scalatron/users/{user}/bot/ScalatronBot.jar")
+          * - deletes the temporary output directory
+          *
+          * @return a build result container, which specifies whether the build (compilation and
+          * .jar zipping) was successful, how many errors and warnings were seen, and the list of
+          * compiler messages (which include line and column number information).
+          * @throws IllegalStateException if compilation service is unavailable, sources don't exist etc.
+          * @throws IOError if source files cannot be read from disk, etc.
+          */
+        def buildSourceFiles(sourceFiles: Iterable[SourceFile]): BuildResult
+
         /** Builds a local (unpublished) .jar bot plug-in from the sources currently present in
           * the user's workspace.
           *
           * Internals:
+          * - patches up the package statements to make the fully-qualified class names user-specific
           * - enumerates the source files in the source directory of the current user (all files
           *   residing in e.g. "/Scalatron/users/{user}/src")
           * - compiles those source files into a temporary output directory (e.g. "/Scalatron/users/{user}/out")
@@ -254,7 +276,7 @@ object Scalatron {
           *   directory (e.g. as "/Scalatron/users/{user}/bot/ScalatronBot.jar")
           * - deletes the temporary output directory
           *
-          * Returns a build result container, which specifies whether the build (compilation and
+          * @return a build result container, which specifies whether the build (compilation and
           * .jar zipping) was successful, how many errors and warnings were seen, and the list of
           * compiler messages (which include line and column number information).
           * @throws IllegalStateException if compilation service is unavailable, sources don't exist etc.
@@ -490,6 +512,7 @@ object Scalatron {
         val UsersOutputDirectoryName = "out" // e.g. in "/Scalatron/users/{user}/out"
         val UsersBotDirectoryName = "bot" // e.g. in "/Scalatron/users/{user}/bot"
         val UsersSourceDirectoryName = "src" // e.g. in "/Scalatron/users/{user}/src"
+        val UsersPatchedSourceDirectoryName = "patched" // e.g. in "/Scalatron/users/{user}/patched"
         val UsersVersionsDirectoryName = "versions" // e.g. in "/Scalatron/users/{user}/versions"
         val UsersSourceFileName = "Bot.scala" // e.g. in "/Scalatron/users/{user}/src/Bot.scala"
         val SamplesDirectoryName = "samples" // e.g. in "/Scalatron/samples"

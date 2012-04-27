@@ -7,6 +7,7 @@ import scalatron.scalatron.impl.ScalatronUser
 import scalatron.scalatron.api.Scalatron.Constants._
 import ScalatronApiTest._
 import org.specs2.execute.Result
+import scalatron.scalatron.api.Scalatron.BuildResult.BuildMessage
 
 class ScalatronApiSpec extends mutable.Specification
 {
@@ -112,7 +113,7 @@ class ScalatronApiSpec extends mutable.Specification
         // test building
         //------------------------------------------------------------------------------------------
 
-        "be able to build from sources containing no errors" in {
+        "be able to build from sources from disk containing no errors" in {
             runTest((scalatron: Scalatron, usersBaseDirPath: String, samplesBaseDirPath: String, pluginBaseDirPath: String) => {
                 val user = scalatron.createUser("ExampleUser", "", sourceFiles)
 
@@ -155,17 +156,18 @@ class ScalatronApiSpec extends mutable.Specification
                 assert(compileResult.warningCount == 0)
                 assert(compileResult.messages.size == 2)
 
-                val msg1 = compileResult.messages.head
+                val sortedMessages = compileResult.messages.toArray.sortBy(_.sourceFile)
+                val msg0 = sortedMessages(0)
+                assert(msg0.sourceFile == "1.scala")
+                assert(msg0.lineAndColumn ==(1, 1))
+                assert(msg0.severity == 2)
+                assert(msg0.multiLineMessage == "expected class or object definition")
+
+                val msg1 = sortedMessages(1)
                 assert(msg1.sourceFile == "2.scala")
                 assert(msg1.lineAndColumn ==(1, 12))
                 assert(msg1.severity == 2)
                 assert(msg1.multiLineMessage == "expected class or object definition")
-
-                val msg2 = compileResult.messages.last
-                assert(msg2.sourceFile == "1.scala")
-                assert(msg2.lineAndColumn ==(1, 1))
-                assert(msg2.severity == 2)
-                assert(msg2.multiLineMessage == "expected class or object definition")
 
                 success
             })
