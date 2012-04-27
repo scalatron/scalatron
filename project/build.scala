@@ -7,6 +7,14 @@ import AssemblyKeys._
 object build extends Build {
     def standardSettings = Defaults.defaultSettings ++ src ++ assemblySettings ++ Seq (
         mergeStrategy in assembly := {_ => MergeStrategy.first}
+    ) ++ implVersion
+
+    lazy val implVersion = Seq (
+        packageOptions <<= (version) map {
+            scalatronVersion => Seq(Package.ManifestAttributes(
+                ("Implementation-Version", scalatronVersion)
+            ))
+        }
     )
 
     lazy val all = Project(
