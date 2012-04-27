@@ -36,21 +36,19 @@
                                 jsonData:{ files: [ { filename: "Bot.scala", code: botCode} ] },
 
                                 success:function () {
-
                                     Events.fireEvent("progressUpdate", { message: "Building sources" });
-
                                     Events.fireEvent("documentSaved");
 
                                     API.build({
                                         success:function (result) {
                                             try {
-                                                if (result.successful === false) {
-                                                    ErrorConsole.show(result);
-                                                } else {
+                                                if (result.successful) {
                                                     ErrorConsole.hide(true);
                                                     if (fn) {
                                                         fn();
                                                     }
+                                                } else {
+                                                    ErrorConsole.show(result);
                                                 }
                                             } finally {
                                                 disableActions(false);
