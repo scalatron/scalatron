@@ -29,24 +29,31 @@ object WebServer {
         if (verbose) println("Browser UI will be served on port: " + webServerPort)
 
         // for a help message, find out the hostname and IP address
-        val hostname =
+        val (hostname,ipAddressString) =
             try {
                 val addr = InetAddress.getLocalHost
 
-                try {
-                    // Get hostname
-                    addr.getHostName
-                } catch {
-                    case e: UnknownHostException =>
-                        // val ipAddr = addr.getAddress // Get IP Address
-                        "localhost" // better: render the IP
-                }
+                val hostname =
+                    try {
+                        addr.getHostName    // Get hostname
+                    } catch {
+                        case e: UnknownHostException => "localhost"
+                    }
+
+                val ipAddressString =
+                    try {
+                        addr.getHostAddress // get host IP address string (e.g. "123.123.200.120")
+                    } catch {
+                        case e: UnknownHostException => "127.0.0.1"
+                    }
+                (hostname, ipAddressString)
             } catch {
-                case t: Throwable => "localhost" // Oh well
+                case t: Throwable => ("localhost", "127.0.0.1") // oh well
             }
 
-        val browserUiUrl = "http://" + hostname + ":" + webServerPort + "/"
-        println("Players should point their browsers to: " + browserUiUrl)
+        val browserUiUrl_Hostname = "http://" + hostname + ":" + webServerPort + "/"
+        val browserUiUrl_IpAddress = "http://" + ipAddressString + ":" + webServerPort + "/"
+        println("Players should point their browsers to '%s' or '%s'".format(browserUiUrl_Hostname, browserUiUrl_IpAddress))
 
 
 
@@ -69,6 +76,7 @@ object WebServer {
         val webCtx = WebContext(scalatron, webUiBaseDirectoryPath, verbose)
 
         val jettyServer = new jetty.server.Server(webServerPort)
+
 
         val context = new ServletContextHandler(ServletContextHandler.SESSIONS);
         context.setContextPath("/")
@@ -94,7 +102,7 @@ object WebServer {
                     try {
                         val waitTimeBeforeLaunchingBrowser = 3000 // give web server some time to start up
                         Thread.sleep(waitTimeBeforeLaunchingBrowser)
-                        desktop.browse(new java.net.URI(browserUiUrl))
+                        desktop.browse(new java.net.URI(browserUiUrl_IpAddress))
                     } catch {
                         case t: Throwable => if(verbose) System.err.println("warning: failed to open browser (for convenience only)")
                     }
