@@ -113,20 +113,21 @@ object build extends Build {
             IO.copyFile(scalatronDir / fileToCopy, distDir / fileToCopy)
         }
 
-        for (dirToCopy <- List("webui", "doc/pdf", "bots")) {
+        for (dirToCopy <- List("webui", "doc/pdf")) {
             println("Copying " + dirToCopy)
             IO.copyDirectory(scalatronDir / dirToCopy, distDir / dirToCopy)
         }
 
         val distSamples = distDir / "samples"
+        def sampleJar(sample: Project) = sample.base / ("target/scala-%s/ScalatronBot.jar" format version)
         for (sample <- samples) {
-            val sampleJar = sample.base / ("target/scala-%s/ScalatronBot.jar" format version)
-            if (sampleJar.exists) {
+            if (sampleJar(sample).exists) {
                 println("Copying " + sample.base)
                 IO.copyDirectory(sample.base / "src", distSamples / sample.base.getName / "src")
-                IO.copyFile(sampleJar, distSamples / sample.base.getName / "ScalatronBot.jar")
+                IO.copyFile(sampleJar(sample), distSamples / sample.base.getName / "ScalatronBot.jar")
             }
         }
+        IO.copyFile(sampleJar(referenceBot), distDir / "bots" / "Reference" / "ScalatronBot.jar")
 
         for (file <- IO.listFiles(scalatronDir / "doc/tutorial") if !file.getName.endsWith(".md")) {
             IO.copyFile(file, distDir / "webui/tutorial" / file.getName)
