@@ -21,7 +21,7 @@ object build extends Build {
         id        = "all",
         base      = file("."),
         settings  = standardSettings ++ Seq(distTask),
-        aggregate = Seq(main, cli, markdown)
+        aggregate = Seq(main, cli, markdown, referenceBot, tagTeamBot)
     )
 
     lazy val src = Seq(
@@ -75,6 +75,16 @@ object build extends Build {
         )
     )
 
+    lazy val samples = (IO.listFiles(file("Scalatron") / "samples")) filter (!_.isFile) map {
+        sample => Project(sample.getName, sample, settings = Defaults.defaultSettings ++ Seq (
+            scalaSource in Compile <<= baseDirectory / "src",
+            artifactName in packageBin := ((_, _, _) => "ScalatronBot.jar")
+        ))
+    }
+    // TODO How can we do this automatically?!?
+    lazy val referenceBot = samples(0)
+    lazy val tagTeamBot = samples(1)
+
     val dist = TaskKey[Unit]("dist", "Makes the distribution zip file")
     val distTask = dist <<= (version, scalaVersion) map { (scalatronVersion, version) =>
         val distDir = file("dist")
@@ -102,9 +112,20 @@ object build extends Build {
         for (fileToCopy <- List("Readme.txt", "License.txt")) {
             IO.copyFile(scalatronDir / fileToCopy, distDir / fileToCopy)
         }
-        for (dirToCopy <- List("samples", "webui", "doc/pdf", "bots")) {
+
+        for (dirToCopy <- List("webui", "doc/pdf", "bots")) {
             println("Copying " + dirToCopy)
             IO.copyDirectory(scalatronDir / dirToCopy, distDir / dirToCopy)
+        }
+
+        val distSamples = distDir / "samples"
+        for (sample <- samples) {
+            val sampleJar = sample.base / ("target/scala-%s/ScalatronBot.jar" format version)
+            if (sampleJar.exists) {
+                println("Copying " + sample.base)
+                IO.copyDirectory(sample.base / "src", distSamples / sample.base.getName / "src")
+                IO.copyFile(sampleJar, distSamples / sample.base.getName / "ScalatronBot.jar")
+            }
         }
 
         for (file <- IO.listFiles(scalatronDir / "doc/tutorial") if !file.getName.endsWith(".md")) {
@@ -122,6 +143,6 @@ object build extends Build {
             IO.zip(allDistFiles, destFile)
         }
         zip (distDir, file("./scalatron-%s.zip" format scalatronVersion), "Scalatron/")
-    } dependsOn (assembly in main, assembly in cli, assembly in markdown)
+    } dependsOn (assembly in main, assembly in cli, assembly in markdown, packageBin in Compile in referenceBot, packageBin in Compile in tagTeamBot)
 
 }
