@@ -133,28 +133,15 @@ object Bot {
                 }
 
                 val view = state.flattenedBoard.computeView(botPos, Constants.SlaveHorizonHalfSize)
-                view.occlude()      // caution: in situ!
-                val renderedView = view.cells.map(cell => Player.cellContentToChar(cell, bot) ).mkString
-                val stateMapString =
-                    stateMap
-                    .filter(_._1 != Protocol.PropertyName.Debug)
-                    .map(entry => entry._1 + "=" + entry._2)
-                    .mkString(",")
-                val controlFunctionInput =
-                    Protocol.ServerOpcode.React + "(" +
-                        Protocol.PropertyName.Generation + "=" + generation + "," + "" +
-                        Protocol.PropertyName.Name + "=" + name + "," + "" +
-                        Protocol.PropertyName.Time + "=" + state.time + "," + "" +
-                        Protocol.PropertyName.Energy + "=" + bot.energy + "," +
-                        Protocol.ServerOpcode.ParameterName.Master + "=" + deltaToMaster + "," +
-                        Protocol.PropertyName.View + "=" + renderedView +
-                        (if(stateMapString.isEmpty) "" else "," + stateMapString) +
-                        ")"
-                controlFunctionInput
+                computeControlFunctionInput(view, Some(deltaToMaster))
             }
 
             def computeBotInputForMaster(bot: Bot, state: State): String = {
                 val view = state.flattenedBoard.computeView(bot.pos, Constants.MasterHorizonHalfSize)
+                computeControlFunctionInput(view)
+            }
+            
+            def computeControlFunctionInput(view: FlattenedBoard, maybeDeltaToMaster: Option[XY] = None): String = {
                 view.occlude()      // caution: in situ!
                 val renderedView = view.cells.map(cell => Player.cellContentToChar(cell, bot) ).mkString
                 val stateMapString =
@@ -162,15 +149,21 @@ object Bot {
                     .filter(_._1 != Protocol.PropertyName.Debug)
                     .map(entry => entry._1 + "=" + entry._2)
                     .mkString(",")
+                val maybeMasterParameter = 
+                    maybeDeltaToMaster 
+                    .map(Protocol.ServerOpcode.ParameterName.Master + "=" + _ + ",")
+                    .getOrElse("")
                 val controlFunctionInput =
                     Protocol.ServerOpcode.React + "(" +
                         Protocol.PropertyName.Generation + "=" + generation + "," + "" +
                         Protocol.PropertyName.Name + "=" + name + "," + "" +
                         Protocol.PropertyName.Time + "=" + state.time + "," +
                         Protocol.PropertyName.View + "=" + renderedView + "," +
+                        maybeMasterParameter +
                         Protocol.PropertyName.Energy + "=" + bot.energy +
                         (if(stateMapString.isEmpty) "" else "," + stateMapString) +
                         ")"
+                        
                 controlFunctionInput
             }
 
