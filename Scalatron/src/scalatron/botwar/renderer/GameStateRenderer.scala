@@ -219,6 +219,13 @@ object GameStateRenderer {
                     val color = makeTransparent(AnnihilationColor, alpha)
                     ctx.setColor(color)
                     ctx.drawOval(centerX - age, centerY - age, age * 2, age * 2)
+                
+                case markedCell: Decoration.MarkedCell =>
+                    println("rendering marked cell: " + markedCell.color)
+                    val color = makeTransparent(Color.decode(markedCell.color), alpha)
+                    ctx.setColor(color)
+                    val radius = ctx.pixelsPerCell / 2
+                    ctx.fillOval(centerX - radius, centerY - radius, radius * 2, radius * 2)
 
                 case _ => // OK
             }

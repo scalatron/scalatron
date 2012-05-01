@@ -244,7 +244,7 @@ to an empty string deletes it from the state.
 
 # Opcodes of Server-to-Plugin Commands
 
-These are the opcodes valid for commands sent by the server to a plug-in�s control function.
+These are the opcodes valid for commands sent by the server to a plug-in's control function.
 Only one opcode will be present per control function invocation.
 
 
@@ -333,7 +333,7 @@ Parameters:
 # Opcodes of Plugin-to-Server Commands
 
 These are the opcodes valid for commands returned by a plug-in to a server. Multiple such
-commands can be combined into a multi-command by separating them with a pipe (�|�) character.
+commands can be combined into a multi-command by separating them with a pipe ('|') character.
 
 ### Move(direction=int:int)
 
@@ -342,7 +342,7 @@ signed integers. The permitted range values are "-1", "0" or "1".
 
 Parameters:
 
-* `direction`   desired displacement for the move, e.g. �1:1� or �0:-1�
+* `direction`   desired displacement for the move, e.g. '1:1' or '0:-1'
 
 Example:
 
@@ -362,7 +362,7 @@ position, expressed relative to the current position.
 
 Parameters:
 
-* `direction`   desired displacement for the spawned mini-bot, e.g. �-1:1�
+* `direction`   desired displacement for the spawned mini-bot, e.g. '-1:1'
 * `name`        arbitrary string, except the following characters are
                 not permitted: '|', ',', '=', '('
 * `energy`      energy budget to transfer to the spawned mini-bot (minimum: 100 EU)
@@ -465,6 +465,22 @@ Parameters:
 * `text`    the message to display; maximum length: 20 chars; can be an
             arbitrary string, except the following characters are not
             permitted: '|', ',', '=', '('
+
+Energy Cost/Permissions:
+
+* for master bot:   permitted, no energy consumed
+* for mini-bot:     permitted, no energy consumed
+
+
+
+### MarkCell(position=int:int,color=string)
+
+Displays a cell as marked. You can use this as a debugging tool.
+
+Parameters:
+
+* `position`  desired displacement relative to the current bot, e.g. '-2:4' (defaults to '0:0')
+* `color`     color to use for marking the cell (defaults to '#8888ff'), e.g. '#ff8800'
 
 Energy Cost/Permissions:
 

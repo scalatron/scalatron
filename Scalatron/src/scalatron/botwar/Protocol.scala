@@ -23,11 +23,14 @@ object Protocol {
         val Set = "Set"
         val Explode = "Explode"
         val Log = "Log"
+        val MarkCell = "MarkCell"
 
         object ParameterName {
             val Direction = "direction"
             val Text = "text"
             val BlastRadius = "size"
+            val Position = "position"
+            val Color = "color"
         }
     }
 
