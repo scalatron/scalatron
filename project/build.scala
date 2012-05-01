@@ -76,14 +76,15 @@ object build extends Build {
     )
 
     lazy val samples = (IO.listFiles(file("Scalatron") / "samples")) filter (!_.isFile) map {
-        sample => Project(sample.getName, sample, settings = Defaults.defaultSettings ++ Seq (
+        sample: File => sample.getName -> Project(sample.getName, sample, settings = Defaults.defaultSettings ++ Seq (
             scalaSource in Compile <<= baseDirectory / "src",
             artifactName in packageBin := ((_, _, _) => "ScalatronBot.jar")
         ))
-    }
+    } toMap
+    
     // TODO How can we do this automatically?!?
-    lazy val referenceBot = samples(0)
-    lazy val tagTeamBot = samples(1)
+    lazy val referenceBot = samples("Example Bot 01 - Reference")
+    lazy val tagTeamBot = samples("Example Bot 02 - TagTeam")
 
     val dist = TaskKey[Unit]("dist", "Makes the distribution zip file")
     val distTask = dist <<= (version, scalaVersion) map { (scalatronVersion, version) =>
@@ -120,7 +121,7 @@ object build extends Build {
 
         val distSamples = distDir / "samples"
         def sampleJar(sample: Project) = sample.base / ("target/scala-%s/ScalatronBot.jar" format version)
-        for (sample <- samples) {
+        for (sample <- samples.values) {
             if (sampleJar(sample).exists) {
                 println("Copying " + sample.base)
                 IO.copyDirectory(sample.base / "src", distSamples / sample.base.getName / "src")
