@@ -1,9 +1,9 @@
 SCALATRON - Learn Scala With Friends
-http://scalatron.wordpress.com - Twitter: @scalatron / #scalatron
+http://scalatron.github.com - Twitter: @scalatron - scalatron@hotmail.com
 This work is licensed under the Creative Commons Attribution 3.0 Unported License.
 
 Organizer Documentation - Scalatron CLI (Command Line Interface)
-Version 0.9.9 -- updated 2012-04-26
+Version 0.9.9 -- updated 2012-05-01
 
 
 

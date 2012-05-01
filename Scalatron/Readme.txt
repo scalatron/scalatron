@@ -1,5 +1,5 @@
 SCALATRON - Learn Scala With Friends
-http://scalatron.wordpress.com - Twitter: @scalatron / #scalatron
+http://scalatron.github.com - Twitter: @scalatron - scalatron@hotmail.com
 This work is licensed under the Creative Commons Attribution 3.0 Unported License.
 
 
@@ -18,7 +18,7 @@ in the public domain. Feel free to use, copy, and improve them!
 
 ## Quick Start
 
-* download the Scalatron distribution, e.g. from http://scalatron.wordpress.com
+* download the Scalatron distribution, e.g. from http://scalatron.github.com
 * unzip the compressed file to a local directory, e.g. `/Scalatron`
 * launch the game server by double-clicking the application, e.g. at `Scalatron/bin/Scalatron.jar`
 * this should automatically open a browser and point it to e.g. `http://localhost:8080`
