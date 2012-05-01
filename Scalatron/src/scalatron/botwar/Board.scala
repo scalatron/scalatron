@@ -76,7 +76,7 @@ case class Board(
     def addBotThatIsMaster(pos: XY, creationTime: Time, controlFunction: (String => String), plugin: Plugin) : Board =
         copy(nextId = nextId + 1, bots = bots.updated(nextId,
             Bot(nextId, pos, XY.One, creationTime, Time.SomtimeInThePast, Constants.Energy.Initial,
-                Bot.Player(controlFunction, plugin, Bot.MasterGeneration, nextId, (0,2), 0L, "", Iterable.empty, Map(Protocol.PropertyName.Name -> plugin.name))
+                Bot.Player(controlFunction, plugin, Bot.MasterGeneration, nextId, (0,2), 0L, "", Iterable.empty, Map())
             )))
 
     def sprinkle(count: Int, rnd: Random, creationTime: Time, boardSize: XY, variety: Bot.Variety) =
