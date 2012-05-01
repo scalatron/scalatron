@@ -187,6 +187,7 @@ commands. The string has the following format:
 
 No spaces will be present between key name, equals sign and value.
 No pipe characters are permitted anywhere in the string except between commands.
+The order of the key-value pairs is not fixed.
 
 Example communication between server and plug-in:
 
@@ -275,7 +276,7 @@ Parameters:
             incremented each time.
 
 
-### React(generation=int,entity=string,time=int,view=string,energy=string,master=int:int,...)
+### React(generation=int,name=string,time=int,view=string,energy=string,master=int:int,...)
 
 "React" is invoked by the server once for each entity for each step in which the entity is
 allowed to move (mini-bots every cycle, bots every second cycle - see the *Game Rules* for
