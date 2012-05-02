@@ -318,6 +318,8 @@ object Decoration {
     case object Bonk extends Variety { def lifeTime = 40 }
     case object Annihilation extends Variety { def lifeTime = 40 }
     case class Text(text: String) extends Variety { def lifeTime = 40 }
+    case class MarkedCell(color: String) extends Variety { def lifeTime = 40 }
+    case class Line(toPos: XY, color: String) extends Variety { def lifeTime = 40 }
 }
 
 
