@@ -302,6 +302,9 @@ case object AugmentedDynamics extends ((State,Random,Iterable[(Entity.Id,Iterabl
                             throw new IllegalStateException("Explode() command is illegal for non-player bots")
                     }
 
+                case markedCell: Command.MarkCell =>           // "MarkCell(position=x:y,color=#ff0000)"
+                    updatedBoard = updatedBoard.addDecoration(thisBotPos + markedCell.pos, time, Decoration.MarkedCell(markedCell.color))
+
                 case _ =>
                     // unknown command!
                     throw new IllegalStateException("unknown command: " + command)

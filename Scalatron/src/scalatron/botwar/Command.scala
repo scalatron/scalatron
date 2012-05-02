@@ -45,7 +45,11 @@ object Command
         def opcode = Protocol.PluginOpcode.Set
         def paramMap = map
     }
-
+    case class MarkCell(pos: XY, color: String) extends Command {
+        def opcode = Protocol.PluginOpcode.MarkCell
+        def paramMap = Map(Protocol.PluginOpcode.ParameterName.Position -> pos, Protocol.PluginOpcode.ParameterName.Color -> color)
+    }
+    
     def fromControlFunctionResponse(controlFunctionResponse: String): Iterable[Command] = {
         val commandMap = MultiCommandParser.splitStringIntoParsedCommandMap(controlFunctionResponse)
         if(commandMap.isEmpty)
@@ -83,6 +87,11 @@ object Command
         case Protocol.PluginOpcode.Log =>            // "Log(text=<string>)"
             Log(params.get(Protocol.PluginOpcode.ParameterName.Text).getOrElse(""))
 
+        case Protocol.PluginOpcode.MarkCell =>       // "MarkCell(position=x:y,color=#ff0000)"
+            MarkCell(
+                params.get(Protocol.PluginOpcode.ParameterName.Position).map(s => XY(s)).getOrElse( XY.Zero),
+                params.get(Protocol.PluginOpcode.ParameterName.Color).getOrElse("#8888ff")) // default to a light blue
+                
         case _ =>
             throw new IllegalStateException("unknown opcode: '" + opcode + "'")
     }
