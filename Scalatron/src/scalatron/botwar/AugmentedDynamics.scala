@@ -305,6 +305,10 @@ case object AugmentedDynamics extends ((State,Random,Iterable[(Entity.Id,Iterabl
                 case markedCell: Command.MarkCell =>           // "MarkCell(position=x:y,color=#ff0000)"
                     updatedBoard = updatedBoard.addDecoration(thisBotPos + markedCell.pos, time, Decoration.MarkedCell(markedCell.color))
 
+                case line: Command.DrawLine =>                 // "DrawLine(from=x1:y1,to=x2:y2,color=#cccccc)"
+                    updatedBoard = updatedBoard.addDecoration(
+                        thisBotPos + line.fromPos, time, Decoration.Line(thisBotPos + line.toPos, line.color))
+
                 case _ =>
                     // unknown command!
                     throw new IllegalStateException("unknown command: " + command)

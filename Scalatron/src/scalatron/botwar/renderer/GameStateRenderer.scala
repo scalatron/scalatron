@@ -226,6 +226,12 @@ object GameStateRenderer {
                     val radius = ctx.pixelsPerCell / 2
                     ctx.fillOval(centerX - radius, centerY - radius, radius * 2, radius * 2)
 
+                case line: Decoration.Line =>
+                    val color = makeTransparent(Color.decode(line.color), alpha)
+                    ctx.setColor(color)
+                    val (toX, toY) = ctx.center(line.toPos)
+                    ctx.drawLine(centerX, centerY, toX, toY)
+                    
                 case _ => // OK
             }
         })

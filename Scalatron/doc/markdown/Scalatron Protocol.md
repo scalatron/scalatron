@@ -489,6 +489,23 @@ Energy Cost/Permissions:
 
 
 
+### DrawLine(from=int:int,to=int:int,color=string)
+
+Draws a line. You can use this as a debugging tool.
+
+Parameters:
+
+* `from`      starting cell of the line to draw, e.g. '-2:4' (defaults to '0:0')
+* `to`        destination cell of the line to draw, e.g. '3:-2' (defaults to '0:0')
+* `color`     color to use for marking the cell (defaults to '#ff8888'), e.g. '#ffffff' for a white line
+
+Energy Cost/Permissions:
+
+* for master bot:   permitted, no energy consumed
+* for mini-bot:     permitted, no energy consumed
+
+
+
 ### Log(text=string)
 
 Shortcut for setting the state property `debug`, which by convention contains an optional

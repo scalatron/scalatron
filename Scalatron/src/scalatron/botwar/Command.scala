@@ -49,6 +49,13 @@ object Command
         def opcode = Protocol.PluginOpcode.MarkCell
         def paramMap = Map(Protocol.PluginOpcode.ParameterName.Position -> pos, Protocol.PluginOpcode.ParameterName.Color -> color)
     }
+    case class DrawLine(fromPos: XY, toPos: XY, color: String) extends Command {
+        def opcode = Protocol.PluginOpcode.DrawLine
+        def paramMap = Map(
+            Protocol.PluginOpcode.ParameterName.From -> fromPos, 
+            Protocol.PluginOpcode.ParameterName.To -> toPos, 
+            Protocol.PluginOpcode.ParameterName.Color -> color)
+    }
     
     def fromControlFunctionResponse(controlFunctionResponse: String): Iterable[Command] = {
         val commandMap = MultiCommandParser.splitStringIntoParsedCommandMap(controlFunctionResponse)
@@ -91,6 +98,12 @@ object Command
             MarkCell(
                 params.get(Protocol.PluginOpcode.ParameterName.Position).map(s => XY(s)).getOrElse( XY.Zero),
                 params.get(Protocol.PluginOpcode.ParameterName.Color).getOrElse("#8888ff")) // default to a light blue
+
+        case Protocol.PluginOpcode.DrawLine =>       // "DrawLine(from=x:y,to=x:y,color=#ffffff)"
+            DrawLine(
+                params.get(Protocol.PluginOpcode.ParameterName.From).map(s => XY(s)).getOrElse( XY.Zero),
+                params.get(Protocol.PluginOpcode.ParameterName.To).map(s => XY(s)).getOrElse( XY.Zero),
+                params.get(Protocol.PluginOpcode.ParameterName.Color).getOrElse("#cccccc")) // default to a light grey
                 
         case _ =>
             throw new IllegalStateException("unknown opcode: '" + opcode + "'")
