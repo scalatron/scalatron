@@ -156,7 +156,6 @@ object Bot {
                 val controlFunctionInput =
                     Protocol.ServerOpcode.React + "(" +
                         Protocol.PropertyName.Generation + "=" + generation + "," + "" +
-                        Protocol.PropertyName.Name + "=" + name + "," + "" +
                         Protocol.PropertyName.Time + "=" + state.time + "," +
                         Protocol.PropertyName.View + "=" + renderedView + "," +
                         maybeMasterParameter +
