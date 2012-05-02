@@ -54,7 +54,13 @@ in the public domain. Feel free to use, copy, and improve them!
 
 ## Version History
 
-### Version 0.9.9 -- 2012-04-26
+### Version 0.9.9.3 -- 2012-05-02
+
+* new opcodes: "MarkCell()", "DrawLine()"; see Scalatron Protocol docs for details. Thanks Joachim Hofer, @johofer!
+* name duplication bug fixed; docs for "React()" opcode fixed. Also thanks to @johofer!
+
+
+### Version 0.9.9.0 - 0.9.9.2 -- 2012-04-26
 
 * restructured for move to github
 * bot processing ported from parallel collections to Akka
