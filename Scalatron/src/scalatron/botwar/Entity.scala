@@ -138,10 +138,10 @@ object Bot {
 
             def computeBotInputForMaster(bot: Bot, state: State): String = {
                 val view = state.flattenedBoard.computeView(bot.pos, Constants.MasterHorizonHalfSize)
-                computeControlFunctionInput(view)
+                computeControlFunctionInput(view, None)
             }
             
-            def computeControlFunctionInput(view: FlattenedBoard, maybeDeltaToMaster: Option[XY] = None): String = {
+            def computeControlFunctionInput(view: FlattenedBoard, deltaToMasterOpt: Option[XY]): String = {
                 view.occlude()      // caution: in situ!
                 val renderedView = view.cells.map(cell => Player.cellContentToChar(cell, bot) ).mkString
                 val stateMapString =
@@ -150,7 +150,7 @@ object Bot {
                     .map(entry => entry._1 + "=" + entry._2)
                     .mkString(",")
                 val maybeMasterParameter = 
-                    maybeDeltaToMaster 
+                    deltaToMasterOpt
                     .map(Protocol.ServerOpcode.ParameterName.Master + "=" + _ + ",")
                     .getOrElse("")
                 val controlFunctionInput =
