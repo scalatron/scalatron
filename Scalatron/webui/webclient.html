@@ -1,7 +1,7 @@
 <html>
 <head>
 
-    <meta charset="UTF-8">
+    <!--<meta charset="UTF-8">-->
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 
     <title>Scalatron Development Environment: $BotName$</title>
@@ -22,6 +22,12 @@
         }
     </style>
 
+    <script type="text/javascript">
+        // Hack to get the current user name. Cookie doesn't work
+        function getUserName() {
+            return '$BotName$';
+        }
+    </script>
     <!--<script type="text/javascript" src="/ext-4.0.7/bootstrap.js"></script>-->
     <script type="text/javascript" src="/ext-4.0.7/ext-all.js"></script>
 
