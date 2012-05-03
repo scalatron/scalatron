@@ -1,5 +1,5 @@
 SCALATRON - Learn Scala With Friends
-http://scalatron.wordpress.com - Twitter: @scalatron / #scalatron
+http://scalatron.github.com - Twitter: @scalatron - scalatron@hotmail.com
 This work is licensed under the Creative Commons Attribution 3.0 Unported License.
 
 
@@ -18,7 +18,7 @@ in the public domain. Feel free to use, copy, and improve them!
 
 ## Quick Start
 
-* download the Scalatron distribution, e.g. from http://scalatron.wordpress.com
+* download the Scalatron distribution, e.g. from http://scalatron.github.com
 * unzip the compressed file to a local directory, e.g. `/Scalatron`
 * launch the game server by double-clicking the application, e.g. at `Scalatron/bin/Scalatron.jar`
 * this should automatically open a browser and point it to e.g. `http://localhost:8080`
@@ -54,7 +54,13 @@ in the public domain. Feel free to use, copy, and improve them!
 
 ## Version History
 
-### Version 0.9.9 -- 2012-04-26
+### Version 0.9.9.3 -- 2012-05-02
+
+* new opcodes: "MarkCell()", "DrawLine()"; see Scalatron Protocol docs for details. Thanks Joachim Hofer, @johofer!
+* name duplication bug fixed; docs for "React()" opcode fixed. Also thanks to @johofer!
+
+
+### Version 0.9.9.0 - 0.9.9.2 -- 2012-04-26
 
 * restructured for move to github
 * bot processing ported from parallel collections to Akka

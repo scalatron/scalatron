@@ -72,69 +72,103 @@ object Plugin {
     }
 
 
-    /** Returns either a control function factory (success) or an exception (failure).
-      * @param userName the user name, will be tried as a package name
+    /** Attempts to load a ControlFunctionFactory instance from a given plug-in file using a number of package
+      * path candidates and returns either the resulting factory function (left, success) or the most recent
+      * exception (right, failure).
       * @param pluginFile a File object representing the plug-in (.jar) file
-      * @param factoryClassPackage e.g. "scalatron.botwar.botPlugin"
+      * @param userName the user name, will be tried as a package name
+      * @param gameSpecificPackagePath e.g. "scalatron.botwar.botPlugin"
       * @param factoryClassName e.g. "ControlFunctionFactory"
-      * */
+      */
     def loadFrom(
-        userName: String,
         pluginFile: File,
-        factoryClassPackage: String,
+        userName: String,
+        gameSpecificPackagePath: String,
         factoryClassName: String,
         verbose: Boolean): Either[() => ( String => String ), Throwable] =
     {
-        try {
-            /** TODO: think about sandboxing plug-ins to prevent them from accessing sensitive stuff. See
-              * http://stackoverflow.com/questions/3947558/java-security-sandboxing-plugins-loaded-via-urlclassloader
-              */
-            val classLoader = new URLClassLoader(Array(pluginFile.toURI.toURL), this.getClass.getClassLoader)
+        /** For regular tournament operation it would be OK to use any fixed package name on the factory class
+          * (including no package statement at all). The compile service, however, recycles its compiler state
+          * to accelerate compilation, which results in namespace collisions if multiple users use the same
+          * fully qualified class names for their classes. So in order to make the compiler instance recycling
+          * feasible, we need a bit of a hack: each user must (be able to) use a unique package name for her classes.
+          * So we try that as the first option: a package name consisting of the user name (which during plug-in
+          * loading for the tournament loop will be the name of the directory containing the plug-in .jar file).
+          * Case is significant.
+          * We try the following package names in the following order:
+          * 1) {gamePackage}.{username}.{className} -- game- and user-specific package name, e.g. "scalatron.botwar.botPlugin.Frank.ControlFunctionFactory"
+          * 2) {username}.{className}               -- user-specific package name, e.g. "Frank.ControlFunctionFactory"
+          * 3) {gamePackage}.{className}            -- game-specific package name, e.g. "scalatron.botwar.botPlugin.ControlFunctionFactory"
+          * 4) {className}                          -- no package name, e.g. "ControlFunctionFactory"
+          */
+        val classNamesWithPackagePathsToTry = Iterable(
+            gameSpecificPackagePath + "." + userName + "." + factoryClassName,
+            userName + "." + factoryClassName,
+            gameSpecificPackagePath + "." + factoryClassName,
+            factoryClassName
+        )
 
-            /** When multiple users want to leverage the compile service,
-             * We try the following package names in order:
-             * 1) package {username}
-             * 2) package scalatron.botwar.botPlugin
-             * 3) no package statement
-             */
-            val userSpecificFactoryClassName = userName + "." + factoryClassName
-            val fullFactoryClassName = factoryClassPackage + "." + factoryClassName
-            val factoryClass =
-                try {
-                    Class.forName(userSpecificFactoryClassName, true, classLoader)
-                } catch {
-                    case t: Throwable =>
-                        try {
-                            if( verbose ) {
-                                println("info: failed to load user-name-specific factory (" + userSpecificFactoryClassName + ") from plug-in '" + pluginFile.getAbsolutePath + "':" + t)
-                                println("info: trying unqualified factory class name... (" + factoryClassName + ")")
-                            }
-                            Class.forName(fullFactoryClassName, true, classLoader)
-                        } catch {
-                            case t: Throwable =>
-                                try {
-                                    if( verbose ) {
-                                        println("info: failed to load fully qualified factory from plug-in '" + pluginFile.getAbsolutePath + "':" + t)
-                                        println("info: trying unqualified factory class name... (" + factoryClassName + ")")
-                                    }
-                                    Class.forName(factoryClassName, true, classLoader)
-                                } catch {
-                                    case t: Throwable =>
-                                        System.err.println("failed to load either qualified or unqualified factory from plug-in '" + pluginFile.getAbsolutePath + "':" + t)
-                                        throw t
-                                }
-                        }
-                }
+        loadFactoryClassFromJar(
+            pluginFile,
+            classNamesWithPackagePathsToTry,
+            verbose
+        )
+    }
 
-            val factoryMethod = factoryClass.getMethod("create")
 
-            // wrap the Java factory method into a Scala factory function
-            val factory = factoryClass.newInstance()
-            val factoryFunction: () => ( String => String ) = () => factoryMethod.invoke(factory).asInstanceOf[( String => String )]
+    /** Creates a URLClassLoader for a given file and attempts to load a class via the loader using a sequence of
+      * class names, one after the other. All exceptions that are detected are mapped to Right(Throwable).
+      * @param jarFile a File object representing the plug-in (.jar) file
+      * @param classNamesWithPackagePathsToTry a collection of class names (including package path) to try to load
+      * @param verbose if true, prints what it is doing to the console
+      * @return the class that was loaded, or the last encountered exception
+      */
+    private def loadFactoryClassFromJar(
+        jarFile: File,
+        classNamesWithPackagePathsToTry: Iterable[String],
+        verbose: Boolean): Either[() => ( String => String ),Throwable] =
+    {
+        /** TODO: think about sandboxing plug-ins to prevent them from accessing sensitive stuff. See
+          * http://stackoverflow.com/questions/3947558/java-security-sandboxing-plugins-loaded-via-urlclassloader
+          */
+        val classLoader =
+            try {
+                new URLClassLoader(Array(jarFile.toURI.toURL), this.getClass.getClassLoader)
+            } catch {
+                case t: Throwable => return Right(t)
+            }
 
-            Left(factoryFunction)
-        } catch {
-            case t: Throwable => Right(t)
+        val pluginFilePath = jarFile.getAbsolutePath
+        val methodName = "create"
+
+        // can't return from a .foreach to shortcircuit, throws scala.runtime.NonLocalReturnControl; so we iterate manually
+        var lastError: Option[Throwable] = None
+        val iterator = classNamesWithPackagePathsToTry.iterator
+        while(iterator.hasNext) {
+            val classNamesWithPackagePath = iterator.next()
+            try {
+                if(verbose) println("info: will try to load class '%s' from plug-in '%s'...".format(classNamesWithPackagePath, pluginFilePath))
+                val factoryClass = Class.forName(classNamesWithPackagePath, true, classLoader)
+
+                if(verbose) println("info: class '%s' loaded, will try to find method '%s'...".format(classNamesWithPackagePath, methodName))
+                val factoryMethod = factoryClass.getMethod(methodName)
+
+                if(verbose) println("info: method '%s' found, will try to instantiate factory...".format(methodName))
+                val factory = factoryClass.newInstance()
+                val factoryFunction: () => ( String => String ) = () => factoryMethod.invoke(factory).asInstanceOf[( String => String )]
+
+                if(verbose) println("info: successfully loaded class '%s' from plug-in '%s'...".format(classNamesWithPackagePath, pluginFilePath))
+                return Left(factoryFunction)
+            } catch {
+                case t: Throwable =>
+                    lastError = Some(t)
+                    if(verbose) println("info: failed to load class '%s' from plug-in '%s'...: %s".format(classNamesWithPackagePath, pluginFilePath, t.toString))
+            }
+        }
+
+        lastError match {
+            case Some(t) => Right(t)
+            case None => Right(new IllegalStateException("none of the factory class candidates found in '%s': %s".format(pluginFilePath, classNamesWithPackagePathsToTry.mkString(", "))))
         }
     }
 

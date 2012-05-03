@@ -1,9 +1,9 @@
 SCALATRON - Learn Scala With Friends
-http://scalatron.wordpress.com - Twitter: @scalatron / #scalatron
+http://scalatron.github.com - Twitter: @scalatron - scalatron@hotmail.com
 This work is licensed under the Creative Commons Attribution 3.0 Unported License.
 
 Developer Documentation - Scalatron APIs
-Version 0.9.9 -- updated 2012-04-26
+Version 0.9.9 -- updated 2012-05-01
 
 
 
@@ -449,6 +449,8 @@ Response JSON example:
 ### Update Source Files
 
 Updates the source code files in the user's workspace on the server.
+Optionally creates a backup version of the source files currently in the workspace before overwriting them
+with the uploaded source files.
 
 * URL:              /api/users/{user}/sources
 * Method:           PUT
@@ -467,7 +469,9 @@ Request JSON example:
         [
             { "filename" : "Bot.scala", "code" : "class ControlFunctionFactory { ... }" },
             { "filename" : "Util.scala", "code" : "class View { ... }" }
-        ]
+        ],
+        "versionPolicy" : "ifDifferent",      // or: "always", "never"
+        "versionLabel" : "before Build and Publish into Tournament"
     }
 
 Comments:

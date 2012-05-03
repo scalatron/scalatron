@@ -1,5 +1,5 @@
 SCALATRON - Learn Scala With Friends
-http://scalatron.wordpress.com - Twitter: @scalatron / #scalatron
+http://scalatron.github.com - Twitter: @scalatron - scalatron@hotmail.com
 
 
 # The incorporated parts of this work...
@@ -36,7 +36,7 @@ letter to Creative Commons, 444 Castro Street, Suite 900, Mountain View, Califor
 * Attribution - You must attribute the work in the manner specified by the author or
   licensor (but not in any way that suggests that they endorse you or your use of the work).
   You can do this by referencing Scalatron as the origin of your materials and by linking to
-  the Scalatron web page at http://scalatron.wordpress.com.
+  the Scalatron web page at http://scalatron.github.com.
 
 
 

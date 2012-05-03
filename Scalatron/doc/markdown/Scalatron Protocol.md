@@ -1,9 +1,9 @@
 SCALATRON - Learn Scala With Friends
-http://scalatron.wordpress.com - Twitter: @scalatron / #scalatron
+http://scalatron.github.com - Twitter: @scalatron - scalatron@hotmail.com
 This work is licensed under the Creative Commons Attribution 3.0 Unported License.
 
 Participant Documentation - Scalatron Protocol
-Version 0.9.9 -- updated 2012-04-26
+Version 0.9.9 -- updated 2012-05-01
 
 
 
@@ -187,6 +187,7 @@ commands. The string has the following format:
 
 No spaces will be present between key name, equals sign and value.
 No pipe characters are permitted anywhere in the string except between commands.
+The order of the key-value pairs is not fixed.
 
 Example communication between server and plug-in:
 
@@ -243,7 +244,7 @@ to an empty string deletes it from the state.
 
 # Opcodes of Server-to-Plugin Commands
 
-These are the opcodes valid for commands sent by the server to a plug-in�s control function.
+These are the opcodes valid for commands sent by the server to a plug-in's control function.
 Only one opcode will be present per control function invocation.
 
 
@@ -275,7 +276,7 @@ Parameters:
             incremented each time.
 
 
-### React(generation=int,entity=string,time=int,view=string,energy=string,master=int:int,...)
+### React(generation=int,name=string,time=int,view=string,energy=string,master=int:int,...)
 
 "React" is invoked by the server once for each entity for each step in which the entity is
 allowed to move (mini-bots every cycle, bots every second cycle - see the *Game Rules* for
@@ -310,7 +311,7 @@ a mini-bot was spawned with `Spawn(...,role=missile)`, the `React` invocation wi
 parameter called `role` with the value `missile`.
 
 The control function is expected to return a valid response, which may consist of zero or more
-commands separated by a pipe ('|') character. The available commands are listed in the section
+commands separated by a pipe (`|`) character. The available commands are listed in the section
 *Opcodes of Plugin-to-Server Commands*.
 
 
@@ -332,20 +333,28 @@ Parameters:
 # Opcodes of Plugin-to-Server Commands
 
 These are the opcodes valid for commands returned by a plug-in to a server. Multiple such
-commands can be combined into a multi-command by separating them with a pipe (�|�) character.
+commands can be combined into a multi-command by separating them with a pipe (`|`) character.
+
+
+
+## Simulation-Affecting Commands
+
+These commands, when executed by the server, alter the state of the game and affect the
+course of the simulation.
+
 
 ### Move(direction=int:int)
 
 Moves the bot one cell in a given direction, if possible. The delta values are
-signed integers. The permitted range values are "-1", "0" or "1".
+signed integers. The permitted values are `-1`, `0` or `1`.
 
 Parameters:
 
-* `direction`   desired displacement for the move, e.g. �1:1� or �0:-1�
+* `direction`   desired displacement for the move, e.g. `1:1` or `0:-1`
 
 Example:
 
-* "Move(direction=-1:1)" moves the entity left and down.
+* `Move(direction=-1:1)` moves the entity left and down.
 
 Energy Cost/Permissions:
 
@@ -361,15 +370,15 @@ position, expressed relative to the current position.
 
 Parameters:
 
-* `direction`   desired displacement for the spawned mini-bot, e.g. �-1:1�
+* `direction`   desired displacement for the spawned mini-bot, e.g. `-1:1`
 * `name`        arbitrary string, except the following characters are
-                not permitted: '|', ',', '=', '('
+                not permitted: `|`, `,`, `=`, `(`
 * `energy`      energy budget to transfer to the spawned mini-bot (minimum: 100 EU)
 
 Defaults:
 
-* `name` = "Slave_nn"   an auto-generated unique slave name
-* `energy` = 100        the minimum permissible energy
+* `name` = `Slave_nn`   an auto-generated unique slave name
+* `energy` = `100`      the minimum permissible energy
 
 Additional Parameters:
 
@@ -379,12 +388,12 @@ Additional Parameters:
   allows a master bot to "program" a mini-bot with arbitrary starting parameters.
 * The usual restrictions for strings apply (no comma, parentheses, equals sign or pipe characters).
 * The following property names are reserved and must not be used for custom properties:
-  "generation", "name", "energy", "time", "view", "direction", "master".
+  `generation`, `name`, `energy`, `time`, `view`, `direction`, `master`.
 * Properties whose values are empty strings are ignored.
 
 Example:
 
-* `"Spawn(direction=-1:1,energy=100)"` spawns a new mini-bot one cell to the left and one cell
+* `Spawn(direction=-1:1,energy=100)` spawns a new mini-bot one cell to the left and one cell
   down, with an initial energy of 100 EU.
 
 Energy Cost/Permissions:
@@ -406,7 +415,7 @@ immutable and delegating state maintenance to the server.
 
 * The usual restrictions for strings apply (no comma, parentheses, equals sign or pipe characters).
 * The following property names are reserved and must not be used for custom properties:
-  "generation", "name", "energy", "time", "view", "direction", "master".
+  `generation`, `name`, `energy`, `time`, `view`, `direction`, `master`.
 * Properties whose values are empty strings are deleted from the state properties.
 
 Energy Cost/Permissions:
@@ -432,6 +441,15 @@ Energy Cost/Permissions:
 
 
 
+
+
+## Simulation-Neutral Commands
+
+These commands, when executed by the server, do not alter the state of the game and
+do not affect the course of the simulation. They are primarily intended for debugging
+purposes.
+
+
 ### Say(text=string)
 
 Displays a little text bubble that remains at the position where it was created.
@@ -443,7 +461,7 @@ Parameters:
 
 * `text`    the message to display; maximum length: 10 chars; can be an
             arbitrary string, except the following characters are not
-            permitted: '|', ',', '=', '('
+            permitted: `|`, `,`, `=`, `(`
 
 Energy Cost/Permissions:
 
@@ -463,7 +481,40 @@ Parameters:
 
 * `text`    the message to display; maximum length: 20 chars; can be an
             arbitrary string, except the following characters are not
-            permitted: '|', ',', '=', '('
+            permitted: `|`, `,`, `=`, `(`
+
+Energy Cost/Permissions:
+
+* for master bot:   permitted, no energy consumed
+* for mini-bot:     permitted, no energy consumed
+
+
+
+### MarkCell(position=int:int,color=string)
+
+Displays a cell as marked. You can use this as a debugging tool.
+
+Parameters:
+
+* `position`  desired displacement relative to the current bot, e.g. `-2:4` (defaults to `0:0`)
+* `color`     color to use for marking the cell, using HTML color notation, e.g. `#ff8800` (default: `#8888ff`)
+
+Energy Cost/Permissions:
+
+* for master bot:   permitted, no energy consumed
+* for mini-bot:     permitted, no energy consumed
+
+
+
+### DrawLine(from=int:int,to=int:int,color=string)
+
+Draws a line. You can use this as a debugging tool.
+
+Parameters:
+
+* `from`      starting cell of the line to draw, e.g. `-2:4` (defaults to `0:0`)
+* `to`        destination cell of the line to draw, e.g. `3:-2` (defaults to `0:0`)
+* `color`     color to use for marking the cell, using HTML color notation, e.g. `#ff8800` (default: `#8888ff`)
 
 Energy Cost/Permissions:
 

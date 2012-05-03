@@ -219,7 +219,19 @@ object GameStateRenderer {
                     val color = makeTransparent(AnnihilationColor, alpha)
                     ctx.setColor(color)
                     ctx.drawOval(centerX - age, centerY - age, age * 2, age * 2)
+                
+                case markedCell: Decoration.MarkedCell =>
+                    val color = makeTransparent(Color.decode(markedCell.color), alpha)
+                    ctx.setColor(color)
+                    val radius = ctx.pixelsPerCell / 2
+                    ctx.fillOval(centerX - radius, centerY - radius, radius * 2, radius * 2)
 
+                case line: Decoration.Line =>
+                    val color = makeTransparent(Color.decode(line.color), alpha)
+                    ctx.setColor(color)
+                    val (toX, toY) = ctx.center(line.toPos)
+                    ctx.drawLine(centerX, centerY, toX, toY)
+                    
                 case _ => // OK
             }
         })

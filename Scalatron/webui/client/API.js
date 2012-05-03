@@ -80,7 +80,6 @@
         build:function (param) {
             var p = this.applyDefault("PUT", this.api.Build, param);
             Ext.Ajax.request(p);
-
         },
 
         // expects:

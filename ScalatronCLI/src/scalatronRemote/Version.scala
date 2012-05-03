@@ -4,5 +4,5 @@
 package scalatronRemote
 
 object Version {
-    val VersionString = "0.9.9.0" // version of this tool (not of remote server :-)
+    val VersionString = Version.getClass.getPackage.getImplementationVersion // version of this tool (not of remote server :-)
 }

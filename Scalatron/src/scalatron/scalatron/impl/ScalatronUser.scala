@@ -20,10 +20,11 @@ import ScalatronUser.loadConfigFile
 import ScalatronUser.updateConfigFileMulti
 import ScalatronUser.copyFile
 import ScalatronUser.writeSourceFiles
+import ScalatronUser.buildSourceFilesIntoJar
 import scalatron.scalatron.api.Scalatron.Constants._
 import java.util.Date
 import scalatron.scalatron.api.Scalatron
-import scalatron.scalatron.api.Scalatron.{ScalatronException, BuildResult, Version, SourceFile}
+import scalatron.scalatron.api.Scalatron._
 
 
 case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatron.User {
@@ -38,6 +39,7 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
 
     val sourceDirectoryPath = userDirectoryPath + "/" + UsersSourceDirectoryName
     val sourceFilePath = sourceDirectoryPath + "/" + UsersSourceFileName
+    val patchedSourceDirectoryPath = userDirectoryPath + "/" + UsersPatchedSourceDirectoryName
 
     val versionBaseDirectoryPath = userDirectoryPath + "/" + UsersVersionsDirectoryName
 
@@ -113,91 +115,78 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
     }
 
 
-    def updateSourceFiles(sourceFiles: Iterable[SourceFile]) {
+    def updateSourceFiles(transientSourceFiles: Iterable[SourceFile]) {
         // delete existing content
         deleteRecursively(sourceDirectoryPath, scalatron.verbose)
         new File(sourceDirectoryPath).mkdirs()
 
         // write source files to disk
-        writeSourceFiles(sourceDirectoryPath, sourceFiles, scalatron.verbose)
+        writeSourceFiles(sourceDirectoryPath, transientSourceFiles, scalatron.verbose)
     }
+
+
+    def buildSourceFiles(transientSourceFiles: Iterable[SourceFile]): BuildResult = {
+        /** The compile service recycles its compiler state to accelerate compilation. This results in namespace
+          * collisions if multiple users use the same fully qualified package names for their classes and submit
+          * those files for compilation. So in order to make the compiler instance recycling feasible, we need a bit
+          * of a hack: each user's classes must reside in their own namespace, which we can realize by using a
+          * package statement with a unique package name for each source code file. The user name provides a
+          * symbol that is guaranteed to be unique in this context, so we use that as the package name - verbatim.
+          * The plug-in loader knows about this hack, too, and tries to load a fully qualified class name based on
+          * the user name first. Case is significant.
+          */
+        val gameSpecificPackagePath = scalatron.game.pluginLoadSpec.gameSpecificPackagePath
+        val packagePath = gameSpecificPackagePath + "." + name
+        val packageStatementWithNewline = "package " + packagePath + "\n"
+        val patchedSourceFiles = transientSourceFiles.map(sf => {
+            val localCode = sf.code
+            // CBB: warn the user about conflicts if she embeds her own package name
+            // but if(localCode.contains("package")) ... is too dumb
+            val patchedCode = packageStatementWithNewline + localCode
+            if(scalatron.verbose) println("  patching '%s' with 'package %s'".format(sf.filename, packagePath))
+            SourceFile(sf.filename, patchedCode)
+        })
+        val messageLineAdjustment = -1
+
+        // OK, in theory, this should work:
+        //   val compileJob = CompileJob.FromMemory(patchedSourceFiles, outputDirectoryPath)
+        // but unfortunately, we're doing something wrong in setting up the virtual files to compile from,
+        // so the compiler chokes while trying to sort its dependent files by rank, or something like that.
+
+        // so, as a temporary work-around, we create temp files on disk:
+        // TODO: this code shiould probably exist within writeSourceFiles() - refactor!
+        val patchedSourceDirectory = new File(patchedSourceDirectoryPath)
+        if(!patchedSourceDirectory.exists) {
+            if(!patchedSourceDirectory.mkdirs()) {
+                System.err.println("error: cannot create patched source directory at: " + patchedSourceDirectory)
+                throw new IllegalStateException("error: cannot create patched source directory at: " + patchedSourceDirectory)
+            }
+        }
+        writeSourceFiles(patchedSourceDirectoryPath, patchedSourceFiles, scalatron.verbose)
+
+        val patchesSourceFilePaths = patchedSourceFiles.map(psf => patchedSourceDirectoryPath + "/" + psf.filename)
+        val compileJob = CompileJob.FromDisk(patchesSourceFilePaths, outputDirectoryPath)
+
+
+        // compiles source -> out, then zips out -> jar, then deletes out & returns BuildResult
+        buildSourceFilesIntoJar(
+            scalatron,
+            name,
+            patchedSourceDirectoryPath,
+            compileJob,
+            localJarDirectoryPath,
+            localJarFilePath,
+            messageLineAdjustment
+        )
+    }
+
 
 
     def buildSources(): BuildResult = {
-        scalatron.compileActorRefOpt match {
-            case None =>
-                throw new IllegalStateException("compile actor not available")
-
-            case Some(compileActorRef) =>
-                // scan for source files to compile
-                val sourceDirectory = new File(sourceDirectoryPath)
-                if( !sourceDirectory.exists() ) {
-                    throw new IllegalStateException("source directory does not exist: " + sourceDirectoryPath)
-                }
-                val sourceFiles = sourceDirectory.listFiles()
-                if( sourceFiles == null || sourceFiles.isEmpty ) {
-                    throw new IllegalStateException("source directory is empty: " + sourceDirectoryPath)
-                }
-                val sourceFileCollection = sourceFiles.map(_.getAbsolutePath)
-
-
-                // create the output directory
-                val outputDirectory = new File(outputDirectoryPath)
-                if( outputDirectory.exists() ) {
-                    // it should not exist before we start. If it does, we delete it
-                    deleteRecursively(outputDirectoryPath, scalatron.verbose)
-                }
-                outputDirectory.mkdirs()
-
-
-                // compile the source file, using an Akka Actor with a fixed time-out
-                implicit val timeout = Timeout(60 seconds)
-                val compileJob = CompileJob(sourceFileCollection, outputDirectoryPath)
-                val future = compileActorRef ? compileJob
-                val result = Await.result(future, timeout.duration)
-                val compileResult = result.asInstanceOf[CompileResult]
-
-                if( compileResult.compilationSuccessful ) {
-                    // create the .jar directory, if necessary
-                    val localJarDirectory = new File(localJarDirectoryPath)
-                    if( !localJarDirectory.exists() ) {
-                        if( !localJarDirectory.mkdirs() ) {
-                            throw new IllegalStateException("failed to create directory for .jar file: " + localJarDirectoryPath)
-                        }
-                        if( scalatron.verbose ) println("created .jar directory for '" + name + "' at: " + localJarDirectoryPath)
-                    }
-
-                    // build the .jar archive file
-                    JarBuilder(outputDirectoryPath, localJarFilePath, scalatron.verbose)
-
-                    // delete the output directory - it is no longer needed
-                    deleteRecursively(outputDirectoryPath, scalatron.verbose)
-                }
-
-                // transform compiler output into the BuildResult format expected by the Scalatron API
-                val sourceDirectoryPrefix = sourceDirectoryPath + "/"
-                BuildResult(
-                    compileResult.compilationSuccessful,
-                    compileResult.errorCount,
-                    compileResult.warningCount,
-                    compileResult.compilerMessages.map(msg => {
-                        val absoluteSourceFilePath = msg.pos.source.path
-                        val relativeSourceFilePath =
-                            if(absoluteSourceFilePath.startsWith(sourceDirectoryPrefix)) {
-                                absoluteSourceFilePath.drop(sourceDirectoryPrefix.length)
-                            } else {
-                                absoluteSourceFilePath
-                            }
-                        BuildResult.BuildMessage(
-                            relativeSourceFilePath,
-                            (msg.pos.line,msg.pos.column),
-                            msg.msg,
-                            msg.severity
-                        )}
-                    )
-                )
-        }
+        val localSourceFiles = sourceFiles        // fetch the source files from disk
+        buildSourceFiles(localSourceFiles)
     }
+
 
     def unpublishedBotPluginPath = localJarFilePath
 
@@ -299,6 +288,37 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
     }
 
 
+    def createBackupVersion(policy: VersionPolicy, label: String, updatedSourceFiles: Iterable[SourceFile]) =
+        policy match {
+            case VersionPolicy.IfDifferent =>
+                val oldSourceFiles = sourceFiles
+                val different =
+                    (oldSourceFiles.size == updatedSourceFiles.size) &&
+                        (oldSourceFiles.forall(oldSF => {
+                            updatedSourceFiles.find(_.filename == oldSF.filename) match {
+                                case None => true // file present in old, but not in new => different
+                                case Some(newSF) => newSF.code != oldSF.code // file present in old and new, so compare code
+                            }
+                        }))
+
+                if(different)
+                    Some(createVersion(label, oldSourceFiles))    // backup old files as a version
+                else
+                    None
+
+            case VersionPolicy.Always =>
+                val oldSourceFiles = sourceFiles
+                Some(createVersion(label, oldSourceFiles))       // backup old files as a version
+
+            case VersionPolicy.Never =>
+                None // OK - nothing to back up
+        }
+
+
+
+
+
+
     //----------------------------------------------------------------------------------------------
     // tournament management
     //----------------------------------------------------------------------------------------------
@@ -357,9 +377,9 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
                 val loadSpec = scalatron.game.pluginLoadSpec
                 val eitherFactoryOrException =
                     Plugin.loadFrom(
-                        name,
                         localJarFile,
-                        loadSpec.factoryClassPackage,
+                        name,
+                        loadSpec.gameSpecificPackagePath,
                         loadSpec.factoryClassName,
                         scalatron.verbose)
 
@@ -398,6 +418,94 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
 
 
 object ScalatronUser {
+    /** Builds a .jar file using the given compile job (either from disk or from in-memory files), using the output
+      * directory stored in the compile job for temporarily created .class files, storing the resulting .jar file
+      * into the given path. The first compilation in a newly started server may take rather long
+      * (parsing scala-language), so a longish timeout (60 seconds) is recommended for that case.
+      * @param scalatron reference to the Scalatron instance (for verbosity and access to CompileActor)
+      * @param sourceDirectoryPath the source directory path - no trailing slash!; used to make error messages relative
+      * @param compileJob the collection of source file paths to compile
+      * @param jarDirectoryPath the path of the directory where the zipped-up .jar file should reside; created if it does not exist
+      * @param jarFilePath the path where the zipped-up .jar file should reside
+      * @param messageLineAdjustment how much to add/remove from line number error message (because of patched-in package statement)
+      * @param timeoutInSeconds the timeout for the compile job in seconds
+      * @return a build result containing any compiler error messages that may have been generated
+      * @throws IOError when building the .jar file encounters problems
+      */
+    private def buildSourceFilesIntoJar(
+        scalatron: ScalatronImpl,
+        userName: String,
+        sourceDirectoryPath: String,
+        compileJob: CompileJob,
+        jarDirectoryPath: String,
+        jarFilePath: String,
+        messageLineAdjustment: Int,
+        timeoutInSeconds: Int = 60
+    ): BuildResult = {
+        scalatron.compileActorRefOpt match {
+            case None =>
+                throw new IllegalStateException("compile actor not available")
+
+            case Some(compileActorRef) =>
+                // create the output directory if necessary
+                val outputDirectoryPath = compileJob.outputDirectoryPath
+                val outputDirectory = new File(outputDirectoryPath)
+                if( outputDirectory.exists() ) {
+                    // it should not exist before we start. If it does, we delete it
+                    deleteRecursively(outputDirectoryPath, scalatron.verbose)
+                }
+                outputDirectory.mkdirs()
+
+
+                // compile the source file, using an Akka Actor with a fixed time-out
+                implicit val timeout = Timeout(timeoutInSeconds seconds)
+                val future = compileActorRef ? compileJob
+                val result = Await.result(future, timeout.duration)
+                val compileResult = result.asInstanceOf[CompileResult]
+
+                if( compileResult.compilationSuccessful ) {
+                    // create the .jar directory, if necessary
+                    val localJarDirectory = new File(jarDirectoryPath)
+                    if( !localJarDirectory.exists() ) {
+                        if( !localJarDirectory.mkdirs() ) {
+                            throw new IllegalStateException("failed to create directory for .jar file: " + jarDirectoryPath)
+                        }
+                        if( scalatron.verbose ) println("created .jar directory at: " + jarDirectoryPath)
+                    }
+
+                    // build the .jar archive file
+                    JarBuilder(outputDirectoryPath, jarFilePath, scalatron.verbose)
+
+                    // delete the output directory - it is no longer needed
+                    deleteRecursively(outputDirectoryPath, scalatron.verbose)
+                }
+
+                // transform compiler output into the BuildResult format expected by the Scalatron API
+                val sourceDirectoryPrefix = sourceDirectoryPath + "/"
+                BuildResult(
+                    compileResult.compilationSuccessful,
+                    compileResult.errorCount,
+                    compileResult.warningCount,
+                    compileResult.compilerMessages.map(msg => {
+                        val absoluteSourceFilePath = msg.pos.source.path
+                        val relativeSourceFilePath =
+                            if(absoluteSourceFilePath.startsWith(sourceDirectoryPrefix)) {
+                                absoluteSourceFilePath.drop(sourceDirectoryPrefix.length)
+                            } else {
+                                absoluteSourceFilePath
+                            }
+                        BuildResult.BuildMessage(
+                            relativeSourceFilePath,
+                            (msg.pos.line + messageLineAdjustment, msg.pos.column),
+                            msg.msg,
+                            msg.severity
+                        )}
+                    )
+                )
+        }
+    }
+
+
     /** Loads and parses a file with one key/val pair per line to Map[String,String].
       * Throws an exception if an error occurs. */
     def loadConfigFile(absolutePath: String) =

@@ -73,8 +73,12 @@ trait Scalatron
     def createUser(name: String, password: String, initialSourceFiles: Iterable[SourceFile]): User
 
     /** Checks if the given string would represent a valid user name by examining the characters
-      * in the string. A variety of characters are not allowed, partly for security reasons
-      * (e.g. to prevent "../", etc). */
+      * in the string. A variety of characters are not allowed primarily for the following reasons:
+      * (a) the user names are used as components of path names on disk;
+      *     this poses a security problem if we allow names that include substrings like "../"
+      * (b) the user names are used as components of package names in Scala source files;
+      *     we need to obey Scala's rules. This rules out space, dash, leading numbers, etc.
+      */
     def isUserNameValid(name: String): Boolean
 
 
@@ -243,10 +247,28 @@ object Scalatron {
           * */
         def updateSourceFiles(sourceFiles: Iterable[SourceFile])
 
+        /** Builds a local (unpublished) .jar bot plug-in from the given (in-memory) source files.
+          *
+          * Internals:
+          * - patches up the package statements to make the fully-qualified class names user-specific
+          * - compiles those source files into a temporary output directory (e.g. "/Scalatron/users/{user}/out")
+          * - if successful, zips the resulting .class files into a .jar archive in the user's bot
+          *   directory (e.g. as "/Scalatron/users/{user}/bot/ScalatronBot.jar")
+          * - deletes the temporary output directory
+          *
+          * @return a build result container, which specifies whether the build (compilation and
+          * .jar zipping) was successful, how many errors and warnings were seen, and the list of
+          * compiler messages (which include line and column number information).
+          * @throws IllegalStateException if compilation service is unavailable, sources don't exist etc.
+          * @throws IOError if source files cannot be read from disk, etc.
+          */
+        def buildSourceFiles(sourceFiles: Iterable[SourceFile]): BuildResult
+
         /** Builds a local (unpublished) .jar bot plug-in from the sources currently present in
           * the user's workspace.
           *
           * Internals:
+          * - patches up the package statements to make the fully-qualified class names user-specific
           * - enumerates the source files in the source directory of the current user (all files
           *   residing in e.g. "/Scalatron/users/{user}/src")
           * - compiles those source files into a temporary output directory (e.g. "/Scalatron/users/{user}/out")
@@ -254,7 +276,7 @@ object Scalatron {
           *   directory (e.g. as "/Scalatron/users/{user}/bot/ScalatronBot.jar")
           * - deletes the temporary output directory
           *
-          * Returns a build result container, which specifies whether the build (compilation and
+          * @return a build result container, which specifies whether the build (compilation and
           * .jar zipping) was successful, how many errors and warnings were seen, and the list of
           * compiler messages (which include line and column number information).
           * @throws IllegalStateException if compilation service is unavailable, sources don't exist etc.
@@ -289,10 +311,28 @@ object Scalatron {
 
         /** Creates a new version by storing the given source files into a version directory
           * below the 'versions' directory.
+          * @param label an optional label to apply to the version (may be empty).
+          * @param sourceFiles the source files that will be stored in the version.
           * @throws IllegalStateException if version (base) directory could not be created
           * @throws IOError if source files cannot be written to disk, etc.
           * */
         def createVersion(label: String, sourceFiles: Iterable[SourceFile]): Version
+
+        /** Creates a new version by storing a backup copy of the source files currently present in the source
+          * code directory of the user if the given version creation policy requires it. This method is intended as
+          * a convenience call you can perform before overwriting the source code in the user's workspace with
+          * new, updated source files.
+          * @param policy the version creation policy: IfDifferent, Always, Never.
+          * @param label an optional label to apply to the version (may be empty).
+          * @param sourceFiles the source files that will be used to determine whether the files on disk are
+          *                    different in the policy "IfDifferent". Note that theses are NOT the files that
+          *                    will be stored in the version!
+          * @return an optional Version object, valid if a version was actually created.
+          * @throws IllegalStateException if version (base) directory could not be created or source
+          *                               directory could not be read.
+          * @throws IOError if source files cannot be written to disk, etc.
+          * */
+         def createBackupVersion(policy: VersionPolicy, label: String, sourceFiles: Iterable[SourceFile]): Option[Version]
 
 
         //----------------------------------------------------------------------------------------------
@@ -339,6 +379,18 @@ object Scalatron {
         require(!filename.startsWith("/")) // minimize security issues
         require(!filename.contains("..")) // minimize security issues
     }
+
+
+    /** Policy used for optional version generation (e.g. when uploading new source files) that dictates whether
+      * and under which circumstances a backup version should be generated.
+      */
+    sealed trait VersionPolicy
+    object VersionPolicy {
+        case object IfDifferent extends VersionPolicy   // create version if new and old files differ
+        case object Never extends VersionPolicy         // don't create a version, even if new and old files differ
+        case object Always extends VersionPolicy        // always create a version, even if new and old files do not differ
+    }
+
 
 
     /** A container for build results that can be reported back to a user. Contains a flag
@@ -490,6 +542,7 @@ object Scalatron {
         val UsersOutputDirectoryName = "out" // e.g. in "/Scalatron/users/{user}/out"
         val UsersBotDirectoryName = "bot" // e.g. in "/Scalatron/users/{user}/bot"
         val UsersSourceDirectoryName = "src" // e.g. in "/Scalatron/users/{user}/src"
+        val UsersPatchedSourceDirectoryName = "patched" // e.g. in "/Scalatron/users/{user}/patched"
         val UsersVersionsDirectoryName = "versions" // e.g. in "/Scalatron/users/{user}/versions"
         val UsersSourceFileName = "Bot.scala" // e.g. in "/Scalatron/users/{user}/src/Bot.scala"
         val SamplesDirectoryName = "samples" // e.g. in "/Scalatron/samples"

@@ -83,7 +83,13 @@ case class PluginCollection(
                                     case None =>
                                         // there is no recyclable existing plug-in
                                         val userName = pluginDirectory.getName
-                                        val eitherFactoryOrException = Plugin.loadFrom(userName, pluginJarFile, loadSpec.factoryClassPackage, loadSpec.factoryClassName, verbose)
+                                        val eitherFactoryOrException =
+                                            Plugin.loadFrom(
+                                                pluginJarFile,
+                                                userName,
+                                                loadSpec.gameSpecificPackagePath,
+                                                loadSpec.factoryClassName,
+                                                verbose)
 
                                         eitherFactoryOrException match {
                                             case Left(controlFunctionFactory) =>
@@ -146,7 +152,13 @@ case class PluginCollection(
                             val fileTime = pluginFile.lastModified
 
                             val userName = pluginDirectory.getName
-                            val eitherFactoryOrException = Plugin.loadFrom(userName, pluginFile, loadSpec.factoryClassPackage, loadSpec.factoryClassName, verbose)
+                            val eitherFactoryOrException =
+                                Plugin.loadFrom(
+                                    pluginFile,
+                                    userName,
+                                    loadSpec.gameSpecificPackagePath,
+                                    loadSpec.factoryClassName,
+                                    verbose)
 
                             val eitherPluginOrLoadFailure = eitherFactoryOrException match {
                                 case Left(controlFunctionFactory) =>
@@ -189,7 +201,7 @@ object PluginCollection {
       */
     case class LoadSpec(
         jarFilename: String, // "ScalatronBot.jar"
-        factoryClassPackage: String, // "scalatron.botwar.botPlugin"
+        gameSpecificPackagePath: String, // "scalatron.botwar.botPlugin"
         factoryClassName: String)
 
 

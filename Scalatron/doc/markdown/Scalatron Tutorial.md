@@ -1,9 +1,9 @@
 SCALATRON - Learn Scala With Friends
-http://scalatron.wordpress.com - Twitter: @scalatron / #scalatron
+http://scalatron.github.com - Twitter: @scalatron - scalatron@hotmail.com
 This work is licensed under the Creative Commons Attribution 3.0 Unported License.
 
 Participant Documentation - Scalatron Tutorial
-Version 0.9.9 -- updated 2012-04-26
+Version 0.9.9 -- updated 2012-05-01
 
 
 
@@ -1795,7 +1795,7 @@ The modifier keyword `case` before the `class` keyword basically instructs the c
  
 * an immutable field for each parameter of the `class` definition  
 * an `equals()` method that tests equality by checking each field 
-* a `hasCode` method that takes into account each field 
+* a `hashCode` method that takes into account each field 
 * a `toString` method that takes into account each field 
 
 as well as a few others. Upgrading a `class` to a `case class` also automatically 

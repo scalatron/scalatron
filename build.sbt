@@ -2,6 +2,6 @@ organization := "Scalatron"
 
 name         := "Scalatron"
 
-version      := "0.9.9.0"
+version in Global := "0.9.9.3"
 
 scalaVersion := "2.9.1"
