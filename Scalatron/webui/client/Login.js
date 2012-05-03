@@ -47,7 +47,7 @@ Ext.onReady(function () {
                 "Content-Type":'application/json'
             },
             success:function (r) {
-                var result = JSON.parse(r.responseText);
+                var result = Ext.JSON.decode(r.responseText);
                 var combo = Ext.getCmp("userName");
                 combo.getStore().loadRawData(result.users);
                 combo.setDisabled(false);
