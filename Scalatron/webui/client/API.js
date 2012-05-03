@@ -1,8 +1,10 @@
 (function () {
 
+    /* See webclient.html
     function getUserName() {
         return Ext.util.Cookies.get("scalatron-user");
     }
+    */
 
     Ext.define('API', {
         singleton:true,
@@ -17,7 +19,7 @@
                     "Content-Type":'application/json'
                 },
                 success: function(r) {
-                    var result = JSON.parse(r.responseText);
+                    var result = Ext.JSON.decode(r.responseText);
                     var api = {};
 
                     Ext.each(result.resources, function(e) {
@@ -46,7 +48,7 @@
 
                         if(r.responseText != "") {
                             try {
-                                result = JSON.parse(r.responseText)
+                                result = Ext.JSON.decode(r.responseText)
                             } catch(e) {
                                 console.warn("URL: " + url + " Method: " + method);
                                 console.warn("Cannot parse result, Test to parse is: ", r.responseText);
@@ -66,6 +68,7 @@
         },
 
         /*
+         { "name" : "Session",       "url" : "/api/users/{user}/session" },
          { "name" : "Sources",       "url" : "/api/users/{user}/sources" },
          { "name" : "Build",         "url" : "/api/users/{user}/sources/build" },
          { "name" : "Sandboxes",     "url" : "/api/users/{user}/sandboxes" },
@@ -113,7 +116,7 @@
         },
 
         logout: function() {
-            var p = this.applyDefault("DELETE", this.api.Logout, {});
+            var p = this.applyDefault("DELETE", this.api.Session, {});
             Ext.Ajax.request(p);
         }
     });

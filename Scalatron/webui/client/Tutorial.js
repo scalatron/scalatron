@@ -27,6 +27,7 @@ Ext.define('TutorialPanel', {
         this.on('afterrender', function() {
             var hiddenFrame = this.el.createChild({
                 id: 'tutorialIFrame',
+                // Bugfix for firefox and IE
                 name: 'tutorialIFrame',
                 tag: 'iframe',
                 src: config.url,
@@ -71,7 +72,7 @@ Ext.define('TutorialPanel', {
                     var url = urls.getByKey(a.id);
                     a.href = url;
 
-                    var indexOfMarker = url.indexOf("/tutorial/tutorial")
+                    var indexOfMarker = url.indexOf("/tutorial/tutorial");
                     if(indexOfMarker > 0) {
                         // this URL points inside the tutorial
                         a.target = 'tutorialIFrame';
@@ -87,7 +88,7 @@ Ext.define('TutorialPanel', {
                     button.style.visibility = 'visible';
                     button.innerText = 'Load into Editor';
                     button.onclick = function() {
-                        var url = this.getAttribute("data-url")
+                        var url = this.getAttribute("data-url");
                         Ext.Ajax.request({
                             url: url,
                             success: function(response, opts) { Editor.setContent(response.responseText) }
