@@ -27,6 +27,8 @@ Ext.define('TutorialPanel', {
         this.on('afterrender', function() {
             var hiddenFrame = this.el.createChild({
                 id: 'tutorialIFrame',
+                // Bugfix for firefox and IE
+                name: 'tutorialIFrame',
                 tag: 'iframe',
                 src: config.url,
                 width: '0',
@@ -70,7 +72,7 @@ Ext.define('TutorialPanel', {
                     var url = urls.getByKey(a.id);
                     a.href = url;
 
-                    var indexOfMarker = url.indexOf("/tutorial/tutorial")
+                    var indexOfMarker = url.indexOf("/tutorial/tutorial");
                     if(indexOfMarker > 0) {
                         // this URL points inside the tutorial
                         a.target = 'tutorialIFrame';
