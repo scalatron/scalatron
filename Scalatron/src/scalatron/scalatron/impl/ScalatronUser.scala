@@ -24,7 +24,7 @@ import ScalatronUser.buildSourceFilesIntoJar
 import scalatron.scalatron.api.Scalatron.Constants._
 import java.util.Date
 import scalatron.scalatron.api.Scalatron
-import scalatron.scalatron.api.Scalatron.{ScalatronException, BuildResult, Version, SourceFile}
+import scalatron.scalatron.api.Scalatron._
 
 
 case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatron.User {
@@ -286,6 +286,37 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
 
         ScalatronVersion(versionId, label, date, this)
     }
+
+
+    def createBackupVersion(policy: VersionPolicy, label: String, updatedSourceFiles: Iterable[SourceFile]) =
+        policy match {
+            case VersionPolicy.IfDifferent =>
+                val oldSourceFiles = sourceFiles
+                val different =
+                    (oldSourceFiles.size == updatedSourceFiles.size) &&
+                        (oldSourceFiles.forall(oldSF => {
+                            updatedSourceFiles.find(_.filename == oldSF.filename) match {
+                                case None => true // file present in old, but not in new => different
+                                case Some(newSF) => newSF.code != oldSF.code // file present in old and new, so compare code
+                            }
+                        }))
+
+                if(different)
+                    Some(createVersion(label, oldSourceFiles))    // backup old files as a version
+                else
+                    None
+
+            case VersionPolicy.Always =>
+                val oldSourceFiles = sourceFiles
+                Some(createVersion(label, oldSourceFiles))       // backup old files as a version
+
+            case VersionPolicy.Never =>
+                None // OK - nothing to back up
+        }
+
+
+
+
 
 
     //----------------------------------------------------------------------------------------------

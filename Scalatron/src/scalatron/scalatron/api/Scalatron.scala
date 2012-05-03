@@ -311,10 +311,28 @@ object Scalatron {
 
         /** Creates a new version by storing the given source files into a version directory
           * below the 'versions' directory.
+          * @param label an optional label to apply to the version (may be empty).
+          * @param sourceFiles the source files that will be stored in the version.
           * @throws IllegalStateException if version (base) directory could not be created
           * @throws IOError if source files cannot be written to disk, etc.
           * */
         def createVersion(label: String, sourceFiles: Iterable[SourceFile]): Version
+
+        /** Creates a new version by storing a backup copy of the source files currently present in the source
+          * code directory of the user if the given version creation policy requires it. This method is intended as
+          * a convenience call you can perform before overwriting the source code in the user's workspace with
+          * new, updated source files.
+          * @param policy the version creation policy: IfDifferent, Always, Never.
+          * @param label an optional label to apply to the version (may be empty).
+          * @param sourceFiles the source files that will be used to determine whether the files on disk are
+          *                    different in the policy "IfDifferent". Note that theses are NOT the files that
+          *                    will be stored in the version!
+          * @return an optional Version object, valid if a version was actually created.
+          * @throws IllegalStateException if version (base) directory could not be created or source
+          *                               directory could not be read.
+          * @throws IOError if source files cannot be written to disk, etc.
+          * */
+         def createBackupVersion(policy: VersionPolicy, label: String, sourceFiles: Iterable[SourceFile]): Option[Version]
 
 
         //----------------------------------------------------------------------------------------------
@@ -361,6 +379,18 @@ object Scalatron {
         require(!filename.startsWith("/")) // minimize security issues
         require(!filename.contains("..")) // minimize security issues
     }
+
+
+    /** Policy used for optional version generation (e.g. when uploading new source files) that dictates whether
+      * and under which circumstances a backup version should be generated.
+      */
+    sealed trait VersionPolicy
+    object VersionPolicy {
+        case object IfDifferent extends VersionPolicy   // create version if new and old files differ
+        case object Never extends VersionPolicy         // don't create a version, even if new and old files differ
+        case object Always extends VersionPolicy        // always create a version, even if new and old files do not differ
+    }
+
 
 
     /** A container for build results that can be reported back to a user. Contains a flag

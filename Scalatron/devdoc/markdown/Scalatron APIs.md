@@ -449,6 +449,8 @@ Response JSON example:
 ### Update Source Files
 
 Updates the source code files in the user's workspace on the server.
+Optionally creates a backup version of the source files currently in the workspace before overwriting them
+with the uploaded source files.
 
 * URL:              /api/users/{user}/sources
 * Method:           PUT
@@ -467,7 +469,9 @@ Request JSON example:
         [
             { "filename" : "Bot.scala", "code" : "class ControlFunctionFactory { ... }" },
             { "filename" : "Util.scala", "code" : "class View { ... }" }
-        ]
+        ],
+        "versionPolicy" : "ifDifferent",      // or: "always", "never"
+        "versionLabel" : "before Build and Publish into Tournament"
     }
 
 Comments:
