@@ -70,6 +70,62 @@ class VersionsResource extends ResourceWithUser {
         }
     }
 
+
+    @GET
+    @Path("{id}")
+    def getVersionFiles(@PathParam("id") id: Int) = {
+        if(!userSession.isLoggedOnAsUserOrAdministrator(userName)) {
+            Response.status(CustomStatusType(HttpStatus.UNAUTHORIZED_401, "must be logged on as '" + userName + "' or '" + Scalatron.Constants.AdminUserName + "'")).build()
+        } else {
+            try {
+                scalatron.user(userName) match {
+                    case Some(user) =>
+                        user.version(id) match {
+                            case None =>
+                                Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, "version %d of user %s does not exist".format(id,userName))).build()
+                            case Some(version) =>
+                                val s = version.sourceFiles
+                                val sourceFiles = s.map(sf => SourcesResource.SourceFile(sf.filename, sf.code)).toArray
+                                SourcesResource.SourceFiles(sourceFiles)
+                        }
+                    case None =>
+                        Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, "user '" + userName + "' does not exist")).build()
+                }
+            } catch {
+                case e: IOError =>
+                    // source files could not be read
+                    Response.status(CustomStatusType(HttpStatus.INTERNAL_SERVER_ERROR_500, e.getMessage)).build()
+            }
+        }
+    }
+
+
+    @DELETE
+    @Path("{id}")
+    def deleteVersion(@PathParam("id") id: Int) = {
+        if(!userSession.isLoggedOnAsUserOrAdministrator(userName)) {
+            Response.status(CustomStatusType(HttpStatus.UNAUTHORIZED_401, "must be logged on as '" + userName + "' or '" + Scalatron.Constants.AdminUserName + "'")).build()
+        } else {
+            try {
+                scalatron.user(userName) match {
+                    case Some(user) =>
+                        user.version(id) match {
+                            case None =>
+                                Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, "version %d of user %s does not exist".format(id,userName))).build()
+                            case Some(version) =>
+                                version.delete()
+                                Response.noContent().build()
+                        }
+                    case None =>
+                        Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, "user '" + userName + "' does not exist")).build()
+                }
+            } catch {
+                case e: IOError =>
+                    // source files could not be read
+                    Response.status(CustomStatusType(HttpStatus.INTERNAL_SERVER_ERROR_500, e.getMessage)).build()
+            }
+        }
+    }
 }
 
 

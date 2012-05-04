@@ -165,7 +165,7 @@ case class ScalatronUser(
     // source code & build management
     //----------------------------------------------------------------------------------------------
 
-    def getSourceFiles: Iterable[SourceFile] = {
+    def sourceFiles: SourceFileCollection = {
         try {
             /*
            {
@@ -179,8 +179,8 @@ case class ScalatronUser(
             val sourcesResource = resource("Sources")
             val jsonOpt = scalatron.connection.GET_json(sourcesResource)
             val jsonMap = jsonOpt.asMap
-            val sourceFiles = jsonMap.asKVStrings("files", "filename", "code")
-            sourceFiles.map(sf => SourceFile(sf._1, sf._2))
+            val sourceFilePairs = jsonMap.asKVStrings("files", "filename", "code")
+            sourceFilePairs.map(sf => SourceFile(sf._1, sf._2))
         } catch {
             case e: HttpFailureCodeException =>
                 e.httpCode match {
@@ -199,12 +199,12 @@ case class ScalatronUser(
         }
     }
 
-    def updateSourceFiles(sourceFiles: Iterable[SourceFile]) {
+    def updateSourceFiles(sourceFileCollection: SourceFileCollection) {
         try {
             val sourcesResource = resource("Sources")
             val sourceFilesJson =
                 "{ \"files\" : [\n" +
-                    sourceFiles.map(sf => {
+                    sourceFileCollection.map(sf => {
                         val codeJson = JSONFormat.defaultFormatter(sf.code)
                         "{ \"filename\" : \"" + sf.filename + "\", \"code\" : " + codeJson + " }"
                     }).mkString(",\n") +
@@ -314,9 +314,9 @@ case class ScalatronUser(
         }
     }
 
-    def version(id: Int): Option[Version] = { throw new UnsupportedOperationException }
+    def version(id: Int): Option[Version] = versions.find(_.id == id)
 
-    def createVersion(label: String, sourceFiles: Iterable[SourceFile]): ScalatronVersion = {
+    def createVersion(label: String, sourceFileCollection: SourceFileCollection): ScalatronVersion = {
         try {
             /*
             {
@@ -333,7 +333,7 @@ case class ScalatronUser(
                 "{ " +
                     "\"label\" : \"" + label + "\", " +
                     "\"files\" : [\n" +
-                    sourceFiles.map(sf => {
+                    sourceFileCollection.map(sf => {
                         val codeJson = JSONFormat.defaultFormatter(sf.code)
                         "{ \"filename\" : \"" + sf.filename + "\", \"code\" : " + codeJson + " }"
                     }).mkString(",\n") +

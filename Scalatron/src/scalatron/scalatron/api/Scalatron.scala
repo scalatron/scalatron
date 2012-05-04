@@ -9,6 +9,8 @@ import scalatron.scalatron.api.Scalatron.{Sample, User, SourceFileCollection}
 import akka.actor.ActorSystem
 import scala.io.Source
 import java.io.{FileWriter, File}
+import scalatron.scalatron.impl.FileUtil
+import FileUtil.use
 
 
 /** The trait representing the main API entry point of the Scalatron server. */
@@ -436,7 +438,7 @@ object Scalatron {
                         val filename = file.getName
                         val code = Source.fromFile(file).mkString
                         if(verbose) println("loaded source code from file: '%s'".format(file.getAbsolutePath))
-                        Scalatron.SourceFile(filename, code)
+                        SourceFile(filename, code)
                     })
                 }
             }
@@ -453,9 +455,7 @@ object Scalatron {
         def writeTo(directoryPath: String, sourceFileCollection: SourceFileCollection, verbose: Boolean = false) {
             sourceFileCollection.foreach(sf => {
                 val path = directoryPath + "/" + sf.filename
-                val sourceFile = new FileWriter(path)
-                sourceFile.append(sf.code)
-                sourceFile.close()
+                use(new FileWriter(path)) { _.append(sf.code) }
                 if(verbose) println("wrote source file: " + path)
             })
         }
