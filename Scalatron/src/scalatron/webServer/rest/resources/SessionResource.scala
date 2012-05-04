@@ -55,7 +55,7 @@ class SessionResource extends ResourceWithUser {
 object SessionResource {
     def resources(userName: String) =
             Array(
-                SessionResource.ResourceLink("Session", "users/%s/session".format(userName)),
+                SessionResource.ResourceLink("Session", "/api/users/%s/session".format(userName)),
                 SessionResource.ResourceLink("Sources", "/api/users/%s/sources".format(userName)),
                 SessionResource.ResourceLink("Build", "/api/users/%s/sources/build".format(userName)),
                 SessionResource.ResourceLink("Sandboxes", "/api/users/%s/sandboxes".format(userName)),

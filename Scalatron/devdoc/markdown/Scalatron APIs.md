@@ -200,6 +200,7 @@ Response JSON example:
     {
         "resources" :
         [
+            { "name" : "Session",       "url" : "/api/users/{user}/session" },
             { "name" : "Sources",       "url" : "/api/users/{user}/sources" },
             { "name" : "Build",         "url" : "/api/users/{user}/sources/build" },
             { "name" : "Sandboxes",     "url" : "/api/users/{user}/sandboxes" },
