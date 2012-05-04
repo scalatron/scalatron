@@ -4,9 +4,9 @@
 package scalatron.scalatron.api
 
 import scalatron.scalatron.api.Scalatron.Constants._
-import scalatron.scalatron.impl.ScalatronUser
 import java.io.{IOException, File}
 import akka.actor.ActorSystem
+import scalatron.scalatron.impl.{FileUtil, ScalatronUser}
 
 
 object ScalatronDemo
@@ -233,7 +233,7 @@ object ScalatronDemo
 
         } finally {
             // delete the temporary directory
-            ScalatronUser.deleteRecursively(tmpDirPath)
+            FileUtil.deleteRecursively(tmpDirPath)
         }
     }
 }

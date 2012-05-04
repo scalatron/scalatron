@@ -8,11 +8,10 @@ import akka.actor._
 import scalatron.botwar.BotWar
 import scalatron.scalatron.api.Scalatron.Constants._
 import scalatron.scalatron.api.Scalatron
-import scalatron.scalatron.impl.ScalatronUser.writeSourceFiles
 import scalatron.Version
-import scalatron.scalatron.api.Scalatron.{ScalatronException, SourceFile, User}
 import java.text.DateFormat
 import java.util.Date
+import scalatron.scalatron.api.Scalatron.{SourceFileCollection, ScalatronException, SourceFile, User}
 
 
 object ScalatronImpl
@@ -256,7 +255,7 @@ case class ScalatronImpl(
         val adminUserConfigFile = new File(adminUserConfigFilePath)
         try {
             if(!adminUserConfigFile.exists()) {
-                ScalatronUser.updateConfigFileMulti(
+                ConfigFile.updateConfigFileMulti(
                     adminUserConfigFilePath,
                     Map(
                         "password" -> Scalatron.Constants.AdminDefaultPassword,
@@ -335,7 +334,7 @@ case class ScalatronImpl(
             System.err.println("configuration file for user '" + name + "' already exists")
             throw ScalatronException.Exists(name + ": configuration file")
         } else {
-            ScalatronUser.updateConfigFileMulti(
+            ConfigFile.updateConfigFileMulti(
                 userConfigFilePath,
                 Map(
                     "password" -> password,
@@ -428,7 +427,7 @@ case class ScalatronImpl(
             throw new IllegalStateException("could not create sample source directory: " + sampleDirectoryPath)
         }
         if(verbose) println("created sample source directory: " + sampleDirectoryPath)
-        writeSourceFiles(sampleSourceDirectoryPath, sourceFiles, verbose)
+        SourceFileCollection.writeTo(sampleSourceDirectoryPath, sourceFiles, verbose)
 
         // future: write documentation file(s) to disk
         // future: write bot file

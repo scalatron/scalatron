@@ -20,7 +20,7 @@
                 })
             }
 
-            function createPublishBuildAction(text, fn) {
+            function createPublishBuildAction(text, label, fn) {
                 return Ext.create('Ext.Action', {
                     text:text,
                     handler:function (c) {
@@ -33,7 +33,14 @@
                             Events.fireEvent("progressUpdate", { message: "Saving sources" });
 
                             API.updateSourceFiles({
-                                jsonData:{ files: [ { filename: "Bot.scala", code: botCode} ] },
+                                jsonData:{
+                                    versionLabel: label,
+                                    versionPolicy: "ifDifferent",
+                                    files: [{
+                                        filename: "Bot.scala",
+                                        code: botCode
+                                    }]
+                                },
 
                                 success:function () {
                                     Events.fireEvent("progressUpdate", { message: "Building sources" });
@@ -67,14 +74,14 @@
                 });
             }
 
-            var buildAction = createPublishBuildAction("Build");
+            var buildAction = createPublishBuildAction("Build", "before Build");
 
-            var buildAndPubAction = createPublishBuildAction('Publish into Tournament', function () {
+            var buildAndPubAction = createPublishBuildAction('Publish into Tournament', "before Publish into Tournament", function () {
                 Events.fireEvent("progressUpdate", { message: "Publishing" });
                 API.publish({});
             });
 
-            var sandbox = createPublishBuildAction('Run in Sandbox', function () {
+            var sandbox = createPublishBuildAction('Run in Sandbox', "before Run in Sandbox", function () {
                 Events.fireEvent("progressUpdate", { message: "Creating new sandbox" });
                 API.createSandbox({
                     jsonData:{
@@ -112,6 +119,8 @@
                     var botCode = Editor.getContent();
                     if (botCode) {
                         API.updateSourceFiles({
+                            versionLabel: "before Save",
+                            versionPolicy: "ifDifferent",
                             jsonData:{ files: [ { filename: "Bot.scala", code: botCode} ] },
                             success:function () {
                                 disableActions(false);

@@ -6,7 +6,6 @@ package scalatron.scalatron.impl
 
 
 import scalatron.botwar.{Config, PermanentConfig, BotWar}
-import io.Source
 import java.io._
 
 import akka.util.duration._
@@ -15,11 +14,10 @@ import akka.util.Timeout
 import akka.dispatch.Await
 
 
-import ScalatronUser.deleteRecursively
-import ScalatronUser.loadConfigFile
-import ScalatronUser.updateConfigFileMulti
-import ScalatronUser.copyFile
-import ScalatronUser.writeSourceFiles
+import FileUtil.deleteRecursively
+import FileUtil.copyFile
+import ConfigFile.loadConfigFile
+import ConfigFile.updateConfigFileMulti
 import ScalatronUser.buildSourceFilesIntoJar
 import scalatron.scalatron.api.Scalatron.Constants._
 import java.util.Date
@@ -94,38 +92,27 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
     // source code & build management
     //----------------------------------------------------------------------------------------------
 
-    def sourceFiles: Iterable[SourceFile] = {
-        val sourceDirectory = new File(sourceDirectoryPath)
-        if( !sourceDirectory.exists ) {
-            System.err.println("error: user '" + name + "' has no /src directory at: " + sourceDirectoryPath)
-            throw new IllegalStateException("no source directory found for user '" + name + "'")
+    def sourceFiles = {
+        val sourceFileCollection = SourceFileCollection.loadFrom(sourceDirectoryPath)
+        if(sourceFileCollection.isEmpty) {
+            System.err.println("error: user '" + name + "' has no source files in: '%s'".format(sourceDirectoryPath))
+            throw new IllegalStateException("no source files found for user '%s'".format(name))
         }
-
-        // read whatever is on disk now
-        val currentSourceFiles = sourceDirectory.listFiles()
-        if(currentSourceFiles==null) {
-            Iterable.empty
-        } else {
-            currentSourceFiles.filter(_.isFile).map(file => {
-                val filename = file.getName
-                val code = Source.fromFile(file).getLines().mkString("\n")
-                Scalatron.SourceFile(filename, code)
-            })
-        }
+        sourceFileCollection
     }
 
 
-    def updateSourceFiles(transientSourceFiles: Iterable[SourceFile]) {
+    def updateSourceFiles(transientSourceFiles: SourceFileCollection) {
         // delete existing content
         deleteRecursively(sourceDirectoryPath, scalatron.verbose)
         new File(sourceDirectoryPath).mkdirs()
 
         // write source files to disk
-        writeSourceFiles(sourceDirectoryPath, transientSourceFiles, scalatron.verbose)
+        SourceFileCollection.writeTo(sourceDirectoryPath, transientSourceFiles, scalatron.verbose)
     }
 
 
-    def buildSourceFiles(transientSourceFiles: Iterable[SourceFile]): BuildResult = {
+    def buildSourceFiles(transientSourceFiles: SourceFileCollection): BuildResult = {
         /** The compile service recycles its compiler state to accelerate compilation. This results in namespace
           * collisions if multiple users use the same fully qualified package names for their classes and submit
           * those files for compilation. So in order to make the compiler instance recycling feasible, we need a bit
@@ -162,7 +149,7 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
                 throw new IllegalStateException("error: cannot create patched source directory at: " + patchedSourceDirectory)
             }
         }
-        writeSourceFiles(patchedSourceDirectoryPath, patchedSourceFiles, scalatron.verbose)
+        SourceFileCollection.writeTo(patchedSourceDirectoryPath, patchedSourceFiles, scalatron.verbose)
 
         val patchesSourceFilePaths = patchedSourceFiles.map(psf => patchedSourceDirectoryPath + "/" + psf.filename)
         val compileJob = CompileJob.FromDisk(patchesSourceFilePaths, outputDirectoryPath)
@@ -233,7 +220,7 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
     }
 
 
-    def createVersion(label: String, sourceFiles: Iterable[SourceFile]): ScalatronVersion = {
+    def createVersion(label: String, sourceFiles: SourceFileCollection): ScalatronVersion = {
         val versionBaseDirectory = new File(versionBaseDirectoryPath)
         if( !versionBaseDirectory.exists ) {
             if( !versionBaseDirectory.mkdirs() ) {
@@ -267,7 +254,7 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
         updateConfigFileMulti(versionConfigFilePath, Map("label" -> label, "date" -> dateString))
 
         // write the given source files into the version directory
-        writeSourceFiles(versionDirectoryPath, sourceFiles, scalatron.verbose)
+        SourceFileCollection.writeTo(versionDirectoryPath, sourceFiles, scalatron.verbose)
 
 /*
         // 2012-04-16 was: copy the current contents of the source directory into the version directory
@@ -288,7 +275,7 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
     }
 
 
-    def createBackupVersion(policy: VersionPolicy, label: String, updatedSourceFiles: Iterable[SourceFile]) =
+    def createBackupVersion(policy: VersionPolicy, label: String, updatedSourceFiles: SourceFileCollection) =
         policy match {
             case VersionPolicy.IfDifferent =>
                 val oldSourceFiles = sourceFiles
@@ -296,21 +283,55 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
                     (oldSourceFiles.size == updatedSourceFiles.size) &&
                         (oldSourceFiles.forall(oldSF => {
                             updatedSourceFiles.find(_.filename == oldSF.filename) match {
-                                case None => true // file present in old, but not in new => different
-                                case Some(newSF) => newSF.code != oldSF.code // file present in old and new, so compare code
+                                case None =>
+                                    if(scalatron.verbose) println("VersionPolicy.IfDifferent: file no longer exists: " + oldSF.filename)
+                                    true // file present in old, but not in new => different
+                                case Some(newSF) =>
+                                    if(scalatron.verbose) {
+                                        // 2012-05-04 temp debugging information
+                                        println("VersionPolicy.IfDifferent: file still exists: " + oldSF.filename)
+                                        if(newSF.code != oldSF.code) {
+                                            println("   file contents different")
+
+                                            if(newSF.code.length != oldSF.code.length) {
+                                                println("   file sizes are different: old %d vs new %d".format(oldSF.code.length, newSF.code.length))
+                                            }
+
+                                            val newLineCount = newSF.code.lines.length
+                                            val oldLineCount = oldSF.code.lines.length
+                                            if(newLineCount > oldLineCount) {
+                                                println("   new file contains more lines: %d vs %d".format(newLineCount, oldLineCount))
+                                                val newLines = newSF.code.lines
+                                                val oldLines = oldSF.code.lines
+                                                val linesWithIndex = newLines.zip(oldLines).zipWithIndex.map(l => "%04d: %60s %60s".format(l._2, l._1._1, l._1._2))
+                                                println(linesWithIndex.mkString("\n"))
+                                            } else
+                                            if(newLineCount < oldLineCount) {
+                                                println("   old file contains more lines: %d vs %d".format(newLineCount, oldLineCount))
+                                            } else {
+                                                println("   old file and new file contain same number of lines")
+                                            }
+                                        }
+                                    }
+                                    newSF.code != oldSF.code // file present in old and new, so compare code
                             }
                         }))
 
-                if(different)
+                if(different) {
+                    if(scalatron.verbose) println("VersionPolicy.IfDifferent, files are different => creating backup version")
                     Some(createVersion(label, oldSourceFiles))    // backup old files as a version
-                else
+                } else {
+                    if(scalatron.verbose) println("VersionPolicy.IfDifferent, files are unchanged => not creating backup version")
                     None
+                }
 
             case VersionPolicy.Always =>
+                if(scalatron.verbose) println("VersionPolicy.Always => creating backup version")
                 val oldSourceFiles = sourceFiles
                 Some(createVersion(label, oldSourceFiles))       // backup old files as a version
 
             case VersionPolicy.Never =>
+                if(scalatron.verbose) println("VersionPolicy.Never => not creating backup version")
                 None // OK - nothing to back up
         }
 
@@ -503,119 +524,5 @@ object ScalatronUser {
                     )
                 )
         }
-    }
-
-
-    /** Loads and parses a file with one key/val pair per line to Map[String,String].
-      * Throws an exception if an error occurs. */
-    def loadConfigFile(absolutePath: String) =
-        Source
-        .fromFile(absolutePath).getLines()
-        .map(_.split('='))
-        .map(a => if( a.length == 2 ) (a(0), a(1)) else (a(0), ""))
-        .toMap
-
-
-    /** Loads, parses, updates and writes back a file with one key/val pair per line. */
-    def updateConfigFile(absolutePath: String, key: String, value: String) {
-        updateConfigFileMulti(absolutePath, Map(( key -> value )))
-    }
-
-    /** Loads, parses, updates and writes back a file with one key/val pair per line. */
-    def updateConfigFileMulti(absolutePath: String, kvMap: Map[String, String]) {
-
-        val updatedMap =
-            if( new File(absolutePath).exists() ) {
-                val paramMap = loadConfigFile(absolutePath)
-                paramMap ++ kvMap
-            } else {
-                kvMap
-            }
-
-        val sourceFile = new FileWriter(absolutePath)
-        updatedMap.foreach(entry => {
-            sourceFile.append(entry._1 + "=" + entry._2 + "\n")
-        })
-        sourceFile.close()
-    }
-
-    /** Recursively deletes the given directory and all of its contents (CAUTION!)
-      * @throws IllegalStateException if there is a problem deleting a file or directory
-      */
-    def deleteRecursively(directoryPath: String, verbose: Boolean = false) {
-        val directory = new File(directoryPath)
-        if( directory.exists ) {
-            // caller handles exceptions
-            if( verbose ) println("  deleting contents of directory at: " + directoryPath)
-            if( directory.isDirectory ) {
-                val filesInsideUserDir = directory.listFiles()
-                if( filesInsideUserDir != null ) {
-                    filesInsideUserDir.foreach(file => deleteRecursively(file.getAbsolutePath, verbose))
-                }
-                if( verbose ) println("  deleting directory: " + directoryPath)
-                if( !directory.delete() )
-                    throw new IllegalStateException("failed to delete directory at: " + directoryPath)
-            } else {
-                if( !directory.delete() )
-                    throw new IllegalStateException("failed to delete file: " + directory.getAbsolutePath)
-            }
-        }
-    }
-
-    /** code from http://stackoverflow.com/a/3028853
-      * @throws IOError if there is a problem reading/writing the files
-      */
-    def copyFile(from: String, to: String) {
-        def use[T <: {def close()}](closable: T)(block: T => Unit) {
-            try {
-                block(closable)
-            }
-            finally {
-                closable.close()
-            }
-        }
-
-        use(new FileInputStream(from)) {
-            in =>
-                use(new FileOutputStream(to)) {
-                    out =>
-                        val buffer = new Array[Byte](1024)
-                        Iterator.continually(in.read(buffer))
-                        .takeWhile(_ != -1)
-                        .foreach {out.write(buffer, 0, _)}
-                }
-        }
-    }
-
-
-    def loadSourceFiles(directoryPath: String): Iterable[SourceFile] = {
-        val directory = new File(directoryPath)
-
-        val sourceFiles = directory.listFiles()
-        if( sourceFiles == null || sourceFiles.isEmpty ) {
-            // no source files there!
-            Iterable.empty
-        } else {
-            // read whatever is on disk now
-            sourceFiles
-            .filter(file => file.isFile && file.getName != ConfigFilename)
-            .map(file => {
-                val filename = file.getName
-                val code = Source.fromFile(file).getLines().mkString("\n")
-                Scalatron.SourceFile(filename, code)
-            })
-        }
-    }
-
-    /** Writes the given collection of source files into the given directory, which must exist
-      * and should be empty. Throws an exception on IO errors. */
-    def writeSourceFiles(targetDirectoryPath: String, sourceCode: Iterable[SourceFile], verbose: Boolean) {
-        sourceCode.foreach(sf => {
-            val path = targetDirectoryPath + "/" + sf.filename
-            val sourceFile = new FileWriter(path)
-            sourceFile.append(sf.code)
-            sourceFile.close()
-            if( verbose ) println("wrote source file: " + path)
-        })
     }
 }

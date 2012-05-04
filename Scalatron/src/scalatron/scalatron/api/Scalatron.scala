@@ -5,8 +5,10 @@
 package scalatron.scalatron.api
 
 
-import scalatron.scalatron.api.Scalatron.{Sample, SourceFile, User}
+import scalatron.scalatron.api.Scalatron.{Sample, User, SourceFileCollection}
 import akka.actor.ActorSystem
+import scala.io.Source
+import java.io.{FileWriter, File}
 
 
 /** The trait representing the main API entry point of the Scalatron server. */
@@ -70,7 +72,7 @@ trait Scalatron
       * @throws ScalatronException.CreationFailure if the user could not be created (e.g. because /src dir could not be created).
       * @throws IOError if the user's initial source files could not be written to disk.
       */
-    def createUser(name: String, password: String, initialSourceFiles: Iterable[SourceFile]): User
+    def createUser(name: String, password: String, initialSourceFiles: SourceFileCollection): User
 
     /** Checks if the given string would represent a valid user name by examining the characters
       * in the string. A variety of characters are not allowed primarily for the following reasons:
@@ -98,7 +100,7 @@ trait Scalatron
 
     /** Creates a new sample with the given name from the given source file collection.
       * Users can employ this to share bot code across the network. */
-    def createSample(name: String, sourceFiles: Iterable[SourceFile]): Sample
+    def createSample(name: String, sourceFiles: SourceFileCollection): Sample
 
 
     //----------------------------------------------------------------------------------------------
@@ -235,7 +237,7 @@ object Scalatron {
           * @throws IllegalStateException if the source directory does not exist.
           * @throws IOError if the source files could not be read.
           */
-        def sourceFiles : Iterable[SourceFile]
+        def sourceFiles : SourceFileCollection
 
         /** Updates the source code of the given user to the given source files.
           * The updated source file(s) are written to e.g. "/Scalatron/users/{user}/src/".
@@ -245,7 +247,7 @@ object Scalatron {
           * before instructing it to build them.
           * @throws IOError if the source files could not be written.
           * */
-        def updateSourceFiles(sourceFiles: Iterable[SourceFile])
+        def updateSourceFiles(sourceFiles: SourceFileCollection)
 
         /** Builds a local (unpublished) .jar bot plug-in from the given (in-memory) source files.
           *
@@ -262,7 +264,7 @@ object Scalatron {
           * @throws IllegalStateException if compilation service is unavailable, sources don't exist etc.
           * @throws IOError if source files cannot be read from disk, etc.
           */
-        def buildSourceFiles(sourceFiles: Iterable[SourceFile]): BuildResult
+        def buildSourceFiles(sourceFiles: SourceFileCollection): BuildResult
 
         /** Builds a local (unpublished) .jar bot plug-in from the sources currently present in
           * the user's workspace.
@@ -316,7 +318,7 @@ object Scalatron {
           * @throws IllegalStateException if version (base) directory could not be created
           * @throws IOError if source files cannot be written to disk, etc.
           * */
-        def createVersion(label: String, sourceFiles: Iterable[SourceFile]): Version
+        def createVersion(label: String, sourceFiles: SourceFileCollection): Version
 
         /** Creates a new version by storing a backup copy of the source files currently present in the source
           * code directory of the user if the given version creation policy requires it. This method is intended as
@@ -332,7 +334,7 @@ object Scalatron {
           *                               directory could not be read.
           * @throws IOError if source files cannot be written to disk, etc.
           * */
-         def createBackupVersion(policy: VersionPolicy, label: String, sourceFiles: Iterable[SourceFile]): Option[Version]
+         def createBackupVersion(policy: VersionPolicy, label: String, sourceFiles: SourceFileCollection): Option[Version]
 
 
         //----------------------------------------------------------------------------------------------
@@ -368,6 +370,7 @@ object Scalatron {
     }
 
 
+
     /** Scalatron.SourceFile: trait that provides an interface for dealing with source code
       * files handed through the API.
       * CBB: do we need to specify some particular kind of encoding?
@@ -379,6 +382,88 @@ object Scalatron {
         require(!filename.startsWith("/")) // minimize security issues
         require(!filename.contains("..")) // minimize security issues
     }
+
+
+    /** Type alias for a collection of source files; each holds a filename and code. */
+    type SourceFileCollection = Iterable[SourceFile]
+
+    /** Utility methods for working with collections of source files. */
+    object SourceFileCollection
+    {
+        /** Returns an initial source file collection that incorporates the given user name.
+          * @param userName the name of the user to generate an initial source file collection for.
+          * @return a non-empty collection of SourceFile objects
+          */
+        def initial(userName: String): SourceFileCollection =
+            Iterable(SourceFile(
+                "Bot.scala",
+                "// this is the source code for your bot - have fun!\n" +
+                    "\n" +
+                    "class ControlFunctionFactory {\n" +
+                    "    def create = new Bot().respond _\n" +
+                    "}\n" +
+                    "\n" +
+                    "class Bot {\n" +
+                    "    def respond(input: String) = \"Status(text=" + userName + ")\"\n" +
+                    "}\n"
+            ))
+
+        /** Returns a collection of SourceFile objects representing source code files residing in the given directory.
+          * Excludes directories and files that have the same name as the config files ("config.txt").
+          * If the directory does not exist, is empty or does not contain valid files, an empty collection is returned.
+          * @param directoryPath the directory to scan for source files.
+          * @param verbose if true, information about the files read is logged to the console.
+          * @return a collection of SourceFile objects; may be empty
+          * @throws IOError on IO errors encountered while loading source file contents from disk
+          */
+        def loadFrom(directoryPath: String, verbose: Boolean = false): SourceFileCollection = {
+            val directory = new File(directoryPath)
+            if(!directory.exists) {
+                System.err.println("warning: directory expected to contain source files does not exist: %s".format(directoryPath))
+                Iterable.empty
+            }
+            else
+            {
+                val sourceFiles = directory.listFiles()
+                if( sourceFiles == null || sourceFiles.isEmpty ) {
+                    // no source files there!
+                    Iterable.empty
+                } else {
+                    // read whatever is on disk now
+                    sourceFiles
+                        .filter(file => file.isFile && file.getName != Constants.ConfigFilename)
+                        .map(file => {
+                        val filename = file.getName
+                        val code = Source.fromFile(file).mkString
+                        if(verbose) println("loaded source code from file: '%s'".format(file.getAbsolutePath))
+                        Scalatron.SourceFile(filename, code)
+                    })
+                }
+            }
+        }
+
+
+        /** Writes the given collection of source files into the given directory, which must exist
+          * and should be empty. Throws an exception on IO errors.
+          * @param directoryPath the directory to write the source files to.
+          * @param sourceFileCollection the collection of source files to write to disk.
+          * @param verbose if true, information about the written files is logged to the console.
+          * @throws IOError on IO errors encountered while writing source file contents to disk.
+          */
+        def writeTo(directoryPath: String, sourceFileCollection: SourceFileCollection, verbose: Boolean = false) {
+            sourceFileCollection.foreach(sf => {
+                val path = directoryPath + "/" + sf.filename
+                val sourceFile = new FileWriter(path)
+                sourceFile.append(sf.code)
+                sourceFile.close()
+                if(verbose) println("wrote source file: " + path)
+            })
+        }
+    }
+
+
+
+
 
 
     /** Policy used for optional version generation (e.g. when uploading new source files) that dictates whether
@@ -424,7 +509,7 @@ object Scalatron {
         def name: String
 
         /** Returns the source code files associated with this sample. */
-        def sourceFiles: Iterable[SourceFile]
+        def sourceFiles: SourceFileCollection
 
         /** Deletes this sample, including all associated source code files. */
         def delete()
@@ -448,7 +533,7 @@ object Scalatron {
         def user: User
 
         /** Returns the source code files associated with this version. */
-        def sourceFiles: Iterable[SourceFile]
+        def sourceFiles: SourceFileCollection
 
         /** Deletes this version, including all associated source code files. */
         def delete()
@@ -551,20 +636,6 @@ object Scalatron {
 
         val JarFilename = "ScalatronBot.jar"
         val BackupJarFilename = "ScalatronBot.backup.jar"
-
-        def initialSources(userName: String): Iterable[SourceFile] =
-            Iterable(SourceFile(
-                "Bot.scala",
-                "// this is the source code for your bot - have fun!\n" +
-                    "\n" +
-                    "class ControlFunctionFactory {\n" +
-                    "    def create = new Bot().respond _\n" +
-                    "}\n" +
-                    "\n" +
-                    "class Bot {\n" +
-                    "    def respond(input: String) = \"Status(text=" + userName + ")\"\n" +
-                    "}\n"
-            ))
     }
 
 

@@ -15,7 +15,7 @@ trait BaseServlet extends HttpServlet {
 
     def loadRelTextFile(relativePath: String) = loadAbsTextFile(relativeToAbsolutePath(relativePath))
 
-    def loadAbsTextFile(absolutePath: String) = Source.fromFile(absolutePath).getLines().mkString("\n")
+    def loadAbsTextFile(absolutePath: String) = Source.fromFile(absolutePath).mkString
 
     def relativeToAbsolutePath(relativePath: String) = {
         if(relativePath.contains(".."))

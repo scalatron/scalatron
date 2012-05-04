@@ -46,7 +46,7 @@ class UsersResource extends Resource {
             Response.status(CustomStatusType(HttpStatus.UNAUTHORIZED_401, "must be logged on as '" + Scalatron.Constants.AdminUserName + "'")).build()
         } else {
             try {
-                val user = scalatron.createUser(param.getName, param.getPassword, Scalatron.Constants.initialSources(param.getName))
+                val user = scalatron.createUser(param.getName, param.getPassword, Scalatron.SourceFileCollection.initial(param.getName))
 
                 /*
                {
