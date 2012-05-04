@@ -16,11 +16,14 @@
     <link rel="stylesheet" type="text/css" href="/ext-4.0.7/resources/css/ext-all-gray.css"/>
 
     <style type="text/css">
-        /** Enable cell line wrap for build/error consol    e **/
-        .wrap .x-grid-cell-inner {
-            white-space: normal;
-        }
+        /** Enable cell line wrap for build/error console **/
+        .wrap .x-grid-cell-inner { white-space: normal; }
     </style>
+
+    <script type="text/javascript">
+        // Hack to get the current user name. Cookie doesn't work
+        function getUserName() { return '$BotName$'; }
+    </script>
 
     <!--<script type="text/javascript" src="/ext-4.0.7/bootstrap.js"></script>-->
     <script type="text/javascript" src="/ext-4.0.7/ext-all.js"></script>
@@ -43,9 +46,11 @@
 </head>
 
 <body>
+<!-- Note that this is an old hack: ideally, a script should use the API and REST to fetch the latest sources. -->
 <pre id="editor" style="color:white;visibility:hidden">$BotSourceCode$</pre>
 
 
+<!-- This UI element will later be recycled to provide the canvas for bot debugging. -->
 <div id=botviewContainer style="visibility:hidden">
     <center><canvas id="botview" width="217" height="217"></canvas></center>
 </div>
