@@ -87,7 +87,7 @@ Ext.define('TutorialPanel', {
                     button.style.visibility = 'visible';
                     button.innerText = 'Load into Editor';
                     button.onclick = function() {
-                        var url = this.getAttribute("data-url")
+                        var url = this.getAttribute("data-url");
                         Ext.Ajax.request({
                             url: url,
                             success: function(response, opts) { Editor.setContent(response.responseText) }
