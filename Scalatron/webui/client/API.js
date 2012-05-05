@@ -118,6 +118,11 @@
         logout: function() {
             var p = this.applyDefault("DELETE", this.api.Session, {});
             Ext.Ajax.request(p);
+        },
+
+        enumVersions: function(param) {
+            var p = this.applyDefault("GET", this.api.Versions, param);
+            Ext.Ajax.request(p);
         }
     });
 
