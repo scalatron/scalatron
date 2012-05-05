@@ -27,8 +27,7 @@ Ext.define('TutorialPanel', {
         this.on('afterrender', function() {
             var hiddenFrame = this.el.createChild({
                 id: 'tutorialIFrame',
-                // Bugfix for firefox and IE
-                name: 'tutorialIFrame',
+                name: 'tutorialIFrame',     // Bugfix for firefox and IE
                 tag: 'iframe',
                 src: config.url,
                 width: '0',

@@ -86,12 +86,12 @@ Important Note:
 
     tested  /api/users/{user}/sandboxes             POST    json    json    200     401,415         Create Sandbox
     untstd  /api/users/{user}/sandboxes             DELETE  -       -       204     401,404         Delete All Sandboxes
-    tested  /api/users/{user}/sandboxes/{id}/{time} GET     -       json    200     401,404        Get Sandbox State
+    tested  /api/users/{user}/sandboxes/{id}/{time} GET     -       json    200     401,404         Get Sandbox State
 
     tested  /api/users/{user}/versions              GET     -       json    200     401,404         Get Existing Versions
     tested  /api/users/{user}/versions              POST    json    url     201     401,415         Create Version
-    n/a     /api/users/{user}/versions/{versionId}  GET     -       json    200     401,404         Get Version Files
-    n/a     /api/users/{user}/versions/{versionId}  DELETE  -       -       204     401,404         Delete Version
+    tested  /api/users/{user}/versions/{versionId}  GET     -       json    200     401,404         Get Version Files
+    tested  /api/users/{user}/versions/{versionId}  DELETE  -       -       204     401,404         Delete Version
 
     n/a     /api/samples                            GET     -       json    200     -               Get Existing Samples
     n/a     /api/samples                            POST    json    -       201     401,415         Create Sample
@@ -200,6 +200,7 @@ Response JSON example:
     {
         "resources" :
         [
+            { "name" : "Session",       "url" : "/api/users/{user}/session" },
             { "name" : "Sources",       "url" : "/api/users/{user}/sources" },
             { "name" : "Build",         "url" : "/api/users/{user}/sources/build" },
             { "name" : "Sandboxes",     "url" : "/api/users/{user}/sandboxes" },

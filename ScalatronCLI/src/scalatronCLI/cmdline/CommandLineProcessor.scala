@@ -5,12 +5,12 @@
 package scalatronCLI.cmdline
 
 import scalatronRemote.api.ScalatronRemote
-import scalatronRemote.api.ScalatronRemote.{ScalatronException, ConnectionConfig}
 import java.io.{FileWriter, File}
 import io.Source
 import scalatronRemote.Version
 import java.text.DateFormat
 import java.util.Date
+import scalatronRemote.api.ScalatronRemote.{SourceFileCollection, ScalatronException, ConnectionConfig}
 
 
 /** A command line interface for interaction with a remote Scalatron server over the RESTful HTTP API.
@@ -73,6 +73,13 @@ object CommandLineProcessor {
             println("       -sourceDir <path>       the path of the local directory where the source files can be found")
             println("       -label <name>           the label to apply to the versions (default: empty)")
             println("")
+            println("   getVersion                  retrieves the source code of the version with the given ID; as user only")
+            println("       -targetDir <path>       the path of the local directory where the source files should be stored")
+            println("       -id <int>               the version's ID")
+            println("")
+            println("   deleteVersion               deletes the version with the given ID; as user only")
+            println("       -id <int>               the version's ID")
+            println("")
             println("   benchmark                   runs standard isolated-bot benchmark on given source files; as user only")
             println("       -sourceDir <path>       the path of the local directory where the source files can be found")
             println("")
@@ -86,6 +93,8 @@ object CommandLineProcessor {
             println(" java -jar ScalatronCLI.jar -user Frankie -password a -cmd build")
             println(" java -jar ScalatronCLI.jar -user Frankie -password a -cmd versions")
             println(" java -jar ScalatronCLI.jar -user Frankie -password a -cmd createVersion -sourceDir /tempsrc -label \"updated\"")
+            println(" java -jar ScalatronCLI.jar -user Frankie -password a -cmd getVersion -targetDir /tempsrc -id 1")
+            println(" java -jar ScalatronCLI.jar -user Frankie -password a -cmd deleteVersion -id 1")
             println(" java -jar ScalatronCLI.jar -user Frankie -password a -cmd benchmark -sourceDir /tempsrc")
             System.exit(0)
         }
@@ -118,6 +127,8 @@ object CommandLineProcessor {
                         case "build" => cmd_buildSources(connectionConfig, argMap)
                         case "versions" => cmd_versions(connectionConfig, argMap)
                         case "createVersion" => cmd_createVersion(connectionConfig, argMap)
+                        case "getVersion" => cmd_getVersion(connectionConfig, argMap)
+                        case "deleteVersion" => cmd_deleteVersion(connectionConfig, argMap)
                         case "benchmark" => cmd_benchmark(connectionConfig, argMap)
                         case _ => System.err.println("unknown command: " + command)
                     }
@@ -316,25 +327,11 @@ object CommandLineProcessor {
                     (scalatron: ScalatronRemote, loggedonUser: ScalatronRemote.User, users: ScalatronRemote.UserList) => {
                         // get user source files (1 round-trip)
                         handleScalatronExceptionsFor {
-                            val targetDir = new File(targetDirPath)
-                            if(!targetDir.exists()) {
-                                if(!targetDir.mkdirs()) {
-                                    System.err.println("error: cannot create local directory '%s'".format(targetDirPath))
-                                    System.exit(-1)
-                                }
-                            }
-
-                            val sourceFiles = loggedonUser.getSourceFiles
-                            sourceFiles.foreach(sf => {
-                                val filename = sf.filename
-                                val filePath = targetDir.getAbsolutePath + "/" + filename
-                                val fileWriter = new FileWriter(filePath)
-                                fileWriter.append(sf.code)
-                                fileWriter.close()
-                            })
+                            val sourceFileCollection = loggedonUser.sourceFiles
+                            SourceFileCollection.writeTo(targetDirPath, sourceFileCollection, connectionConfig.verbose)
 
                             if(connectionConfig.verbose)
-                                println("Wrote %d source files to '%s'".format(sourceFiles.size, targetDirPath))
+                                println("Wrote %d source files to '%s'".format(sourceFileCollection.size, targetDirPath))
                         }
                     }
                 )
@@ -358,12 +355,12 @@ object CommandLineProcessor {
                     (scalatron: ScalatronRemote, loggedonUser: ScalatronRemote.User, users: ScalatronRemote.UserList) => {
                         // update user source files (1 round-trip)
                         handleScalatronExceptionsFor {
-                            val sourceFiles = readSourceFiles(sourceDirPath)
+                            val sourceFileCollection = SourceFileCollection.loadFrom(sourceDirPath)
 
-                            loggedonUser.updateSourceFiles(sourceFiles)
+                            loggedonUser.updateSourceFiles(sourceFileCollection)
 
                             if(connectionConfig.verbose)
-                                println("Updated %d source files from '%s'".format(sourceFiles.size, sourceDirPath))
+                                println("Updated %d source files from '%s'".format(sourceFileCollection.size, sourceDirPath))
                         }
                     }
                 )
@@ -395,8 +392,7 @@ object CommandLineProcessor {
     }
 
 
-    /** -command sources         gets a source files from a user workspace; user or Administrator
-      * -targetDir path         the path of the local directory where the source files should be stored
+    /** -command versions         gets a list of versions for a specific user; as user only
       */
     def cmd_versions(connectionConfig: ConnectionConfig, argMap: Map[String, String]) {
         doAsUser(
@@ -431,12 +427,91 @@ object CommandLineProcessor {
                         // update user source files (1 round-trip)
                         handleScalatronExceptionsFor {
                             val label = argMap.getOrElse("-label", "")
-                            val sourceFiles = readSourceFiles(sourceDirPath)
+                            val sourceFileCollection = SourceFileCollection.loadFrom(sourceDirPath)
 
-                            val version = loggedonUser.createVersion(label, sourceFiles)
+                            val version = loggedonUser.createVersion(label, sourceFileCollection)
 
                             if(connectionConfig.verbose)
-                                println("Create version #%d from %d source files from '%s'".format(version.id, sourceFiles.size, sourceDirPath))
+                                println("Create version #%d from %d source files from '%s'".format(version.id, sourceFileCollection.size, sourceDirPath))
+                        }
+                    }
+                )
+        }
+    }
+
+
+    /** -command getVersion         retrieves the source code of the version with the given ID; as user only
+      *     -targetDir path         the path of the local directory where the source files should be stored
+      *     -id int                 the version's ID
+      */
+    def cmd_getVersion(connectionConfig: ConnectionConfig, argMap: Map[String, String]) {
+        argMap.get("-targetDir") match {
+            case None =>
+                System.err.println("error: command 'getVersion' requires option '-targetDir'")
+                System.exit(-1)
+
+            case Some(targetDirPath) =>
+                argMap.get("-id") match {
+                    case None =>
+                        System.err.println("error: command 'getVersion' requires option '-id'")
+                        System.exit(-1)
+
+                    case Some(versionIdStr) =>
+                        val versionId = versionIdStr.toInt
+                        doAsUser(
+                            connectionConfig,
+                            argMap,
+                            (scalatron: ScalatronRemote, loggedonUser: ScalatronRemote.User, users: ScalatronRemote.UserList) => {
+                                // get user source files (1 round-trip)
+                                handleScalatronExceptionsFor {
+                                    loggedonUser.version(versionId) match {
+                                        case None =>
+                                            System.err.println("error: cannot locate version with id %d".format(versionId))
+                                            System.exit(-1)
+
+                                        case Some(version) =>
+                                            val sourceFileCollection = version.sourceFiles
+                                            SourceFileCollection.writeTo(targetDirPath, sourceFileCollection, connectionConfig.verbose)
+
+                                            if(connectionConfig.verbose)
+                                                println("Wrote %d source files to '%s'".format(sourceFileCollection.size, targetDirPath))
+                                    }
+                                }
+                            }
+                        )
+                }
+        }
+    }
+
+
+    /** -command deleteVersion      deletes the version with the given ID; as user only
+      *     -id int                 the version's ID
+      */
+    def cmd_deleteVersion(connectionConfig: ConnectionConfig, argMap: Map[String, String]) {
+        argMap.get("-id") match {
+            case None =>
+                System.err.println("error: command 'deleteVersion' requires option '-id'")
+                System.exit(-1)
+
+            case Some(versionIdStr) =>
+                val versionId = versionIdStr.toInt
+                doAsUser(
+                    connectionConfig,
+                    argMap,
+                    (scalatron: ScalatronRemote, loggedonUser: ScalatronRemote.User, users: ScalatronRemote.UserList) => {
+                        // get user source files (1 round-trip)
+                        handleScalatronExceptionsFor {
+                            loggedonUser.version(versionId) match {
+                                case None =>
+                                    System.err.println("error: cannot locate version with id %d".format(versionId))
+                                    System.exit(-1)
+
+                                case Some(version) =>
+                                    version.delete()
+
+                                    if(connectionConfig.verbose)
+                                        println("Deleted version with id %d".format(versionId))
+                            }
                         }
                     }
                 )
@@ -460,10 +535,10 @@ object CommandLineProcessor {
                     (scalatron: ScalatronRemote, loggedonUser: ScalatronRemote.User, users: ScalatronRemote.UserList) => {
                         handleScalatronExceptionsFor {
                             // update user source files (1 round-trip)
-                            val sourceFiles = readSourceFiles(sourceDirPath)
-                            loggedonUser.updateSourceFiles(sourceFiles)
+                            val sourceFileCollection = SourceFileCollection.loadFrom(sourceDirPath)
+                            loggedonUser.updateSourceFiles(sourceFileCollection)
                             if(connectionConfig.verbose)
-                                println("Updated %d source files from '%s'".format(sourceFiles.size, sourceDirPath))
+                                println("Updated %d source files from '%s'".format(sourceFileCollection.size, sourceDirPath))
 
                             // build uploaded user source files (1 round-trip)
                             val buildResult = loggedonUser.buildSources()
@@ -514,27 +589,6 @@ object CommandLineProcessor {
     //------------------------------------------------------------------------------------------------------------------
     // helpers
     //------------------------------------------------------------------------------------------------------------------
-
-    /** Reads a collection of source code files from disk, from a given directory.
-      */
-    private def readSourceFiles(sourceDirPath: String) : Iterable[ScalatronRemote.SourceFile] = {
-        val sourceDir = new File(sourceDirPath)
-        if(!sourceDir.exists()) {
-            System.err.println("error: local source directory does not exist: '%s'".format(sourceDirPath))
-            System.exit(-1)
-        }
-
-        val fileList = sourceDir.listFiles()
-        if(fileList == null || fileList.isEmpty) {
-            System.err.println("error: local source directory is empty: '%s'".format(sourceDirPath))
-            System.exit(-1)
-        }
-        fileList.map(f => {
-            val code = Source.fromFile(f).getLines().mkString("\n")
-            ScalatronRemote.SourceFile(f.getName, code)
-        })
-    }
-
 
     /** Accepts a closure; handles typical server exceptions. Exists with error code on such exceptions.
       */

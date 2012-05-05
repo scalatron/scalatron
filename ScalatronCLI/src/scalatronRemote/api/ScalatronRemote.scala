@@ -5,6 +5,8 @@ package scalatronRemote.api
 
 import ScalatronRemote._
 import scalatronRemote.impl.ScalatronRemoteImpl
+import scala.io.Source
+import java.io.{FileWriter, File}
 
 
 /** Client-side interface for the Scalatron RESTful API.
@@ -167,14 +169,14 @@ object ScalatronRemote {
           * @throws ScalatronException.NotFound if user does not exist on the server
           * @throws ScalatronException.InternalServerError if user's source files could not be read
           */
-        def getSourceFiles: Iterable[SourceFile]
+        def sourceFiles: SourceFileCollection
 
         /** Updates the sources of the given user to the given source files.
           * @throws ScalatronException.NotAuthorized if not logged on as this user or as Administrator
           * @throws ScalatronException.NotFound if user does not exist on the server
           * @throws ScalatronException.InternalServerError if user's source files could not be written
           */
-        def updateSourceFiles(sourceFiles: Iterable[SourceFile])
+        def updateSourceFiles(sourceFileCollection: SourceFileCollection)
 
         /** Builds a local (unpublished) .jar bot plug-in from the sources currently present in
           * the user's workspace.
@@ -199,13 +201,16 @@ object ScalatronRemote {
         def versions: Iterable[Version]
 
         /** Returns the version with the given ID, as a Some(Version) if it exists or None if it
-          * does not exist. Will attempt to locate the version in the approriate directory below
-          * the 'versions' directory, e.g. at "/Scalatron/users/{user}/versions/{versionId}" */
+          * does not exist. Will attempt to locate the version in the appropriate directory below
+          * the 'versions' directory, e.g. at "/Scalatron/users/{user}/versions/{versionId}".
+          * Note that the current implementation calls 'versions()' to fetch the list of versions,
+          * so if you already have that, you are better of finding the version yourself.
+          * */
         def version(id: Int): Option[Version]
 
         /** Creates a new version by storing the given source files into a version directory
           * below the 'versions' directory. */
-        def createVersion(label: String, sourceFiles: Iterable[SourceFile]): Version
+        def createVersion(label: String, sourceFileCollection: SourceFileCollection): Version
 
 
         //----------------------------------------------------------------------------------------------
@@ -251,6 +256,77 @@ object ScalatronRemote {
     }
 
 
+
+    /** Type alias for a collection of source files; each holds a filename and code. */
+    type SourceFileCollection = Iterable[SourceFile]
+
+    /** Utility methods for working with collections of source files. */
+    object SourceFileCollection
+    {
+        /** Returns a collection of SourceFile objects representing source code files residing in the given directory.
+          * Excludes directories and files that have the same name as the config files ("config.txt").
+          * If the directory does not exist, is empty or does not contain valid files, an empty collection is returned.
+          * @param directoryPath the directory to scan for source files.
+          * @param verbose if true, information about the files read is logged to the console.
+          * @return a collection of SourceFile objects; may be empty
+          * @throws IOError on IO errors encountered while loading source file contents from disk
+          */
+        def loadFrom(directoryPath: String, verbose: Boolean = false): SourceFileCollection = {
+            val directory = new File(directoryPath)
+            if(!directory.exists) {
+                System.err.println("error: directory expected to contain source files does not exist: %s".format(directoryPath))
+                System.exit(-1)
+            }
+
+            val sourceFileList = directory.listFiles()
+            if( sourceFileList == null || sourceFileList.isEmpty ) {
+                // no source files there!
+                System.err.println("error: local source directory is empty: '%s'".format(directoryPath))
+                System.exit(-1)
+            }
+
+            // read whatever is on disk now
+            sourceFileList
+                .filter(file => file.isFile)
+                .map(file => {
+                val filename = file.getName
+                val code = Source.fromFile(file).mkString
+                if(verbose) println("loaded source code from file: '%s'".format(file.getAbsolutePath))
+                SourceFile(filename, code)
+            })
+        }
+
+
+        /** Writes the given collection of source files into the given directory, which must exist
+          * and should be empty. Throws an exception on IO errors.
+          * @param directoryPath the directory to write the source files to.
+          * @param sourceFileCollection the collection of source files to write to disk.
+          * @param verbose if true, information about the written files is logged to the console.
+          * @throws IOError on IO errors encountered while writing source file contents to disk.
+          */
+        def writeTo(directoryPath: String, sourceFileCollection: SourceFileCollection, verbose: Boolean = false) {
+            val targetDir = new File(directoryPath)
+            if(!targetDir.exists()) {
+                if(!targetDir.mkdirs()) {
+                    System.err.println("error: cannot create local directory '%s'".format(directoryPath))
+                    System.exit(-1)
+                }
+            }
+
+            sourceFileCollection.foreach(sf => {
+                val path = directoryPath + "/" + sf.filename
+                val sourceFile = new FileWriter(path)
+                sourceFile.append(sf.code)
+                sourceFile.close()
+                if(verbose) println("wrote source file: " + path)
+            })
+        }
+    }
+
+
+
+
+
     /** A container for build results that can be reported back to a user. Contains a flag
       * indicating whether the build was successful (primarily: zero errors and not aborted),
       * the count of errors and warnings, and a collection of build message objects. */
@@ -284,7 +360,7 @@ object ScalatronRemote {
         def name: String
 
         /** Returns the source code files associated with this sample. */
-        def sourceFiles: Iterable[SourceFile]
+        def sourceFiles: SourceFileCollection
 
         /** Deletes this sample, including all associated source code files. */
         def delete()
@@ -308,7 +384,7 @@ object ScalatronRemote {
         def user: User
 
         /** Returns the source code files associated with this version. */
-        def sourceFiles: Iterable[SourceFile]
+        def sourceFiles: SourceFileCollection
 
         /** Deletes this version, including all associated source code files. */
         def delete()

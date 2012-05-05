@@ -76,12 +76,12 @@
 
             var buildAction = createPublishBuildAction("Build", "before Build");
 
-            var buildAndPubAction = createPublishBuildAction('Publish into Tournament', "before Publish", function () {
+            var buildAndPubAction = createPublishBuildAction('Publish into Tournament', "before Publish into Tournament", function () {
                 Events.fireEvent("progressUpdate", { message: "Publishing" });
                 API.publish({});
             });
 
-            var sandbox = createPublishBuildAction('Run in Sandbox', "before Sandbox", function () {
+            var sandbox = createPublishBuildAction('Run in Sandbox', "before Run in Sandbox", function () {
                 Events.fireEvent("progressUpdate", { message: "Creating new sandbox" });
                 API.createSandbox({
                     jsonData:{

@@ -54,6 +54,16 @@ in the public domain. Feel free to use, copy, and improve them!
 
 ## Version History
 
+### Version 0.9.9.4 -- 2012-05-04
+
+* RESTful web API and command line client now support these additional commands:
+    /api/users/{user}/versions/{versionId}  GET     Get Version Files
+    /api/users/{user}/versions/{versionId}  DELETE  Delete Version
+* fixed: on Windows in IE and Firefox, code in the editor appeared truncated to a single line (issue #22).
+* fixed: sign-out (sometimes silently) failed because it connected to the wrong REST resource (issue #27).
+* fixed: in IE and Firefox links in the tutorial opened in a new tab instead of the tutorial panel (issue #21).
+
+
 ### Version 0.9.9.3 -- 2012-05-02
 
 * new opcodes: "MarkCell()", "DrawLine()"; see Scalatron Protocol docs for details. Thanks Joachim Hofer, @johofer!

@@ -1,3 +1,4 @@
+/* 2012-05-04: merged this from chilicat to retain it for future use, but not yet activated in index.html. */
 Ext.require(['*']);
 
 Ext.onReady(function () {

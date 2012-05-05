@@ -3,11 +3,11 @@ package scalatron.scalatron.api
 import org.specs2._
 import java.io.{IOException, File}
 import akka.actor.ActorSystem
-import scalatron.scalatron.impl.ScalatronUser
 import scalatron.scalatron.api.Scalatron.Constants._
 import ScalatronApiTest._
 import org.specs2.execute.Result
 import scalatron.scalatron.api.Scalatron.BuildResult.BuildMessage
+import scalatron.scalatron.impl.{FileUtil, ScalatronUser}
 
 class ScalatronApiSpec extends mutable.Specification
 {
@@ -367,7 +367,7 @@ object ScalatronApiTest
             result
         } finally {
             // delete the temporary directory
-            ScalatronUser.deleteRecursively(tmpDirPath, verbose)
+            FileUtil.deleteRecursively(tmpDirPath, verbose)
         }
     }
 
