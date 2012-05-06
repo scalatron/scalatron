@@ -1,3 +1,4 @@
+
 (function () {
     EditorToolBar = {
         create:function () {
@@ -108,29 +109,94 @@
                 handler:function (c) {
                     disableActions(true);
                     API.logout();
-                    window.location = "/"
+                    window.location = "/";
                 }
             });
 
             var saveAction = Ext.create('Ext.Action', {
-                text: "Save",
-                handler:function (c) {
+                text: "Save...",
+
+                saveHandler: function(label) {
+                    var self = this;
+
                     disableActions(true);
                     var botCode = Editor.getContent();
                     if (botCode) {
                         API.updateSourceFiles({
+                            // Create a version of the previouse content - if different.
                             versionLabel: "before Save",
                             versionPolicy: "ifDifferent",
+                            // --
+
                             jsonData:{ files: [ { filename: "Bot.scala", code: botCode} ] },
                             success:function () {
                                 disableActions(false);
+                                Events.fireEvent("documentSaved");
 
-                                Events.fireEvent("documentSaved")
-
+                                self.saveVersion(label, botCode);
                             },
+
                             failure:errorHandler
                         });
                     }
+                },
+
+                saveVersion: function(label, botCode) {
+                    API.createVersion({
+                        jsonData:{
+                            label: label,
+                            files: [
+                                { filename: "Bot.scala", code: botCode }
+                            ]
+                        },
+                        failure: errorHandler
+                    });
+                },
+
+                handler:function (c) {
+
+                    Ext.MessageBox.prompt('Save...', 'Please enter label name:', function(btn, label) {
+                        if(btn = "ok") {
+                            c.saveHandler(label);
+                        } // else - user canceled operation.
+                    });
+
+
+                }
+            });
+
+            var revertAction = Ext.create('Ext.Action', {
+                text:"Revert...",
+                handler:function (c) {
+
+                    var el = c.getEl();
+                    var xy = el.getXY();
+                    var h = el.getHeight();
+                    var menuPosY = xy[1] + h;
+
+                    var pageDim = Ext.getBody().getViewSize();
+                    var maxHeight = pageDim.height - menuPosY - 20;
+
+                    //maxHeight = maxHeight > 600 ? 600 : maxHeight;
+
+                    var grid = VersionGrid.create(maxHeight);
+
+                    grid.loadVersions(function (versions) {
+                        var p = Ext.create("Ext.menu.Menu", {
+                            items:[ grid ],
+                            listeners: {
+
+                            }
+                        });
+
+                        grid.on({
+                            itemclick:function () {
+                                p.destroy();
+                            }
+                        });
+
+                        p.showAt(xy[0], menuPosY);
+                    });
                 }
             });
 
@@ -138,6 +204,7 @@
             actions.push(buildAction);
             actions.push(buildAndPubAction);
             actions.push(sandbox);
+            actions.push(revertAction);
 
             var spinner = {
                 xtype:"panel",
@@ -166,10 +233,10 @@
                         }
                     })
                 ]
-            }
+            };
 
 
-            return [ saveAction, "-", buildAction, "-", sandbox, "-", buildAndPubAction, "->", spinner, signOut]
+            return [ saveAction, revertAction, "-", buildAction, sandbox, buildAndPubAction, "->", spinner, signOut]
         }
     };
 

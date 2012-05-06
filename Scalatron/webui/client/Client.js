@@ -69,6 +69,13 @@ API.init(function () {
                         afterRender:function () {
                             Ext.get("editor").show();
                             Editor.init("editor");
+
+
+                            setTimeout(function() {
+                                // re-validate the layout.
+                                Ext.getCmp("root").doLayout();
+                            }, 10);
+
                         }
                     }
                 }
