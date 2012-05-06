@@ -1,6 +1,7 @@
 (function() {
     EditorModel = {
-        contentModified: true
+        // Default is false because initial content is from server.
+        contentModified: false
     };
 
     Events.on({
