@@ -123,6 +123,11 @@
         enumVersions: function(param) {
             var p = this.applyDefault("GET", this.api.Versions, param);
             Ext.Ajax.request(p);
+        },
+
+        createVersion: function(param) {
+            var p = this.applyDefault("POST", this.api.Versions, param);
+            Ext.Ajax.request(p);
         }
     });
 
