@@ -5,9 +5,11 @@ package scalatron.botwar
 
 import scalatron.scalatron.impl.Plugin
 import akka.actor.ActorSystem
-import akka.dispatch.Future
-import akka.dispatch.Await
 import akka.util.Duration
+import akka.dispatch.{ExecutionContext, Future, Await}
+import java.util.concurrent.{TimeUnit, LinkedBlockingQueue, ThreadFactory, ThreadPoolExecutor}
+import java.io.FilePermission
+import java.security.Permission
 
 
 /** Traits for generic simulations, of which a game like BotWar is an example.
@@ -24,7 +26,7 @@ object Simulation
       * @tparam R type of the result returned by the simulator (arbitrary)
       */
     trait State[S <: State[S, R], R] extends UntypedState {
-        def step(implicit actorSystem: ActorSystem) : Either[S, R]
+        def step(implicit sandboxedExecutionContext: ExecutionContext) : Either[S, R]
     }
 
 
@@ -36,7 +38,6 @@ object Simulation
         def createInitialState(randomSeed: Int, plugins: Iterable[Plugin.External]): S
     }
 
-
     /** Simulation.Runner: a generic runner for simulations that uses .step() to iteratively
       * compute new simulation states.
       * @tparam S type of the simulation state implementation (extends Simulation.State)
@@ -47,7 +48,13 @@ object Simulation
         stepCallback: S => Boolean, // callback invoked at end of every simulation step; if it returns false, the sim terminates without result
         resultCallback: (S, R) => Unit ) //  callback invoked after the end of very last simulation step
     {
-        def apply(plugins: Iterable[Plugin.External], randomSeed: Int)(implicit actorSystem: ActorSystem): Option[R] = {
+        /** @param plugins the collection of external plug-ins to bring into the simulation
+          * @param randomSeed the random seed to use for initializing the simulation
+          * @param actorSystem the actor system to use for trusted processing (not for bot processing)
+          * @param sandboxedExecutionContext execution context whose threads are sandboxed by the security manager
+          * @return an optional simulation result (if the simulation was not prematurely aborted)
+          */
+        def apply(plugins: Iterable[Plugin.External], randomSeed: Int)(implicit actorSystem: ActorSystem, sandboxedExecutionContext: ExecutionContext): Option[R] = {
             var currentState = factory.createInitialState(randomSeed, plugins) // state at entry of loop turn
             var priorStateOpt : Option[S] = None // result of state.step() at exit of prior loop turn
             var finalResult: Option[R] = None
@@ -58,15 +65,15 @@ object Simulation
                 // the callback will generally render the prior state to the screen.
 
                 // process state update, returns either next state or result
-                val stepFuture = Future { currentState.step }  // compute next state
+                val stepFuture = Future( { currentState.step(sandboxedExecutionContext) } )(actorSystem.dispatcher) // compute next state
 
                 // process callback (usually rendering) on prior state, returns true if to continue simulating, false if not
-                val callbackFuture = Future {
+                val callbackFuture = Future( {
                     priorStateOpt match {
                         case None => true // there is no state to call back about (e.g. nothing to render)
                         case Some(priorState) => stepCallback(priorState)
                     }
-                }
+                } )(actorSystem.dispatcher)
 
                 // let the processing complete
                 val stepResult = Await.result(stepFuture, Duration.Inf)

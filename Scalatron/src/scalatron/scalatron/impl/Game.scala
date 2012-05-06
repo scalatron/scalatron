@@ -1,6 +1,7 @@
 package scalatron.scalatron.impl
 
 import akka.actor.ActorSystem
+import akka.dispatch.ExecutionContext
 
 /** This material is intended as a community resource and is licensed under the
   * Creative Commons Attribution 3.0 Unported License. Feel free to use, modify and share it.
@@ -30,7 +31,7 @@ trait Game {
         rounds: Int,
         tournamentState: TournamentState,
         verbose: Boolean)
-            (implicit actorSystem: ActorSystem)
+            (implicit actorSystem: ActorSystem, sandboxedExecutionContext: ExecutionContext)
 
 
     /** Run a loop that simulates tournament rounds until the given number of rounds has been
@@ -48,6 +49,6 @@ trait Game {
         rounds: Int,
         tournamentState: TournamentState,
         verbose: Boolean)
-            (implicit actorSystem: ActorSystem)
+            (implicit actorSystem: ActorSystem, sandboxedExecutionContext: ExecutionContext)
 
 }

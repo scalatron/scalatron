@@ -12,6 +12,11 @@ import scalatron.Version
 import java.text.DateFormat
 import java.util.Date
 import scalatron.scalatron.api.Scalatron.{SourceFileCollection, ScalatronException, SourceFile, User}
+import akka.dispatch.ExecutionContext
+import java.util.concurrent.{ThreadPoolExecutor, ThreadFactory, LinkedBlockingQueue, TimeUnit}
+import akka.dispatch.ExecutionContext
+import java.security.Permission
+import java.io.FilePermission
 
 
 object ScalatronImpl
@@ -58,6 +63,17 @@ object ScalatronImpl
         if(verbose) println("Will search for sub-directories containing bot plug-ins in: " + pluginBaseDirectoryPath)
 
 
+        val sandboxUntrustedCode = argMap.get("-sandboxed").getOrElse("no") == "yes"
+        val scalatronJarFilePath = classOf[ScalatronImpl].getProtectionDomain.getCodeSource.getLocation.getPath
+        implicit val sandboxedExecutionContext = createExecutionContextForUntrustedCode(
+            scalatronJarFilePath,
+            scalatronInstallationDirectoryPath + "/out/",
+            pluginBaseDirectoryPath,
+            sandboxUntrustedCode,
+            verbose
+        )
+
+
         // prepare (but do not start) the Scalatron API entry point
         ScalatronImpl(
             game,
@@ -71,6 +87,129 @@ object ScalatronImpl
     }
 
 
+
+    /** Creates an ExecutionContext instance based on a thread pool whose threads are optionally sandboxed via a
+      * custom security manager. This execution context should be used for all invocations of untrusted code, such
+      * as that of bot plug-ins' control functions.
+      *
+      * Notes:
+      * (a) using a collection of paths (e.g. readablePathPrefixes: Iterable[String]) does not work because this will
+      *     result in a java.lang.ClassCircularityError when we check
+      *     val tryingToAccessPluginDirectory = readablePathPrefixes.find(path.startsWith).isDefined.
+      * (b) currently, threads are identified by name, which is insecure since (doh!) Thread.setName is not subject
+      *     to a SecurityManager check and thus can be invoked by plug-ins to subvert the security scheme.
+      *     To be fixed.
+      * @param applicationJarDirectoryPath a path prefix from which plug-ins may read
+      * @param applicationOutDirectoryPath a path prefix from which plug-ins may read
+      * @param pluginDirectoryPath a path prefix from which plug-ins may read
+      * @param sandboxing if true, the custom security manager is activated and plug-ins are sandboxed
+      * @param verbose if true, the custom security manager is activated and plug-ins are sandboxed
+      */
+    def createExecutionContextForUntrustedCode(
+        applicationJarDirectoryPath: String,
+        applicationOutDirectoryPath: String,
+        pluginDirectoryPath: String,
+        sandboxing: Boolean,
+        verbose: Boolean) = {
+        val availableProcessors = Runtime.getRuntime.availableProcessors
+
+        val threadCount = new java.util.concurrent.atomic.AtomicLong(0L)
+
+        case class PluginSecurityManager(
+            applicationJarDirectoryPath: String,
+            applicationOutDirectoryPath: String,
+            pluginDirectoryPath: String) extends SecurityManager {
+            override def checkPermission(perm: Permission) { check(perm) }
+            override def checkPermission(perm: Permission, context: Any) { check(perm) }
+
+            private def check(permission: Permission) {
+                val currentThread: Thread = Thread.currentThread()
+                val threadName = currentThread.getName
+
+                val isPluginThread = threadName.startsWith("SandboxedThread-")
+                if(isPluginThread) {
+                    permission match {
+                        case filePermission: FilePermission =>
+                            permission.getActions match {
+                                case "read" =>
+                                    // request for read-only access -- is the request inside permitted source directories?
+                                    val path = permission.getName
+                                    if( path.startsWith(applicationJarDirectoryPath) ||
+                                        path.startsWith(applicationOutDirectoryPath) ||
+                                        path.startsWith(pluginDirectoryPath) ) {
+                                        return // granted
+                                    }
+
+                                case _ => // denied
+                            }
+
+                        case runtimePermission: RuntimePermission =>
+                            permission.getActions match {
+                                case "read" =>
+                                    // request for read-only access -- is the request inside permitted source directories?
+                                    val path = permission.getName
+                                    if( path.startsWith(applicationJarDirectoryPath) ||
+                                        path.startsWith(applicationOutDirectoryPath) ||
+                                        path.startsWith(pluginDirectoryPath) ) {
+                                        return // granted
+                                    }
+
+                                case _ => // denied
+                            }
+
+                        case _ => // denied
+                    }
+
+                    System.err.println("warning: untrusted code was denied permission: '%s'".format(permission))
+                    throw new SecurityException("Permission denied: " + permission)
+                }
+            }
+        }
+
+        class PluginThread(target: Runnable) extends Thread(target) {
+            override def run() {
+                // System.err.println("Launching sandboxed thread: " + getName)
+                super.run()
+                // System.err.println("Sandboxed thread ending: " + getName)
+            }
+        }
+
+
+
+        val defaultThreadPool = new java.util.concurrent.ThreadPoolExecutor(
+            availableProcessors,
+            Int.MaxValue,
+            100L,
+            TimeUnit.MILLISECONDS,
+            new LinkedBlockingQueue[Runnable],
+            new ThreadFactory {
+                def newThread(runnable: Runnable) = {
+                    val t = new PluginThread(runnable)
+                    t.setName("SandboxedThread-" + threadCount.incrementAndGet)
+                    t.setDaemon(true)
+                    t
+                }
+            },
+            new ThreadPoolExecutor.CallerRunsPolicy
+        )
+
+        val sandboxedExecutionContext = ExecutionContext.fromExecutorService(defaultThreadPool)
+
+        if(sandboxing) {
+            val pluginSecurityManager =
+                new PluginSecurityManager(
+                    "/Users/dev/Scalatron/Scalatron/bin/Scalatron.jar",
+                    "/Users/dev/Scalatron/Scalatron/out/",
+                    "/Users/dev/ScalatronPrivate/_testing/bots/"
+                )
+            System.setSecurityManager(pluginSecurityManager)
+            // val priorSecurityManager = System.getSecurityManager
+            // System.setSecurityManager(priorSecurityManager)
+        }
+
+
+        sandboxedExecutionContext
+    }
 
     // try to locate a base directory for the installation, e.g. '/Scalatron'
     def detectInstallationDirectory(verbose: Boolean) = {
@@ -169,7 +308,8 @@ case class ScalatronImpl(
     pluginBaseDirectoryPath: String, // e.g. /Scalatron/bots
     tournamentState: TournamentState, // receives and accumulates tournament round results
     verbose: Boolean)
-        (implicit val actorSystem: ActorSystem)   // the Akka actor system to use, e.g. for compilation
+        (implicit val actorSystem: ActorSystem,         // the Akka actor system to use for trusted code, e.g. for compilation
+        sandboxedExecutionContext: ExecutionContext)    // the ExecutionContext to use for untrusted code, e.g. for bot control functions
     extends Scalatron
 {
     var compileActorRefOpt: Option[ActorRef] = None

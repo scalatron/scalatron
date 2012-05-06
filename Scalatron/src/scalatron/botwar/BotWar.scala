@@ -9,6 +9,7 @@ import java.awt.event.{WindowEvent, WindowAdapter, KeyEvent, KeyListener}
 import scalatron.scalatron.api.Scalatron
 import scalatron.scalatron.impl.{TournamentRoundResult, TournamentState, Plugin, PluginCollection, Game}
 import akka.actor.ActorSystem
+import akka.dispatch.ExecutionContext
 
 
 /** BotWar: an implementation of the Scalatron Game trait.
@@ -30,7 +31,7 @@ case object BotWar extends Game
         rounds: Int,
         tournamentState: TournamentState,   // receives tournament round results
         verbose: Boolean)
-            (implicit actorSystem: ActorSystem)
+            (implicit actorSystem: ActorSystem, sandboxedExecutionContext: ExecutionContext)
     {
         // determine the permanent configuration for the game
         val permanentConfig = PermanentConfig.fromArgMap(argMap)
@@ -109,7 +110,7 @@ case object BotWar extends Game
 
             // run game
             val runner = Simulation.Runner(factory, stepCallback, resultCallback)
-            runner(plugins, randomSeed)
+            runner(plugins, randomSeed)(actorSystem, sandboxedExecutionContext)
 
             roundIndex += 1
 
@@ -126,7 +127,7 @@ case object BotWar extends Game
         rounds: Int,
         tournamentState: TournamentState,   // receives tournament round results
         verbose: Boolean)
-            (implicit actorSystem: ActorSystem)
+            (implicit actorSystem: ActorSystem, sandboxedExecutionContext: ExecutionContext)
     {
         // determine the permanent configuration for the game
         val permanentConfig = PermanentConfig.fromArgMap(argMap)
@@ -178,7 +179,7 @@ case object BotWar extends Game
 
             // run game
             val runner = Simulation.Runner(factory, stepCallback, resultCallback)
-            runner(plugins, randomSeed)
+            runner(plugins, randomSeed)(actorSystem, sandboxedExecutionContext)
 
             roundIndex += 1
 

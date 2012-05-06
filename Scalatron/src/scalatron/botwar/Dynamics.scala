@@ -5,24 +5,21 @@ package scalatron.botwar
 
 import scala.util.Random
 import scalatron.scalatron.impl.TournamentRoundResult
-import akka.actor.ActorSystem
-import akka.dispatch.Future
-import akka.util.duration._
-import akka.dispatch.Await
-import akka.util.{Duration, Timeout}
+import akka.util.Duration
+import akka.dispatch._
 
 
 /** Game dynamics. Function that, when applied to a game state, returns either a successor
- *  game state or a game result.
- */
-case object Dynamics extends ((State, Random, ActorSystem) => Either[State,TournamentRoundResult])
+  *  game state or a game result.
+  */
+case object Dynamics extends ((State, Random, ExecutionContext) => Either[State,TournamentRoundResult])
 {
-    def apply(state: State, rnd: Random, actorSystem: ActorSystem) = {
+    def apply(state: State, rnd: Random, sandboxedExecutionContext: ExecutionContext) = {
         // determine which bots are eligible to move in the nest step
         val eligibleBots = computeEligibleBots(state)
 
         // have each bot compute its command
-        val botCommandsAndTimes = computeBotCommands(state, eligibleBots)(actorSystem)
+        val botCommandsAndTimes = computeBotCommands(state, eligibleBots)(sandboxedExecutionContext) // was: actorSystem
 
         // store time taken with each bot
         var updatedBoard = state.board
@@ -103,7 +100,7 @@ case object Dynamics extends ((State, Random, ActorSystem) => Either[State,Tourn
 
 
     // returns a collection of tuples: (id, (nanoSeconds, commandList))
-    def computeBotCommands(state: State, eligibleBots: Iterable[Bot])(implicit actorSystem: ActorSystem): Iterable[(Entity.Id,(Long,String,Iterable[Command]))] = {
+    def computeBotCommands(state: State, eligibleBots: Iterable[Bot])(implicit sandboxedExecutionContext: ExecutionContext): Iterable[(Entity.Id,(Long,String,Iterable[Command]))] = {
         // use Akka to work this out
         val future = Future.traverse(eligibleBots)(bot => Future {
             try {
