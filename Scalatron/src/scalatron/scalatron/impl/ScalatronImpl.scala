@@ -5,13 +5,14 @@ package scalatron.scalatron.impl
 
 import java.io._
 import akka.actor._
-import scalatron.botwar.BotWar
 import scalatron.scalatron.api.Scalatron.Constants._
 import scalatron.scalatron.api.Scalatron
 import scalatron.Version
 import java.text.DateFormat
 import java.util.Date
 import scalatron.scalatron.api.Scalatron.{SourceFileCollection, ScalatronException, SourceFile, User}
+import scalatron.game.{TournamentState, Game}
+import java.net.URLClassLoader
 
 
 object ScalatronImpl
@@ -27,15 +28,22 @@ object ScalatronImpl
       * @return
       */
     def apply(argMap: Map[String, String], verbose: Boolean)(implicit actorSystem: ActorSystem): Scalatron = {
-        // find out which game variant the server should host, since, in theory, the game may be configurable some day
-        val gameName = argMap.get("-game").getOrElse("BotWar")
-        val game = gameName match {
-            case "BotWar" => BotWar
-            case _ => throw new IllegalArgumentException("unknown game name: " + gameName)
-        }
-
         // try to locate a base directory for the installation, e.g. '/Scalatron'
         val scalatronInstallationDirectoryPath = detectInstallationDirectory(verbose)
+
+
+        // find out which game variant the server should host, since, in theory, the game may be configurable some day
+        val gameName = argMap.get("-game").getOrElse("BotWar")
+
+        val gamePluginJarFilePath = scalatronInstallationDirectoryPath + "/" + gameName + ".jar"
+        val game = loadGameFactoryFromJar(gamePluginJarFilePath, verbose) match {
+            case Left(gameFactory) => gameFactory.apply()
+            case Right(throwable) =>
+                System.err.println("error: failed to load game factory from plugin '%s': %s".format(gamePluginJarFilePath, throwable.toString))
+                throw throwable
+        }
+
+
 
 
         // extract the web user base directory from the command line ("/users")
@@ -71,6 +79,55 @@ object ScalatronImpl
     }
 
 
+    /** Loads a Game-implementing plug-in from disk and returns a Game-creating factory function.
+      * @param pluginFilePath the path to the Game-implementing plug-in
+      * @param verbose if true, verbose logging is enabled
+      * @return a factory function that creates a Game instance
+      */
+    private def loadGameFactoryFromJar(pluginFilePath: String, verbose: Boolean): Either[() => Game, Throwable] =
+    {
+        // TODO: think about sandboxing Game plug-ins to prevent them from accessing sensitive stuff. See
+        val classLoader =
+            try {
+                val pluginFile = new File(pluginFilePath)
+                new URLClassLoader(Array(pluginFile.toURI.toURL), this.getClass.getClassLoader)
+            } catch {
+                case t: Throwable => return Right(t)
+            }
+
+        val classNamesWithPackagePathsToTry = Iterable("scalatron.botwar.GameFactory")
+        val methodName = "create"
+
+        // can't return from a .foreach to shortcircuit, throws scala.runtime.NonLocalReturnControl; so we iterate manually
+        var lastError: Option[Throwable] = None
+        val iterator = classNamesWithPackagePathsToTry.iterator
+        while(iterator.hasNext) {
+            val classNamesWithPackagePath = iterator.next()
+            try {
+                if(verbose) println("info: will try to load class '%s' from plug-in '%s'...".format(classNamesWithPackagePath, pluginFilePath))
+                val factoryClass = Class.forName(classNamesWithPackagePath, true, classLoader)
+
+                if(verbose) println("info: class '%s' loaded, will try to find method '%s'...".format(classNamesWithPackagePath, methodName))
+                val factoryMethod = factoryClass.getMethod(methodName)
+
+                if(verbose) println("info: method '%s' found, will try to instantiate factory...".format(methodName))
+                val factory = factoryClass.newInstance()
+                val factoryFunction: () => Game = () => factoryMethod.invoke(factory).asInstanceOf[Game]
+
+                if(verbose) println("info: successfully loaded class '%s' from plug-in '%s'...".format(classNamesWithPackagePath, pluginFilePath))
+                return Left(factoryFunction)
+            } catch {
+                case t: Throwable =>
+                    lastError = Some(t)
+                    if(verbose) println("info: failed to load class '%s' from plug-in '%s'...: %s".format(classNamesWithPackagePath, pluginFilePath, t.toString))
+            }
+        }
+
+        lastError match {
+            case Some(t) => Right(t)
+            case None => Right(new IllegalStateException("none of the factory class candidates found in '%s': %s".format(pluginFilePath, classNamesWithPackagePathsToTry.mkString(", "))))
+        }
+    }
 
     // try to locate a base directory for the installation, e.g. '/Scalatron'
     def detectInstallationDirectory(verbose: Boolean) = {

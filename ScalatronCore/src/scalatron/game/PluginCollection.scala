@@ -1,4 +1,4 @@
-package scalatron.scalatron.impl
+package scalatron.game
 
 /** This material is intended as a community resource and is licensed under the
   * Creative Commons Attribution 3.0 Unported License. Feel free to use, modify and share it.
@@ -6,7 +6,6 @@ package scalatron.scalatron.impl
 
 
 import java.io.File
-import PluginCollection.LoadSpec
 
 
 /** A container class holding plug-in directory scan results. The container is configured to
@@ -14,9 +13,9 @@ import PluginCollection.LoadSpec
   * starts out with an empty plug-in load result collection.
   * Each time a game round is about to begin, the collection is updated via a call to
   * 'rescan()' and incrementally:
-  *     (a) re-loads all updated plug-ins
-  *     (b) loads all newly published plug-ins (new on disk)
-  *     (c) flushes all newly removed plug-ins (gone on disk)
+  * (a) re-loads all updated plug-ins
+  * (b) loads all newly published plug-ins (new on disk)
+  * (c) flushes all newly removed plug-ins (gone on disk)
   * @param pluginDirectoryPath e.g. "/Users/Scalatron/Scalatron/bots" (no terminating slasgh)
   * @param loadSpec game-specific details about where to load plug-ins from
   * @param verbose if true, plug-in loading progress will be printed verbosely
@@ -24,18 +23,19 @@ import PluginCollection.LoadSpec
   */
 case class PluginCollection(
     pluginDirectoryPath: String,
-    loadSpec: LoadSpec,
+    loadSpec: PluginLoadSpec,
     verbose: Boolean,
-    loadResults: Iterable[Either[Plugin.External, Plugin.LoadFailure]]) {
+    loadResults: Iterable[Either[Plugin.External, Plugin.LoadFailure]])
+{
     def plugins: Iterable[Plugin.External] = loadResults.filter(_.isLeft).map(_.left.get)
 
     def loadFailures: Iterable[Plugin.LoadFailure] = loadResults.filter(_.isRight).map(_.right.get)
 
 
     /** Rescans the plug-in base directory for plug-ins incrementally:
-      *     (a) re-loads all updated plug-ins
-      *     (b) loads all newly published plug-ins (new on disk)
-      *     (c) flushes all newly removed plug-ins (gone on disk)
+      * (a) re-loads all updated plug-ins
+      * (b) loads all newly published plug-ins (new on disk)
+      * (c) flushes all newly removed plug-ins (gone on disk)
       * It does so by building a new load result list from scratch based on scanning the
       * directories on disk, but it only re-loads plugins if their file date changed.
       */
@@ -56,7 +56,7 @@ case class PluginCollection(
         val pluginParentDirectory = new File(pluginDirectoryPath)
         val pluginDirectories = pluginParentDirectory.listFiles()
 
-        if( pluginDirectories == null ) {
+        if(pluginDirectories == null) {
             System.err.println("Plug-in parent directory not valid: '" + pluginDirectoryPath + "'")
             PluginCollection(pluginDirectoryPath, loadSpec, verbose)
         } else {
@@ -74,7 +74,7 @@ case class PluginCollection(
                     val pluginJarFile = new File(pluginJarFilePath)
 
                     try {
-                        if( pluginJarFile.exists() ) {
+                        if(pluginJarFile.exists()) {
                             val fileTime = pluginJarFile.lastModified
 
                             // does this plug-in already exist?
@@ -133,7 +133,7 @@ case class PluginCollection(
         val pluginParentDirectory = new File(pluginDirectoryPath)
         val pluginDirectories = pluginParentDirectory.listFiles()
 
-        if( pluginDirectories == null ) {
+        if(pluginDirectories == null) {
             println("Plugin parent directory not valid: '" + pluginDirectoryPath + "'")
             PluginCollection(pluginDirectoryPath, loadSpec, verbose)
         } else {
@@ -148,7 +148,7 @@ case class PluginCollection(
                     val pluginFilePath = pluginDirectoryPath + "/" + pluginJarFilename
                     try {
                         val pluginFile = new File(pluginFilePath)
-                        if( pluginFile.exists() ) {
+                        if(pluginFile.exists()) {
                             val fileTime = pluginFile.lastModified
 
                             val userName = pluginDirectory.getName
@@ -189,21 +189,8 @@ case class PluginCollection(
 }
 
 
-object PluginCollection {
-    def apply(pluginDirectoryPath: String, loadSpec: LoadSpec, verbose: Boolean): PluginCollection =
+object PluginCollection
+{
+    def apply(pluginDirectoryPath: String, loadSpec: PluginLoadSpec, verbose: Boolean): PluginCollection =
         PluginCollection(pluginDirectoryPath, loadSpec, verbose, Iterable.empty)
-
-
-    /** PluginCollection.LoadSpec:
-      * a plug-in loading specification specifies from where plugins should be loaded and which
-      * class should be extracted. They are game-specific (e.g. to the game BotWar running within
-      * the Scalatron server) and are provided by the game factory.
-      */
-    case class LoadSpec(
-        jarFilename: String, // "ScalatronBot.jar"
-        gameSpecificPackagePath: String, // "scalatron.botwar.botPlugin"
-        factoryClassName: String)
-
-
-    // "ControlFunctionFactory"
 }

@@ -1,4 +1,4 @@
-package scalatron.scalatron.impl
+package scalatron.game
 
 /** This material is intended as a community resource and is licensed under the
   * Creative Commons Attribution 3.0 Unported License. Feel free to use, modify and share it.
@@ -12,23 +12,31 @@ import java.io.File
 /** A plugin contains the name of the player that created it (derived from the plugin
   * directory name) as well the control function factory that was loaded from it.
   */
-trait Plugin {
-    def name: String // "daniel"
-    def controlFunctionFactory: () => ( String => String ) // control function factory
+trait Plugin
+{
+    def name: String
+    // "daniel"
+    def controlFunctionFactory: () => (String => String)
+    // control function factory
     override def toString = name
 }
 
 
-object Plugin {
+object Plugin
+{
 
 
     /** Information about where an external plug-in was loaded from, or where a plug-in
       * was attempted to be loaded from when a load failure occurred.
       */
-    trait DiskInfo {
-        def dirPath: String // e.g. "/Users/Scalatron/Scalatron/bots/Daniel" (no terminal slash)
-        def filePath: String // e.g. "/Users/Scalatron/Scalatron/bots/Daniel/ScalatronBot.jar"
-        def fileTime: Long // milliseconds since the epoch, as returned by File.lastModified()
+    trait DiskInfo
+    {
+        def dirPath: String
+        // e.g. "/Users/Scalatron/Scalatron/bots/Daniel" (no terminal slash)
+        def filePath: String
+        // e.g. "/Users/Scalatron/Scalatron/bots/Daniel/ScalatronBot.jar"
+        def fileTime: Long
+        // milliseconds since the epoch, as returned by File.lastModified()
         override def toString = filePath
     }
 
@@ -39,7 +47,7 @@ object Plugin {
       * disk but instantiated from a collection of functions configured within the server itself.
       * Use e.g. to debug complex bots.
       */
-    case class Internal(name: String, controlFunctionFactory: () => ( String => String )) extends Plugin
+    case class Internal(name: String, controlFunctionFactory: () => (String => String)) extends Plugin
 
 
     /** Plugin.External:
@@ -55,8 +63,9 @@ object Plugin {
         filePath: String,
         fileTime: Long,
         name: String,
-        controlFunctionFactory: () => ( String => String ))
-        extends Plugin with DiskInfo {
+        controlFunctionFactory: () => (String => String))
+        extends Plugin with DiskInfo
+    {
         override def toString = filePath
     }
 
@@ -67,7 +76,8 @@ object Plugin {
       * @param fileTime milliseconds since the epoch, as returned by File.lastModified()
       * @param exception the exception that caused/explains the load failure
       */
-    case class LoadFailure(dirPath: String, filePath: String, fileTime: Long, exception: Throwable) extends DiskInfo {
+    case class LoadFailure(dirPath: String, filePath: String, fileTime: Long, exception: Throwable) extends DiskInfo
+    {
         override def toString = exception + ": " + filePath
     }
 
@@ -85,7 +95,7 @@ object Plugin {
         userName: String,
         gameSpecificPackagePath: String,
         factoryClassName: String,
-        verbose: Boolean): Either[() => ( String => String ), Throwable] =
+        verbose: Boolean): Either[() => (String => String), Throwable] =
     {
         /** For regular tournament operation it would be OK to use any fixed package name on the factory class
           * (including no package statement at all). The compile service, however, recycles its compiler state
@@ -126,7 +136,7 @@ object Plugin {
     private def loadFactoryClassFromJar(
         jarFile: File,
         classNamesWithPackagePathsToTry: Iterable[String],
-        verbose: Boolean): Either[() => ( String => String ),Throwable] =
+        verbose: Boolean): Either[() => (String => String), Throwable] =
     {
         /** TODO: think about sandboxing plug-ins to prevent them from accessing sensitive stuff. See
           * http://stackoverflow.com/questions/3947558/java-security-sandboxing-plugins-loaded-via-urlclassloader
@@ -155,7 +165,7 @@ object Plugin {
 
                 if(verbose) println("info: method '%s' found, will try to instantiate factory...".format(methodName))
                 val factory = factoryClass.newInstance()
-                val factoryFunction: () => ( String => String ) = () => factoryMethod.invoke(factory).asInstanceOf[( String => String )]
+                val factoryFunction: () => (String => String) = () => factoryMethod.invoke(factory).asInstanceOf[(String => String)]
 
                 if(verbose) println("info: successfully loaded class '%s' from plug-in '%s'...".format(classNamesWithPackagePath, pluginFilePath))
                 return Left(factoryFunction)

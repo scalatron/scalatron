@@ -5,12 +5,12 @@ package scalatron.botwar.renderer
 
 import scalatron.botwar.Display.RenderTarget
 
-import scalatron.scalatron.impl.{TournamentState, TournamentRoundResult}
 import scalatron.botwar._
 import akka.actor.ActorSystem
 import akka.dispatch.{Await, Future}
 import akka.util.Duration
 import java.awt.Color
+import scalatron.game.TournamentState
 
 
 object Renderer {

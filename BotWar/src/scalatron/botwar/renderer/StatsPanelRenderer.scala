@@ -4,8 +4,8 @@
 package scalatron.botwar.renderer
 
 import java.awt.{Font, Color}
-import scalatron.scalatron.impl.TournamentState
 import scalatron.botwar.{PermanentConfig, State}
+import scalatron.game.TournamentState
 
 
 object StatsPanelRenderer

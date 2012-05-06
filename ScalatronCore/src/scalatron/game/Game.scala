@@ -1,4 +1,4 @@
-package scalatron.scalatron.impl
+package scalatron.game
 
 import akka.actor.ActorSystem
 
@@ -6,11 +6,12 @@ import akka.actor.ActorSystem
   * Creative Commons Attribution 3.0 Unported License. Feel free to use, modify and share it.
   */
 /** Base trait for game implementations that run within a Scalatron server (e.g. BotWar). */
-trait Game {
+trait Game
+{
     def name: String // e.g. "BotWar"
 
     /** The parameters of this game that are relevant for loading plug-ins (e.g. game name). */
-    def pluginLoadSpec: PluginCollection.LoadSpec
+    def pluginLoadSpec: PluginLoadSpec
 
     /** Dump the game-specific command line configuration options via println. */
     def printArgList()

@@ -3,11 +3,11 @@
   */
 package scalatron.botwar
 
-import scalatron.scalatron.impl.Plugin
 import akka.actor.ActorSystem
 import akka.dispatch.Future
 import akka.dispatch.Await
 import akka.util.Duration
+import scalatron.game.Plugin
 
 
 /** Traits for generic simulations, of which a game like BotWar is an example.

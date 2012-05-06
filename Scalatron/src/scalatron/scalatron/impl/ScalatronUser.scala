@@ -5,7 +5,6 @@ package scalatron.scalatron.impl
   */
 
 
-import scalatron.botwar.{Config, PermanentConfig, BotWar}
 import java.io._
 
 import akka.util.duration._
@@ -23,6 +22,7 @@ import scalatron.scalatron.api.Scalatron.Constants._
 import java.util.Date
 import scalatron.scalatron.api.Scalatron
 import scalatron.scalatron.api.Scalatron._
+import scalatron.game.Plugin
 
 
 case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatron.User {

@@ -6,9 +6,8 @@ package scalatron.botwar
 import renderer.Renderer
 import scalatron.botwar.BotWarSimulation.SimState
 import java.awt.event.{WindowEvent, WindowAdapter, KeyEvent, KeyListener}
-import scalatron.scalatron.api.Scalatron
-import scalatron.scalatron.impl.{TournamentRoundResult, TournamentState, Plugin, PluginCollection, Game}
 import akka.actor.ActorSystem
+import scalatron.game._
 
 
 /** BotWar: an implementation of the Scalatron Game trait.
@@ -18,8 +17,8 @@ case object BotWar extends Game
     val name = Constants.GameName
 
     val pluginLoadSpec =
-        PluginCollection.LoadSpec(
-            Scalatron.Constants.JarFilename,          // "ScalatronBot.jar"
+        PluginLoadSpec(
+            "ScalatronBot.jar",         // TODO: was: Scalatron.Constants.JarFilename
             "scalatron.botwar.botPlugin",
             "ControlFunctionFactory")
 

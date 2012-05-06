@@ -4,7 +4,7 @@
 package scalatron.botwar
 
 import State.Time
-import scalatron.scalatron.impl.Plugin
+import scalatron.game.Plugin
 
 
 /** Game state storing the current (game) time, the board parameters, the actual board (i.e.

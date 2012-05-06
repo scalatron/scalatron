@@ -5,7 +5,6 @@ package scalatron.main
 
 import scalatron.Version
 import scalatron.webServer.WebServer
-import scalatron.botwar.BotWar
 import scalatron.scalatron.api.Scalatron
 import akka.actor._
 
@@ -37,7 +36,6 @@ object Main {
 
         // find out if we should provide verbose output
         val verbose = (argMap.get("-verbose").getOrElse("no") == "yes")
-
 
         // prepare the Akka actor system to be used by the various servers of the application
         implicit val actorSystem = ActorSystem("Scalatron")
@@ -73,12 +71,11 @@ object Main {
         println("  -rounds <int>            run this many tournament rounds, then exit (default: unlimited)")
         println("  -headless yes|no         run without visual output (default: no)")
         println("  -verbose yes|no          print verbose output (default: no)")
+        println("  -game <name>             the game plug-in to load and run (default: BotWar)")
         WebServer.printArgList()
-        BotWar.printArgList()
-
-        // undocumented for the moment:
-        // println("  -game <name>             the game variant to host (default: BotWar)")
+        // TODO: was: BotWar.printArgList()
     }
 }
+
 
 

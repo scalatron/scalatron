@@ -4,8 +4,8 @@
 package scalatron.botwar
 
 import scala.util.Random
-import scalatron.scalatron.impl.{Plugin, TournamentRoundResult}
 import akka.actor.ActorSystem
+import scalatron.game.{Plugin, TournamentRoundResult}
 
 
 /** Implementations of generic Simulation traits for the BotWar game. */

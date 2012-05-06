@@ -6,8 +6,7 @@ import akka.actor.ActorSystem
 import scalatron.scalatron.api.Scalatron.Constants._
 import ScalatronApiTest._
 import org.specs2.execute.Result
-import scalatron.scalatron.api.Scalatron.BuildResult.BuildMessage
-import scalatron.scalatron.impl.{FileUtil, ScalatronUser}
+import scalatron.scalatron.impl.FileUtil
 
 class ScalatronApiSpec extends mutable.Specification
 {

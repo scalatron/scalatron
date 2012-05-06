@@ -5,8 +5,8 @@ package scalatron.botwar
 
 import State.Time
 import scala.util.Random
-import scalatron.scalatron.impl.Plugin
 import BoardParams.Perimeter
+import scalatron.game.Plugin
 
 
 /** Contains the temporally variable aspects of the game state.

@@ -3,8 +3,7 @@
   */
 package scalatron.botwar
 
-import internalPlugins.SimpleBot.SimpleBot
-import scalatron.scalatron.impl.Plugin
+import scalatron.game.Plugin
 
 
 /** Configuration settings that won't change round-to-round */

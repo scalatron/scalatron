@@ -3,7 +3,7 @@
   */
 package scalatron.botwar
 
-import scalatron.scalatron.impl.Plugin
+import scalatron.game.Plugin
 
 
 /** Configuration container for a specific game rounds. Incorporates the permanent configuration

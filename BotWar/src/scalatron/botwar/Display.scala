@@ -6,7 +6,6 @@ package scalatron.botwar
 import java.awt.geom.AffineTransform
 import java.awt.{Toolkit, Frame, Graphics2D}
 import scalatron.botwar.Display.RenderTarget
-import scalatron.Version
 
 
 object Display {
@@ -39,7 +38,8 @@ object Display {
             case Some(s) => if(s.toLowerCase=="max") screenSize.getHeight.intValue else s.toInt
         }
 
-        val frame = createFrame(windowSizeX, windowSizeY, "Scalatron " + Constants.GameName + " " + Version.VersionString)
+        val versionString = "2.0.0.0" // TODO; was: Version.VersionString
+        val frame = createFrame(windowSizeX, windowSizeY, "Scalatron " + Constants.GameName + " " + versionString)
 
         Display(frame)
     }
