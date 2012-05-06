@@ -44,7 +44,6 @@ DebuggerOutputGrid = {
 
         return Ext.create('Ext.grid.Panel', {
             title: "<b>Output</b> from control function",
-            id: "debugger_outout",
             flex: 1,
             //margin:3,
             store:store,

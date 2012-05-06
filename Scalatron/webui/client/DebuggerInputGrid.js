@@ -29,7 +29,6 @@ DebuggerInputGrid = {
 
         return Ext.create('Ext.grid.Panel', {
             title: "<b>Input</b> to control function",
-            id: "debugger_input",
             flex: 1,
             //margin:3,
             store:store,
