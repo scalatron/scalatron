@@ -88,6 +88,7 @@ object build extends Build {
 
     val dist = TaskKey[Unit]("dist", "Makes the distribution zip file")
     val distTask = dist <<= (version, scalaVersion) map { (scalatronVersion, version) =>
+        println ("Beginning distribution generation...")
         val distDir = file("dist")
 
 	// clean distribution directory
@@ -100,7 +101,7 @@ object build extends Build {
 
         def markdown(docDir: File, htmlDir: File) = {
             IO createDirectory htmlDir
-            for (doc <- docDir.listFiles if doc.getName.endsWith(".md")) {
+            for (doc <- docDir.listFiles.par if doc.getName.endsWith(".md")) {
                 println ("Generating html for " + doc.getName)
                 Seq("java", "-Xmx1G", "-jar", "ScalaMarkdown/target/ScalaMarkdown.jar", doc.getPath, htmlDir.getPath) !
             }
