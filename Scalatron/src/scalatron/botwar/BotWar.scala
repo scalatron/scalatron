@@ -8,7 +8,6 @@ import scalatron.botwar.BotWarSimulation.SimState
 import java.awt.event.{WindowEvent, WindowAdapter, KeyEvent, KeyListener}
 import scalatron.scalatron.api.Scalatron
 import scalatron.scalatron.impl.{TournamentRoundResult, TournamentState, Plugin, PluginCollection, Game}
-import akka.actor.ActorSystem
 import akka.dispatch.ExecutionContext
 
 
@@ -30,8 +29,11 @@ case object BotWar extends Game
         argMap: Map[String,String],
         rounds: Int,
         tournamentState: TournamentState,   // receives tournament round results
-        verbose: Boolean)
-            (implicit actorSystem: ActorSystem, sandboxedExecutionContext: ExecutionContext)
+        verbose: Boolean
+    )(
+        executionContextForTrustedCode: ExecutionContext,
+        executionContextForUntrustedCode: ExecutionContext
+    )
     {
         // determine the permanent configuration for the game
         val permanentConfig = PermanentConfig.fromArgMap(argMap)
@@ -71,7 +73,7 @@ case object BotWar extends Game
         val stepCallback = (state: SimState) => {
             tournamentState.updateMostRecentState(state)
 
-            renderer.draw(display.renderTarget, state.gameState)
+            renderer.draw(display.renderTarget, state.gameState)(executionContextForTrustedCode)
 
             // enforce maxFPS (max frames per second) by putting this thread to sleep if appropriate
             val currentTime = System.currentTimeMillis
@@ -110,7 +112,7 @@ case object BotWar extends Game
 
             // run game
             val runner = Simulation.Runner(factory, stepCallback, resultCallback)
-            runner(plugins, randomSeed)(actorSystem, sandboxedExecutionContext)
+            runner(plugins, randomSeed)(executionContextForTrustedCode, executionContextForUntrustedCode)
 
             roundIndex += 1
 
@@ -126,8 +128,11 @@ case object BotWar extends Game
         argMap: Map[String,String],
         rounds: Int,
         tournamentState: TournamentState,   // receives tournament round results
-        verbose: Boolean)
-            (implicit actorSystem: ActorSystem, sandboxedExecutionContext: ExecutionContext)
+        verbose: Boolean
+    )(
+        executionContextForTrustedCode: ExecutionContext,
+        executionContextForUntrustedCode: ExecutionContext
+    )
     {
         // determine the permanent configuration for the game
         val permanentConfig = PermanentConfig.fromArgMap(argMap)
@@ -179,7 +184,7 @@ case object BotWar extends Game
 
             // run game
             val runner = Simulation.Runner(factory, stepCallback, resultCallback)
-            runner(plugins, randomSeed)(actorSystem, sandboxedExecutionContext)
+            runner(plugins, randomSeed)(executionContextForTrustedCode, executionContextForUntrustedCode)
 
             roundIndex += 1
 
@@ -197,7 +202,12 @@ case object BotWar extends Game
       * @param argMap the command line arguments
       * @return the initial simulation state
       */
-    def startHeadless(plugins: Iterable[Plugin.External], argMap: Map[String,String]) : SimState = {
+    def startHeadless(
+        plugins: Iterable[Plugin.External],
+        argMap: Map[String,String]
+    )(
+        executionContextForUntrustedCode: ExecutionContext
+    ) : SimState = {
         // determine the permanent configuration for the game
         val permanentConfig = PermanentConfig.fromArgMap(argMap)
 
@@ -215,7 +225,7 @@ case object BotWar extends Game
         // (b) deterministically incremented (beneficial for testing purposes)
         val randomSeed = System.currentTimeMillis.intValue  // or: round
 
-        factory.createInitialState(randomSeed, plugins)
+        factory.createInitialState(randomSeed, plugins)(executionContextForUntrustedCode)
     }
 
 
@@ -223,7 +233,13 @@ case object BotWar extends Game
       * @param plugins the collection of plug-ins to use as control function factories.
       * @return the initial simulation state
       */
-    def startHeadless(plugins: Iterable[Plugin.External], permanentConfig: PermanentConfig, gameConfig: Config) : SimState = {
+    def startHeadless(
+        plugins: Iterable[Plugin.External],
+        permanentConfig: PermanentConfig,
+        gameConfig: Config
+    )(
+        executionContextForUntrustedCode: ExecutionContext
+    ) : SimState = {
         // update the game configuration based on the plug-ins that are loaded
         val factory = BotWarSimulation.Factory(gameConfig)
 
@@ -232,7 +248,7 @@ case object BotWar extends Game
         // (b) deterministically incremented (beneficial for testing purposes)
         val randomSeed = System.currentTimeMillis.intValue  // or: round
 
-        factory.createInitialState(randomSeed, plugins)
+        factory.createInitialState(randomSeed, plugins)(executionContextForUntrustedCode)
     }
 
 

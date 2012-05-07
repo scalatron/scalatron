@@ -12,12 +12,12 @@ import akka.dispatch.ExecutionContext
 object BotWarSimulation
 {
     case class SimState(gameState: State) extends Simulation.State[SimState,TournamentRoundResult] {
-        def step(implicit sandboxedExecutionContext: ExecutionContext) = {
+        def step(executionContextForUntrustedCode: ExecutionContext) = {
             // to make results reproducible, generate a freshly seeded randomizer for every cycle
             val rnd = new Random(gameState.time)
 
             // apply the game dynamics to the game state
-            Dynamics(gameState, rnd, sandboxedExecutionContext) match {
+            Dynamics(gameState, rnd, executionContextForUntrustedCode) match {
                 case Left(updatedGameState) => Left(SimState(updatedGameState))
                 case Right(gameResult) => Right(gameResult)
             }
@@ -26,11 +26,11 @@ object BotWarSimulation
 
 
     case class Factory(config: Config) extends Simulation.Factory[SimState,TournamentRoundResult] {
-        def createInitialState(randomSeed: Int, plugins: Iterable[Plugin.External]) = {
+        def createInitialState(randomSeed: Int, plugins: Iterable[Plugin.External])(executionContextForUntrustedCode: ExecutionContext) = {
             // inject internally implemented players into the plug-in list
             val combinedPlugins = config.permanent.internalPlugins ++ plugins
 
-            val state = State.createInitial(config, randomSeed, combinedPlugins)
+            val state = State.createInitial(config, randomSeed, combinedPlugins)(executionContextForUntrustedCode)
             SimState(state)
         }
     }

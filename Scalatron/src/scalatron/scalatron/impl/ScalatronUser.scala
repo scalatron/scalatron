@@ -407,7 +407,7 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
         val roundIndex = 0
         val gameConfig = Config.create(permanentConfig, roundIndex, plugins, argMap)
 
-        val initialSimState = BotWar.startHeadless(plugins, permanentConfig, gameConfig)
+        val initialSimState = BotWar.startHeadless(plugins, permanentConfig, gameConfig)(scalatron.executionContextForUntrustedCode)
         val sandboxId = nextSandboxId
         nextSandboxId += 1
         ScalatronSandbox(sandboxId, this, initialSimState)

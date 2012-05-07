@@ -100,7 +100,7 @@ case object Dynamics extends ((State, Random, ExecutionContext) => Either[State,
 
 
     // returns a collection of tuples: (id, (nanoSeconds, commandList))
-    def computeBotCommands(state: State, eligibleBots: Iterable[Bot])(implicit sandboxedExecutionContext: ExecutionContext): Iterable[(Entity.Id,(Long,String,Iterable[Command]))] = {
+    def computeBotCommands(state: State, eligibleBots: Iterable[Bot])(implicit executionContextForUntrustedCode: ExecutionContext): Iterable[(Entity.Id,(Long,String,Iterable[Command]))] = {
         // use Akka to work this out
         val future = Future.traverse(eligibleBots)(bot => Future {
             try {
@@ -110,16 +110,12 @@ case object Dynamics extends ((State, Random, ExecutionContext) => Either[State,
                 if(commands.isEmpty) None else Some((bot.id,(timeSpent,inputString,commands)))
             } catch {
                 case t: NoClassDefFoundError =>
-                    // System.err.println("Bot '" + bot.name + "' caused an error: " + t);
-
                     // we fake a Log() command issued by the bot to report the error into the browser UI:
-                    Some((bot.id,(0L,"",Iterable[Command](Command.Log("error: class not found: " + t.getMessage)))))
+                    Some((bot.id,(0L,"",Iterable[Command](Command.Disable("error: class not found: " + t.getMessage)))))
 
                 case t: Throwable =>
-                    // System.err.println("Bot '" + bot.name + "' caused an error: " + t);
-
-                    // we fake a Log() command issued by the bot to report the error into the browser UI:
-                    Some((bot.id,(0L,"",Iterable[Command](Command.Log(t.getMessage)))))
+                    // we inject a Disable() command as-if-issued-by-the-bot to report the error into the browser UI:
+                    Some((bot.id,(0L,"",Iterable[Command](Command.Disable(t.getMessage)))))
             }
 
         })

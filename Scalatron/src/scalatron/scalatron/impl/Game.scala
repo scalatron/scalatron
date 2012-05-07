@@ -1,6 +1,5 @@
 package scalatron.scalatron.impl
 
-import akka.actor.ActorSystem
 import akka.dispatch.ExecutionContext
 
 /** This material is intended as a community resource and is licensed under the
@@ -18,37 +17,45 @@ trait Game {
 
     /** Run a loop that simulates tournament rounds, either until user exists (e.g. by closing
       * the main window) or until the given number of rounds has been played.
-      * @param actorSystem the Scalatron Akka actor system; use this for concurrency
       * @param pluginPath the plug-in base directory path below which to scan for bot plug-ins
       * @param argMap the command line argument map to use to configure the tournament run
       * @param rounds the number of rounds to play in the tournament loop before returning
       * @param tournamentState the tournament state object to update whenever a round ends
       * @param verbose if true, log to the console verbosely
+      * @param executionContextForTrustedCode execution context for trusted code (e.g. from Akka ActorSystem)
+      * @param executionContextForUntrustedCode execution context for untrusted code (e.g. for bot control functions)
       */
     def runVisually(
         pluginPath: String,
         argMap: Map[String, String],
         rounds: Int,
         tournamentState: TournamentState,
-        verbose: Boolean)
-            (implicit actorSystem: ActorSystem, sandboxedExecutionContext: ExecutionContext)
+        verbose: Boolean
+    )(
+        executionContextForTrustedCode: ExecutionContext,
+        executionContextForUntrustedCode: ExecutionContext
+    )
 
 
     /** Run a loop that simulates tournament rounds until the given number of rounds has been
       * played. Does not open a display window.
-      * @param actorSystem the Scalatron Akka actor system; use this for concurrency
       * @param pluginPath the plug-in base directory path below which to scan for bot plug-ins
       * @param argMap the command line argument map to use to configure the tournament run
       * @param rounds the number of rounds to play in the tournament loop before returning
       * @param tournamentState the tournament state object to update whenever a round ends
       * @param verbose if true, log to the console verbosely
+      * @param executionContextForTrustedCode execution context for trusted code (e.g. from Akka ActorSystem)
+      * @param executionContextForUntrustedCode execution context for untrusted code (e.g. for bot control functions)
       */
     def runHeadless(
         pluginPath: String,
         argMap: Map[String, String],
         rounds: Int,
         tournamentState: TournamentState,
-        verbose: Boolean)
-            (implicit actorSystem: ActorSystem, sandboxedExecutionContext: ExecutionContext)
+        verbose: Boolean
+    )(
+        executionContextForTrustedCode: ExecutionContext,
+        executionContextForUntrustedCode: ExecutionContext
+    )
 
 }

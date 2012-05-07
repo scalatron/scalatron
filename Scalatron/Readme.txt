@@ -57,6 +57,9 @@ in the public domain. Feel free to use, copy, and improve them!
 ### Version 0.9.9.5 -- 2012-05-06
 
 * version control is now available in the browser UI via "Save..." and "Revert..." buttons. Thanks @daniel_kuffner!
+* plug-ins can now optionally be isolated into a sandbox to prevent them from executing malicious code on the server.
+  To enable this experimental feature, use the command line argument "-sandboxed yes". Note that plug-ins can no
+  longer access the file system for logging purposes.
 
 
 ### Version 0.9.9.4 -- 2012-05-04

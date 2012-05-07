@@ -7,6 +7,8 @@ import State.Time
 import scala.util.Random
 import scalatron.scalatron.impl.Plugin
 import BoardParams.Perimeter
+import akka.dispatch.{Await, Future, ExecutionContext}
+import akka.util.Duration
 
 
 /** Contains the temporally variable aspects of the game state.
@@ -141,7 +143,11 @@ object Board
         time: Time,
         stepsPerRound: Int,
         roundIndex: Int,
-        randomSeed: Int, combinedPlugins: Iterable[Plugin] ) = {
+        randomSeed: Int, combinedPlugins: Iterable[Plugin]
+    )(
+        implicit executionContextForUntrustedCode: ExecutionContext
+    )
+    = {
         val boardSize = boardParams.size
 
         var updatedBoard = Empty
@@ -150,8 +156,11 @@ object Board
         updatedBoard = spawnPerimeterWalls(boardParams.perimeter, updatedBoard, time, boardSize)
         updatedBoard = spawnRandomWalls(rnd, updatedBoard, time, boardSize, boardParams.wallCount)
 
-        // spawn players
-        combinedPlugins.foreach( plugin => {
+
+
+        // generate players' control functions -- use Akka to work this out
+        // isolate the control function factory invocation via the untrusted thread pool
+        val future = Future.traverse(combinedPlugins)(plugin => Future {
             // initialize plugins
             try {
                 val controlFunction = plugin.controlFunctionFactory.apply()
@@ -169,12 +178,21 @@ object Board
                     case internal: Plugin.Internal => // OK
                 }
 
-                val position = updatedBoard.emptyRandomPos(rnd, boardSize)
-                updatedBoard = updatedBoard.addBotThatIsMaster(position, time, controlFunction, plugin)
+                Some((plugin, controlFunction))
             } catch {
                 case t: Throwable =>
                     System.err.println("error: exception while instantiating control function of plugin '" + plugin.name + "': " + t)
+                    None
             }
+        })
+        val result = Await.result(future, Duration.Inf)     // no timeout; maybe in the future
+        val pluginsAndControlFunctions = result.flatten     // remove failed instantiations
+
+
+        // spawn players
+        pluginsAndControlFunctions.foreach( pluginAndControlFunction => {
+            val position = updatedBoard.emptyRandomPos(rnd, boardSize)
+            updatedBoard = updatedBoard.addBotThatIsMaster(position, time, pluginAndControlFunction._2, pluginAndControlFunction._1)
         } )
 
         updatedBoard

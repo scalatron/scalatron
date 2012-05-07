@@ -5,12 +5,11 @@ package scalatron.botwar.renderer
 
 import scalatron.botwar.Display.RenderTarget
 
-import scalatron.scalatron.impl.{TournamentState, TournamentRoundResult}
+import scalatron.scalatron.impl.TournamentState
 import scalatron.botwar._
-import akka.actor.ActorSystem
-import akka.dispatch.{Await, Future}
 import akka.util.Duration
 import java.awt.Color
+import akka.dispatch.{ExecutionContext, Await, Future}
 
 
 object Renderer {
@@ -92,7 +91,7 @@ case class Renderer(permanentConfig: PermanentConfig, tournamentState: Tournamen
     var pendingRenderJobs : List[RenderJob] = Nil
     var availableRenderContexts : List[RenderContext] = Nil
 
-    def draw(renderTarget: RenderTarget, state: State)(implicit actorSystem: ActorSystem)
+    def draw(renderTarget: RenderTarget, state: State)(implicit executionContextForTrustedCode: ExecutionContext)
     {
         if( state.time <= 1 ) {
             interactivelyAdjustableSettings.introStartTime = System.currentTimeMillis

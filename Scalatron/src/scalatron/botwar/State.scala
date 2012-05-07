@@ -5,6 +5,7 @@ package scalatron.botwar
 
 import State.Time
 import scalatron.scalatron.impl.Plugin
+import akka.dispatch.ExecutionContext
 
 
 /** Game state storing the current (game) time, the board parameters, the actual board (i.e.
@@ -36,7 +37,7 @@ object State
     }
 
 
-    def createInitial(config: Config, randomSeed: Int, combinedPlugins: Iterable[Plugin] ) = {
+    def createInitial(config: Config, randomSeed: Int, combinedPlugins: Iterable[Plugin] )(executionContextForUntrustedCode: ExecutionContext) = {
         val time = 0L
         val board =
             Board.createInitial(
@@ -45,7 +46,10 @@ object State
                 config.permanent.stepsPerRound,
                 config.roundIndex,
                 randomSeed,
-                combinedPlugins)
+                combinedPlugins
+            )(
+                executionContextForUntrustedCode
+            )
         State(time, board, Array.empty, config)
     }
 }

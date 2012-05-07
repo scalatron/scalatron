@@ -12,7 +12,6 @@ import scalatron.Version
 import java.text.DateFormat
 import java.util.Date
 import scalatron.scalatron.api.Scalatron.{SourceFileCollection, ScalatronException, SourceFile, User}
-import akka.dispatch.ExecutionContext
 import java.util.concurrent.{ThreadPoolExecutor, ThreadFactory, LinkedBlockingQueue, TimeUnit}
 import akka.dispatch.ExecutionContext
 import java.security.Permission
@@ -65,7 +64,7 @@ object ScalatronImpl
 
         val sandboxUntrustedCode = argMap.get("-sandboxed").getOrElse("no") == "yes"
         val scalatronJarFilePath = classOf[ScalatronImpl].getProtectionDomain.getCodeSource.getLocation.getPath
-        implicit val sandboxedExecutionContext = createExecutionContextForUntrustedCode(
+        implicit val executionContextForUntrustedCode = createExecutionContextForUntrustedCode(
             scalatronJarFilePath,
             scalatronInstallationDirectoryPath + "/out/",
             pluginBaseDirectoryPath,
@@ -83,6 +82,9 @@ object ScalatronImpl
             pluginBaseDirectoryPath,
             TournamentState.Empty,
             verbose
+        )(
+            actorSystem,
+            executionContextForUntrustedCode
         )
     }
 
@@ -96,9 +98,12 @@ object ScalatronImpl
       * (a) using a collection of paths (e.g. readablePathPrefixes: Iterable[String]) does not work because this will
       *     result in a java.lang.ClassCircularityError when we check
       *     val tryingToAccessPluginDirectory = readablePathPrefixes.find(path.startsWith).isDefined.
-      * (b) currently, threads are identified by name, which is insecure since (doh!) Thread.setName is not subject
-      *     to a SecurityManager check and thus can be invoked by plug-ins to subvert the security scheme.
-      *     To be fixed.
+      * (b) sandboxed threads are identified by their ID, which is maintained in a concurrent skip list set.
+      * (c) the following invocation points need to be secured:
+      *     (1) the processing loop during simulation - done.
+      *     (2) sandbox processing via REST API - TODO.
+      *     (3) execution of static code during class loading - TODO.
+      *     (4) execution of control function factory code at start of round - TODO.
       * @param applicationJarDirectoryPath a path prefix from which plug-ins may read
       * @param applicationOutDirectoryPath a path prefix from which plug-ins may read
       * @param pluginDirectoryPath a path prefix from which plug-ins may read
@@ -110,10 +115,43 @@ object ScalatronImpl
         applicationOutDirectoryPath: String,
         pluginDirectoryPath: String,
         sandboxing: Boolean,
-        verbose: Boolean) = {
+        verbose: Boolean) =
+    {
         val availableProcessors = Runtime.getRuntime.availableProcessors
-
         val threadCount = new java.util.concurrent.atomic.AtomicLong(0L)
+
+        // set maintains list of all currently running sandboxed thread IDs (so we can identify them in the SecurityManager)
+        val threadSet = new java.util.concurrent.ConcurrentSkipListSet[Long]
+
+        class PluginThread(target: Runnable) extends Thread(target) {
+            override def run() {
+                threadSet.add(getId)
+                // System.err.println("Launching sandboxed thread: " + getName)
+                super.run()
+                // System.err.println("Sandboxed thread ending: " + getName)
+                threadSet.remove(getId)
+            }
+        }
+
+        val defaultThreadPool = new java.util.concurrent.ThreadPoolExecutor(
+            availableProcessors,
+            Int.MaxValue,
+            100L,
+            TimeUnit.MILLISECONDS,
+            new LinkedBlockingQueue[Runnable],
+            new ThreadFactory {
+                def newThread(runnable: Runnable) = {
+                    val t = new PluginThread(runnable)
+                    t.setName("SandboxedThread-" + threadCount.incrementAndGet)
+                    t.setDaemon(true)
+                    t
+                }
+            },
+            new ThreadPoolExecutor.CallerRunsPolicy
+        )
+
+        val sandboxedExecutionContext = ExecutionContext.fromExecutorService(defaultThreadPool)
+
 
         case class PluginSecurityManager(
             applicationJarDirectoryPath: String,
@@ -124,9 +162,11 @@ object ScalatronImpl
 
             private def check(permission: Permission) {
                 val currentThread: Thread = Thread.currentThread()
-                val threadName = currentThread.getName
 
-                val isPluginThread = threadName.startsWith("SandboxedThread-")
+                // val threadName = currentThread.getName
+                // val isPluginThread = threadName.startsWith("SandboxedThread-")
+
+                val isPluginThread = threadSet.contains(currentThread.getId)
                 if(isPluginThread) {
                     permission match {
                         case filePermission: FilePermission =>
@@ -166,34 +206,6 @@ object ScalatronImpl
             }
         }
 
-        class PluginThread(target: Runnable) extends Thread(target) {
-            override def run() {
-                // System.err.println("Launching sandboxed thread: " + getName)
-                super.run()
-                // System.err.println("Sandboxed thread ending: " + getName)
-            }
-        }
-
-
-
-        val defaultThreadPool = new java.util.concurrent.ThreadPoolExecutor(
-            availableProcessors,
-            Int.MaxValue,
-            100L,
-            TimeUnit.MILLISECONDS,
-            new LinkedBlockingQueue[Runnable],
-            new ThreadFactory {
-                def newThread(runnable: Runnable) = {
-                    val t = new PluginThread(runnable)
-                    t.setName("SandboxedThread-" + threadCount.incrementAndGet)
-                    t.setDaemon(true)
-                    t
-                }
-            },
-            new ThreadPoolExecutor.CallerRunsPolicy
-        )
-
-        val sandboxedExecutionContext = ExecutionContext.fromExecutorService(defaultThreadPool)
 
         if(sandboxing) {
             val pluginSecurityManager =
@@ -307,10 +319,11 @@ case class ScalatronImpl(
     samplesBaseDirectoryPath: String, // e.g. /Scalatron/samples
     pluginBaseDirectoryPath: String, // e.g. /Scalatron/bots
     tournamentState: TournamentState, // receives and accumulates tournament round results
-    verbose: Boolean)
-        (implicit val actorSystem: ActorSystem,         // the Akka actor system to use for trusted code, e.g. for compilation
-        sandboxedExecutionContext: ExecutionContext)    // the ExecutionContext to use for untrusted code, e.g. for bot control functions
-    extends Scalatron
+    verbose: Boolean
+)(
+    val actorSystem: ActorSystem,                           // the Akka actor system to use for trusted code, e.g. for compilation
+    val executionContextForUntrustedCode: ExecutionContext  // the ExecutionContext to use for untrusted code, e.g. for bot control functions
+) extends Scalatron
 {
     var compileActorRefOpt: Option[ActorRef] = None
 
@@ -329,10 +342,11 @@ case class ScalatronImpl(
     def run(argMap: Map[String, String]) {
         val rounds = argMap.get("-rounds").map(_.toInt).getOrElse(Int.MaxValue)
         val headless = (argMap.get("-headless").getOrElse("no") == "yes")
+        val executionContextForTrustedCode = actorSystem.dispatcher
         if(headless) {
-            game.runHeadless(pluginBaseDirectoryPath, argMap, rounds, tournamentState, verbose)
+            game.runHeadless(pluginBaseDirectoryPath, argMap, rounds, tournamentState, verbose)(executionContextForTrustedCode, executionContextForUntrustedCode)
         } else {
-            game.runVisually(pluginBaseDirectoryPath, argMap, rounds, tournamentState, verbose)
+            game.runVisually(pluginBaseDirectoryPath, argMap, rounds, tournamentState, verbose)(executionContextForTrustedCode, executionContextForUntrustedCode)
         }
     }
 
