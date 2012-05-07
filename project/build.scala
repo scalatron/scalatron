@@ -45,7 +45,7 @@ object build extends Build {
             ),
             resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
         ) ++ Seq (
-            jarName in assembly := "Scalatron.jar"
+            jarName in assembly := "Scalatron.jar" // , logLevel in assembly := Level.Debug
         )
     )
 
