@@ -23,6 +23,7 @@ object Protocol {
         val Set = "Set"
         val Explode = "Explode"
         val Log = "Log"
+        val Disable = "Disable"
         val MarkCell = "MarkCell"
         val DrawLine = "DrawLine"
 

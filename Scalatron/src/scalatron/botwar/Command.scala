@@ -56,7 +56,15 @@ object Command
             Protocol.PluginOpcode.ParameterName.To -> toPos, 
             Protocol.PluginOpcode.ParameterName.Color -> color)
     }
-    
+
+    /** Undocumented command: this command is injected by the server if an exception occurs during bot processing.
+      * @param text the reason the plug-in was disabled, e.g. a security exception or timeout */
+    case class Disable(text: String) extends Command {
+        def opcode = Protocol.PluginOpcode.Disable
+        def paramMap = Map(Protocol.PluginOpcode.ParameterName.Text -> text)
+    }
+
+
     def fromControlFunctionResponse(controlFunctionResponse: String): Iterable[Command] = {
         val commandMap = MultiCommandParser.splitStringIntoParsedCommandMap(controlFunctionResponse)
         if(commandMap.isEmpty)
@@ -93,6 +101,9 @@ object Command
 
         case Protocol.PluginOpcode.Log =>            // "Log(text=<string>)"
             Log(params.get(Protocol.PluginOpcode.ParameterName.Text).getOrElse(""))
+
+        case Protocol.PluginOpcode.Disable =>        // "Disable(text=<string>)"
+            Disable(params.get(Protocol.PluginOpcode.ParameterName.Text).getOrElse(""))
 
         case Protocol.PluginOpcode.MarkCell =>       // "MarkCell(position=x:y,color=#ff0000)"
             MarkCell(

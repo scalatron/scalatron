@@ -221,6 +221,24 @@ case object AugmentedDynamics extends ((State,Random,Iterable[(Entity.Id,Iterabl
                             throw new IllegalStateException("Log(): not permitted for bot variety: " + thisVariety)
                     }
 
+                case disable: Command.Disable =>                // "Disable(text=<string>)"
+                    thisVariety match {
+                        case thisPlayer: Bot.Player =>
+                            val logMessage = "plug-in was disabled because it caused an error"
+                            val updatedStateMap =
+                                thisPlayer.stateMap
+                                .updated(Protocol.PropertyName.Status, "disabled")
+                                .updated(Protocol.PropertyName.Debug, logMessage + "\n" + disable.text)
+                            val updatedVariety =
+                                thisPlayer.copy(
+                                controlFunction = (in: String) => "Log(text=" + logMessage + ")", // make sure it's never called again (but note that sibling minibots/bots use their own ref)
+                                stateMap = updatedStateMap)
+                            val updatedThisBot = thisBot.updateVariety(updatedVariety)
+                            updatedBoard = updatedBoard.updateBot(updatedThisBot)
+                        case _ => // not a permissible command!
+                            throw new IllegalStateException("Disable(): not permitted for bot variety: " + thisVariety)
+                    }
+
                 case explode: Command.Explode =>         // "Explode(size=<int>)"
                     thisBot.variety match {
                         case thisPlayer: Bot.Player =>  // master or slave
