@@ -303,10 +303,14 @@ object Scalatron {
 
         /** Returns a sorted collection of version identifiers of the bot sources, as tuples of
           * (id, label, date). The versions are enumerated by listing the directories below the
-          * 'versions' directory, e.g. at "/Scalatron/users/{user}/versions/{versionId}"
+          * 'versions' directory, e.g. at "/Scalatron/users/{user}/versions/{versionId}", then sorted by
+          * ID, with lowest ID first.
           * @throws IOError if version directory cannot be read from disk, etc.
           */
         def versions: Iterable[Version]
+
+        /** Returns the version with the highest version ID, if any. */
+        def latestVersion: Option[Version] = versions.lastOption
 
         /** Returns the version with the given ID, as a Some(Version) if it exists or None if it
           * does not exist. Will attempt to locate the version in the approriate directory below
@@ -326,17 +330,22 @@ object Scalatron {
           * code directory of the user if the given version creation policy requires it. This method is intended as
           * a convenience call you can perform before overwriting the source code in the user's workspace with
           * new, updated source files.
+          * The function implements the following logic:
+          * - if policy == Always, a backup version is created, no matter what
+          * - if policy == Never, no backup version is created, no matter what
+          * - if policy == IfDifferent, a backup version is created if and only if:
+          *     (a) the current version is different from the incoming, updated version AND
+          *     (b) the current version is different from the latest version in the history, or the history is empty
           * @param policy the version creation policy: IfDifferent, Always, Never.
-          * @param label an optional label to apply to the version (may be empty).
-          * @param sourceFiles the source files that will be used to determine whether the files on disk are
+          * @param label an optional label to apply to the version IF it is created (may be empty).
+          * @param b the incoming, updated source files that will be used to determine whether the files on disk are
           *                    different in the policy "IfDifferent". Note that theses are NOT the files that
           *                    will be stored in the version!
           * @return an optional Version object, valid if a version was actually created.
-          * @throws IllegalStateException if version (base) directory could not be created or source
-          *                               directory could not be read.
+          * @throws IllegalStateException if version (base) directory could not be created or source directory could not be read.
           * @throws IOError if source files cannot be written to disk, etc.
           * */
-         def createBackupVersion(policy: VersionPolicy, label: String, sourceFiles: SourceFileCollection): Option[Version]
+         def createBackupVersion(policy: VersionPolicy, label: String, b: SourceFileCollection): Option[Version]
 
 
         //----------------------------------------------------------------------------------------------
@@ -409,6 +418,47 @@ object Scalatron {
                     "    def respond(input: String) = \"Status(text=" + userName + ")\"\n" +
                     "}\n"
             ))
+
+
+        def areEqual(as: SourceFileCollection, bs: SourceFileCollection, verbose: Boolean) : Boolean =
+            (as.size == bs.size) &&   // same number of files?
+                as.forall(a => {
+                    bs.find(_.filename == a.filename) match {
+                        case None =>
+                            if(verbose) println("  SourceFileCollection.areEqual: file exists in as but not bs: " + a.filename)
+                            false // file present in a, but not in b => different
+
+                        case Some(b) =>
+                            if(verbose) {
+                                // 2012-05-04 temp debugging information
+                                println("  SourceFileCollection.areEqual: file still exists: " + a.filename)
+                                if(b.code != a.code) {
+                                    println("   file contents different")
+
+                                    if(b.code.length != a.code.length) {
+                                        println("   file sizes are different: a %d vs b %d".format(a.code.length, b.code.length))
+                                    }
+
+                                    val aLineCount = a.code.lines.length
+                                    val bLineCount = b.code.lines.length
+                                    if(bLineCount > aLineCount) {
+                                        println("   file b contains more lines: b %d vs a %d".format(bLineCount, aLineCount))
+                                        val bLines = b.code.lines
+                                        val aLines = a.code.lines
+                                        val linesWithIndex = bLines.zip(aLines).zipWithIndex.map(l => "%04d: %60s %60s".format(l._2, l._1._1, l._1._2))
+                                        println(linesWithIndex.mkString("\n"))
+                                    } else
+                                    if(bLineCount < aLineCount) {
+                                        println("   file a contains more lines: b %d vs a %d".format(bLineCount, aLineCount))
+                                    } else {
+                                        println("   files a and b contain same number of lines")
+                                    }
+                                }
+                            }
+
+                            a.code == b.code // file present in a and b, so compare code
+                    }
+                })
 
         /** Returns a collection of SourceFile objects representing source code files residing in the given directory.
           * Excludes directories and files that have the same name as the config files ("config.txt").

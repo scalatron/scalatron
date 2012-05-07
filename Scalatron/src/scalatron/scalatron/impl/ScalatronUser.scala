@@ -193,7 +193,9 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
             // no versions there yet!
             Iterable.empty
         } else {
-            versionDirectories.filter(_.isDirectory).map(dir => {
+            versionDirectories
+            .filter(_.isDirectory)
+            .map(dir => {
                 val versionId = dir.getName.toInt
                 val versionConfigFilename = dir.getAbsolutePath + "/" + ConfigFilename
                 val paramMap = loadConfigFile(versionConfigFilename)
@@ -201,6 +203,8 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
                 val date = paramMap.getOrElse("date", "").toLong
                 ScalatronVersion(versionId, label, date, this)
             })
+            .toArray
+            .sortBy(_.id)
         }
     }
 
@@ -256,20 +260,20 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
         // write the given source files into the version directory
         SourceFileCollection.writeTo(versionDirectoryPath, sourceFiles, scalatron.verbose)
 
-/*
-        // 2012-04-16 was: copy the current contents of the source directory into the version directory
-        val sourceDirectory = new File(sourceDirectoryPath)
-        val sourceFiles = sourceDirectory.listFiles()
-        if( sourceFiles == null || sourceFiles.isEmpty ) {
-            // no source files there yet! -> nothing to do
-        } else {
-            sourceFiles.foreach(sourceFile => {
-                val destPath = versionDirectoryPath + "/" + sourceFile.getName
-                copyFile(sourceFile.getAbsolutePath, destPath)
-                if( scalatron.verbose ) println("copied user source file for '" + name + "' to version: " + destPath)
-            })
-        }
-*/
+        /*
+                // 2012-04-16 was: copy the current contents of the source directory into the version directory
+                val sourceDirectory = new File(sourceDirectoryPath)
+                val sourceFiles = sourceDirectory.listFiles()
+                if( sourceFiles == null || sourceFiles.isEmpty ) {
+                    // no source files there yet! -> nothing to do
+                } else {
+                    sourceFiles.foreach(sourceFile => {
+                        val destPath = versionDirectoryPath + "/" + sourceFile.getName
+                        copyFile(sourceFile.getAbsolutePath, destPath)
+                        if( scalatron.verbose ) println("copied user source file for '" + name + "' to version: " + destPath)
+                    })
+                }
+        */
 
         ScalatronVersion(versionId, label, date, this)
     }
@@ -278,51 +282,24 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
     def createBackupVersion(policy: VersionPolicy, label: String, updatedSourceFiles: SourceFileCollection) =
         policy match {
             case VersionPolicy.IfDifferent =>
-                val oldSourceFiles = sourceFiles
-                val different =
-                    (oldSourceFiles.size == updatedSourceFiles.size) &&
-                        (oldSourceFiles.forall(oldSF => {
-                            updatedSourceFiles.find(_.filename == oldSF.filename) match {
-                                case None =>
-                                    if(scalatron.verbose) println("VersionPolicy.IfDifferent: file no longer exists: " + oldSF.filename)
-                                    true // file present in old, but not in new => different
-                                case Some(newSF) =>
-                                    if(scalatron.verbose) {
-                                        // 2012-05-04 temp debugging information
-                                        println("VersionPolicy.IfDifferent: file still exists: " + oldSF.filename)
-                                        if(newSF.code != oldSF.code) {
-                                            println("   file contents different")
+                val sourceFilesCurrentlyInWorkspace = sourceFiles
 
-                                            if(newSF.code.length != oldSF.code.length) {
-                                                println("   file sizes are different: old %d vs new %d".format(oldSF.code.length, newSF.code.length))
-                                            }
+                val workspaceEqualsUpdated = SourceFileCollection.areEqual(sourceFilesCurrentlyInWorkspace, updatedSourceFiles, scalatron.verbose)
 
-                                            val newLineCount = newSF.code.lines.length
-                                            val oldLineCount = oldSF.code.lines.length
-                                            if(newLineCount > oldLineCount) {
-                                                println("   new file contains more lines: %d vs %d".format(newLineCount, oldLineCount))
-                                                val newLines = newSF.code.lines
-                                                val oldLines = oldSF.code.lines
-                                                val linesWithIndex = newLines.zip(oldLines).zipWithIndex.map(l => "%04d: %60s %60s".format(l._2, l._1._1, l._1._2))
-                                                println(linesWithIndex.mkString("\n"))
-                                            } else
-                                            if(newLineCount < oldLineCount) {
-                                                println("   old file contains more lines: %d vs %d".format(newLineCount, oldLineCount))
-                                            } else {
-                                                println("   old file and new file contain same number of lines")
-                                            }
-                                        }
-                                    }
-                                    newSF.code != oldSF.code // file present in old and new, so compare code
-                            }
-                        }))
+                val workspaceEqualsLatestVersion = latestVersion match {
+                    case None =>
+                        false
+                    case Some(latestVersionInHistory) =>
+                        val sourceFilesOfLatestVersion = latestVersionInHistory.sourceFiles
+                        SourceFileCollection.areEqual(sourceFilesCurrentlyInWorkspace, sourceFilesOfLatestVersion, scalatron.verbose)
+                }
 
-                if(different) {
-                    if(scalatron.verbose) println("VersionPolicy.IfDifferent, files are different => creating backup version")
-                    Some(createVersion(label, oldSourceFiles))    // backup old files as a version
-                } else {
+                if(workspaceEqualsUpdated || workspaceEqualsLatestVersion) {
                     if(scalatron.verbose) println("VersionPolicy.IfDifferent, files are unchanged => not creating backup version")
                     None
+                } else {
+                    if(scalatron.verbose) println("VersionPolicy.IfDifferent, files are different => creating backup version")
+                    Some(createVersion(label, sourceFilesCurrentlyInWorkspace))    // backup old files as a version
                 }
 
             case VersionPolicy.Always =>

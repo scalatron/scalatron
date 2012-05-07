@@ -30,7 +30,6 @@
                         var botCode = Editor.getContent();
 
                         if (botCode) {
-
                             Events.fireEvent("progressUpdate", { message: "Saving sources" });
 
                             API.updateSourceFiles({
@@ -75,14 +74,14 @@
                 });
             }
 
-            var buildAction = createPublishBuildAction("Build", "before Build");
+            var buildAction = createPublishBuildAction("Build", "auto-backup before Build");
 
-            var buildAndPubAction = createPublishBuildAction('Publish into Tournament', "before Publish into Tournament", function () {
+            var buildAndPubAction = createPublishBuildAction('Publish into Tournament', "auto-backup before Publish into Tournament", function () {
                 Events.fireEvent("progressUpdate", { message: "Publishing" });
                 API.publish({});
             });
 
-            var sandbox = createPublishBuildAction('Run in Sandbox', "before Run in Sandbox", function () {
+            var sandbox = createPublishBuildAction('Run in Sandbox', "auto-backup before Run in Sandbox", function () {
                 Events.fireEvent("progressUpdate", { message: "Creating new sandbox" });
                 API.createSandbox({
                     jsonData:{
@@ -122,13 +121,13 @@
                     disableActions(true);
                     var botCode = Editor.getContent();
                     if (botCode) {
+                        var backupLabel = "auto-backup before Save of '" + label + "'";
                         API.updateSourceFiles({
-                            // Create a version of the previouse content - if different.
-                            versionLabel: "before Save",
-                            versionPolicy: "ifDifferent",
-                            // --
-
-                            jsonData:{ files: [ { filename: "Bot.scala", code: botCode} ] },
+                            // Create a version of the previous content - if different.
+                            jsonData:{
+                                versionLabel: backupLabel,
+                                versionPolicy: "ifDifferent",
+                                files: [ { filename: "Bot.scala", code: botCode} ] },
                             success:function () {
                                 disableActions(false);
                                 Events.fireEvent("documentSaved");
@@ -154,7 +153,6 @@
                 },
 
                 handler:function (c) {
-
                     Ext.MessageBox.prompt('Save...', 'Please enter label name:', function(btn, label) {
                         if(btn = "ok") {
                             c.saveHandler(label);

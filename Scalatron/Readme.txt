@@ -54,6 +54,11 @@ in the public domain. Feel free to use, copy, and improve them!
 
 ## Version History
 
+### Version 0.9.9.5 -- 2012-05-06
+
+* version control is now available in the browser UI via "Save..." and "Revert..." buttons. Thanks @daniel_kuffner!
+
+
 ### Version 0.9.9.4 -- 2012-05-04
 
 * RESTful web API and command line client now support these additional commands:
