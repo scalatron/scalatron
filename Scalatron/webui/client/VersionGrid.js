@@ -13,18 +13,19 @@
         create:function (maxHeight) {
             return Ext.create("Ext.grid.Panel", {
                 store:createStore(),
-
                 width: "400",
 
                 // Has no effect!
                 // maxHeight: maxHeight,
 
+                sortableColumns: false,
+
                 // Workaround: See afterrender below.
                 height: maxHeight,
 
                 columns:[
-                    { header:'ID', dataIndex:'id', width:40},
-                    { header:'Date', dataIndex:'date', width:120, type:'int',
+                    { header:'ID', dataIndex:'id', hideable: false, width:40},
+                    { header:'Date', dataIndex:'date', width:120, hideable: false, type:'int',
                         renderer:function (value) {
                             if(value) {
                                 return Ext.Date.format(new Date(parseInt(value)), "Y-m-d H:i:s");
@@ -32,7 +33,7 @@
                             return "";
                         }
                     },
-                    { header:'Label', dataIndex:'label', flex:1,
+                    { header:'Label', dataIndex:'label', hideable: false, flex:1,
                         renderer: function(value) {
                             // The string might contain html special chars.
                             // Prevent that rendering get screwed up.
