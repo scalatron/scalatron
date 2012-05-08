@@ -7,8 +7,10 @@ the Scala programming language or want to hone their Scala programming skills. I
 Scalatron BotWar, a competitive multi-player programming game in which coders pit bot programs
 (written in Scala) against each other.
 
+
 ## Starting With Scalatron
 
+* [Scalatron Web Site](http://scalatron.github.com)
 * [Scala Resurces on the Web](/tutorial/tutorial_00_00_scala_resources.html)
 * [Introduction To Scala](/tutorial/tutorial_00_01_intro_to_scala.html)
 * [Introduction To Scalatron](/tutorial/tutorial_00_10_intro_to_scalatron.html)

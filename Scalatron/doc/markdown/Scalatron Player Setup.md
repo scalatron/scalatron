@@ -1,11 +1,8 @@
-SCALATRON - Learn Scala With Friends
-http://scalatron.github.com - Twitter: @scalatron - scalatron@hotmail.com
-This work is licensed under the Creative Commons Attribution 3.0 Unported License.
-
-Participant Documentation - Configuring Your IDE
-Version 0.9.9 -- updated 2012-05-01
-
-
+---
+layout: default
+title: Scalatron Player Setup
+subtitle: Player Documentation
+---
 
 # About Scalatron
 
@@ -16,7 +13,6 @@ Scalatron BotWar, a competitive multi-player programming game in which coders pi
 
 The documentation, tutorial and source code are intended as a community resource and are
 in the public domain. Feel free to use, copy, and improve them!
-
 
 
 

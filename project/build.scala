@@ -31,7 +31,7 @@ object build extends Build {
 
     lazy val main = Project("Scalatron", file("Scalatron"),
         settings = standardSettings ++ Seq(
-            libraryDependencies ++= Seq(  
+            libraryDependencies ++= Seq(
                 "org.scala-lang" % "scala-compiler" % "2.9.1",
                 "com.typesafe.akka" % "akka-actor" % "2.0",
                 "org.eclipse.jetty.aggregate" % "jetty-webapp" % "7.6.2.v20120308" intransitive,
@@ -61,9 +61,9 @@ object build extends Build {
 
     lazy val markdown = Project("ScalaMarkdown", file("ScalaMarkdown"),
         settings = standardSettings ++ Seq(
-          scalaSource in Compile <<= baseDirectory / "src",
-          scalaSource in Test <<= baseDirectory / "test/scala",
-          resourceDirectory in Test <<= baseDirectory / "test/resources"
+            scalaSource in Compile <<= baseDirectory / "src",
+            scalaSource in Test <<= baseDirectory / "test/scala",
+            resourceDirectory in Test <<= baseDirectory / "test/resources"
         ) ++ Seq(
             libraryDependencies ++= Seq(
                 "org.scala-tools.testing" %% "specs" % "1.6.9",
@@ -81,7 +81,7 @@ object build extends Build {
             artifactName in packageBin := ((_, _, _) => "ScalatronBot.jar")
         ))
     } toMap
-    
+
     // TODO How can we do this automatically?!?
     lazy val referenceBot = samples("Example Bot 01 - Reference")
     lazy val tagTeamBot = samples("Example Bot 02 - TagTeam")
@@ -91,26 +91,16 @@ object build extends Build {
         println ("Beginning distribution generation...")
         val distDir = file("dist")
 
-	// clean distribution directory
-        println("Deleting dist directory")
+        // clean distribution directory
+        println("Deleting /dist directory...")
         IO delete distDir
 
-	// create new distribution directory
+        // create new distribution directory
+        println ("Creating /dist directory...")
         IO createDirectory distDir
         val scalatronDir = file("Scalatron")
 
-        def markdown(docDir: File, htmlDir: File) = {
-            IO createDirectory htmlDir
-            for (doc <- docDir.listFiles.par if doc.getName.endsWith(".md")) {
-                println ("Generating html for " + doc.getName)
-                Seq("java", "-Xmx1G", "-jar", "ScalaMarkdown/target/ScalaMarkdown.jar", doc.getPath, htmlDir.getPath) !
-            }
-        }
-	// generate HTML from Markdown, for /doc and /devdoc
-        for (dir <- List("doc", "devdoc")) {
-            markdown(scalatronDir / dir / "markdown", distDir / dir / "html")
-        }
-
+        println ("Copying Readme.txt and License.txt...")
         for (fileToCopy <- List("Readme.txt", "License.txt")) {
             IO.copyFile(scalatronDir / fileToCopy, distDir / fileToCopy)
         }
@@ -129,23 +119,36 @@ object build extends Build {
                 IO.copyFile(sampleJar(sample), distSamples / sample.base.getName / "ScalatronBot.jar")
             }
         }
+
+        println ("Copying Reference bot to /bots directory...")
         IO.copyFile(sampleJar(referenceBot), distDir / "bots" / "Reference" / "ScalatronBot.jar")
 
-        for (file <- IO.listFiles(scalatronDir / "doc/tutorial") if !file.getName.endsWith(".md")) {
-            IO.copyFile(file, distDir / "webui/tutorial" / file.getName)
+
+        def markdown(docDir: File, htmlDir: File) = {
+            Seq("java", "-Xmx1G", "-jar", "ScalaMarkdown/target/ScalaMarkdown.jar", docDir.getPath, htmlDir.getPath) !
         }
+
+        // generate HTML from Markdown, for /doc and /devdoc
+        println ("Generating /dist/doc/html from /doc/markdown...")
+        markdown(scalatronDir / "doc/markdown", distDir / "doc/html")
+
+        println ("Generating /webui/tutorial from /dev/tutorial...")
         markdown(scalatronDir / "doc/tutorial", distDir / "webui/tutorial")
+
+
 
         for (jar <- List("Scalatron", "ScalatronCLI")) {
             IO.copyFile(file(jar) / "target" / (jar + ".jar"), distDir / "bin" / (jar + ".jar"))
         }
 
         // This is ridiculous, there has to be be an easier way to zip up a directory
+        val zipFileName = "scalatron-%s.zip" format scalatronVersion
+        println ("Zipping up /dist into " + zipFileName + "...")
         def zip(srcDir: File, destFile: File, prepend: String) = {
             val allDistFiles = (srcDir ** "*").get.filter(_.isFile).map { f => (f, prepend + IO.relativize(distDir, f).get)}
             IO.zip(allDistFiles, destFile)
         }
-        zip (distDir, file("./scalatron-%s.zip" format scalatronVersion), "Scalatron/")
+        zip (distDir, file("./" + zipFileName), "Scalatron/")
     } dependsOn (assembly in main, assembly in cli, assembly in markdown, packageBin in Compile in referenceBot, packageBin in Compile in tagTeamBot)
 
 }

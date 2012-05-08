@@ -1,9 +1,18 @@
-SCALATRON - Learn Scala With Friends
-http://scalatron.github.com - Twitter: @scalatron - scalatron@hotmail.com
-This work is licensed under the Creative Commons Attribution 3.0 Unported License.
+---
+layout: default
+title: Scalatron APIs
+subtitle: Developer Documentation
+---
 
-Developer Documentation - Scalatron APIs
-Version 0.9.9 -- updated 2012-05-01
+# About Scalatron
+
+Scalatron is an educational resource for groups of programmers that want to learn more about
+the Scala programming language or want to hone their Scala programming skills. It is based on
+Scalatron BotWar, a competitive multi-player programming game in which coders pit bot programs
+(written in Scala) against each other.
+
+The documentation, tutorial and source code are intended as a community resource and are
+in the public domain. Feel free to use, copy, and improve them!
 
 
 

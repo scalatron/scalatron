@@ -54,6 +54,11 @@ in the public domain. Feel free to use, copy, and improve them!
 
 ## Version History
 
+### Version 1.0.0.0 -- 2012-05-08
+
+* improved the documentation conversion from markdown to HTML, adding layouts, stylesheets and images
+
+
 ### Version 0.9.9.5 -- 2012-05-06
 
 * version control is now available in the browser UI via "Save..." and "Revert..." buttons. Thanks @daniel_kuffner!

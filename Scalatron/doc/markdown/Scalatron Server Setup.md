@@ -1,11 +1,8 @@
-SCALATRON - Learn Scala With Friends
-http://scalatron.github.com - Twitter: @scalatron - scalatron@hotmail.com
-This work is licensed under the Creative Commons Attribution 3.0 Unported License.
-
-Organizer Documentation - Scalatron Server Setup
-Version 0.9.9 -- updated 2012-05-01
-
-
+---
+layout: default
+title: Scalatron Server Setup
+subtitle: Organizer Documentation
+---
 
 # About Scalatron
 
@@ -14,8 +11,8 @@ the Scala programming language or want to hone their Scala programming skills. I
 Scalatron BotWar, a competitive multi-player programming game in which coders pit bot programs
 (written in Scala) against each other.
 
-The documentation, tutorial and source code are intended as a community resource.
-Feel free to use, copy, and improve them!
+The documentation, tutorial and source code are intended as a community resource and are
+in the public domain. Feel free to use, copy, and improve them!
 
 
 
