@@ -16,6 +16,7 @@ import java.util.concurrent.{ThreadPoolExecutor, ThreadFactory, LinkedBlockingQu
 import akka.dispatch.ExecutionContext
 import java.security.Permission
 import java.io.FilePermission
+import java.net.URLDecoder
 
 
 object ScalatronImpl
@@ -63,7 +64,7 @@ object ScalatronImpl
 
 
         val sandboxUntrustedCode = argMap.get("-sandboxed").getOrElse("no") == "yes"
-        val scalatronJarFilePath = classOf[ScalatronImpl].getProtectionDomain.getCodeSource.getLocation.getPath
+        val scalatronJarFilePath = getClassPath(classOf[ScalatronImpl])
         implicit val executionContextForUntrustedCode = createExecutionContextForUntrustedCode(
             scalatronJarFilePath,
             scalatronInstallationDirectoryPath + "/out/",
@@ -223,6 +224,24 @@ object ScalatronImpl
         sandboxedExecutionContext
     }
 
+
+    /** Given a class, this method determines the file system path of the .jar file the class definition was
+      * loaded from. It handles the URLDecoding that is necessary to e.g. deal with paths that contain spaces.
+      * Example usage: <code>val scalatronJarFilePathAsURL = getClass(classOf[ScalatronImpl])</code>
+      * @param theClass the class whose .jar file path is sought
+      * @tparam T the type of the class (not used)
+      * @return a string representing the file system path to the .jar file
+      */
+    def getClassPath[T](theClass: Class[T]) : String = {
+        // The path returned here is URL encoded, resulting in components like "Documents%20and%20Settings"
+        val jarFilePathAsURL = theClass.getProtectionDomain.getCodeSource.getLocation.getPath
+
+        // so we URL-decode the path before returning it:
+        val characterEncoding = "UTF-8"         // Eight-bit UCS Transformation Format
+        URLDecoder.decode(jarFilePathAsURL, characterEncoding)
+    }
+
+
     // try to locate a base directory for the installation, e.g. '/Scalatron'
     def detectInstallationDirectory(verbose: Boolean) = {
         // Strategy A: use the Java user directory
@@ -231,7 +250,8 @@ object ScalatronImpl
         // val scalatronInstallationDirectoryPath = userDirectoryPath + "/.."
 
         // Strategy B: use the path to the Scalatron.jar file
-        val scalatronJarFilePath = classOf[ScalatronImpl].getProtectionDomain.getCodeSource.getLocation.getPath
+        val scalatronJarFilePath = getClassPath(classOf[ScalatronImpl])
+
         if (verbose) println("Detected Scalatron class path to be: " + scalatronJarFilePath)
 
         val scalatronInstallationDirectoryPath =

@@ -33,9 +33,9 @@ case class CompileActor(verbose: Boolean) extends Actor {
       * @return a collection of class paths to append to the classPath property of the Scala compiler
       */
     private def detectScalaClassPaths : Iterable[String] = {
-        val scalatronJarFilePath = classOf[CompileActor].getProtectionDomain.getCodeSource.getLocation.getPath
-        val scalaCompilerClassPath = classOf[Global].getProtectionDomain.getCodeSource.getLocation.getPath
-        val scalaLibraryClassPath = classOf[List[_]].getProtectionDomain.getCodeSource.getLocation.getPath
+        val scalatronJarFilePath = ScalatronImpl.getClassPath(classOf[CompileActor])
+        val scalaCompilerClassPath = ScalatronImpl.getClassPath(classOf[Global])
+        val scalaLibraryClassPath = ScalatronImpl.getClassPath(classOf[List[_]])
         if( verbose ) {
             println("  detected class path for Scalatron: " + scalatronJarFilePath)
             println("  detected class path for scala-compiler: " + scalaCompilerClassPath)
