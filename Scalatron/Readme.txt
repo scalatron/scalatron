@@ -54,6 +54,14 @@ in the public domain. Feel free to use, copy, and improve them!
 
 ## Version History
 
+### Version 1.0.0.1 -- 2012-05-09
+
+* added a favicon.ico to remove warning about missing file
+* fixed issue #39: server fails to initialize correctly when launched from directory containing spaces.
+* fixed issue #37: server fails to delete source directory on Windows because of retained file lock.
+* added `Scalatron Troubleshooting` document
+
+
 ### Version 1.0.0.0 -- 2012-05-08
 
 * improved the documentation conversion from markdown to HTML, adding layouts, stylesheets and images
