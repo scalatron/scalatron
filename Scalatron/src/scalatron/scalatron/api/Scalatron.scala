@@ -7,9 +7,8 @@ package scalatron.scalatron.api
 
 import scalatron.scalatron.api.Scalatron.{Sample, User, SourceFileCollection}
 import akka.actor.ActorSystem
-import scala.io.Source
 import java.io.{FileWriter, File}
-import scalatron.scalatron.impl.FileUtil
+import scalatron.util.FileUtil
 import FileUtil.use
 
 
@@ -483,11 +482,12 @@ object Scalatron {
                 } else {
                     // read whatever is on disk now
                     sourceFiles
-                        .filter(file => file.isFile && file.getName != Constants.ConfigFilename)
-                        .map(file => {
+                    .filter(file => file.isFile && file.getName != Constants.ConfigFilename)
+                    .map(file => {
                         val filename = file.getName
-                        val code = Source.fromFile(file).mkString
-                        if(verbose) println("loaded source code from file: '%s'".format(file.getAbsolutePath))
+                        val filePath = file.getAbsolutePath
+                        val code = FileUtil.loadTextFileContents(filePath)
+                        if(verbose) println("loaded source code from file: '%s'".format(filePath))
                         SourceFile(filename, code)
                     })
                 }

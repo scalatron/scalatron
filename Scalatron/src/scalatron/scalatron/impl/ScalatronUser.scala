@@ -14,6 +14,7 @@ import akka.util.Timeout
 import akka.dispatch.Await
 
 
+import scalatron.util.FileUtil
 import FileUtil.deleteRecursively
 import FileUtil.copyFile
 import ConfigFile.loadConfigFile

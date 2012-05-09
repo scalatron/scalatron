@@ -4,6 +4,7 @@ import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
 import io.Source
 import java.net.URL
 import java.io.{InputStream, BufferedOutputStream, BufferedInputStream}
+import scalatron.util.FileUtil
 
 
 trait BaseServlet extends HttpServlet {
@@ -13,9 +14,7 @@ trait BaseServlet extends HttpServlet {
 
     override def doGet(req: HttpServletRequest, resp: HttpServletResponse) {}
 
-    def loadRelTextFile(relativePath: String) = loadAbsTextFile(relativeToAbsolutePath(relativePath))
-
-    def loadAbsTextFile(absolutePath: String) = Source.fromFile(absolutePath).mkString
+    def loadRelTextFile(relativePath: String) = FileUtil.loadTextFileContents(relativeToAbsolutePath(relativePath))
 
     def relativeToAbsolutePath(relativePath: String) = {
         if(relativePath.contains(".."))

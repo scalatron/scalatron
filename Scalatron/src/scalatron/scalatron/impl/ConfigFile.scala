@@ -2,6 +2,7 @@ package scalatron.scalatron.impl
 
 import java.io.{File, FileWriter}
 import scala.io.Source
+import scalatron.util.FileUtil
 import FileUtil.use
 
 
@@ -9,13 +10,18 @@ object ConfigFile
 {
     /** Loads and parses a file with one key/val pair per line to Map[String,String].
       * Throws an exception if an error occurs. */
-    def loadConfigFile(absolutePath: String) =
-        Source
-            .fromFile(absolutePath)
+    def loadConfigFile(absolutePath: String) = {
+        val source = Source.fromFile(absolutePath)
+        try {
+            source
             .getLines()
             .map(_.split('='))
             .map(a => if( a.length == 2 ) (a(0), a(1)) else (a(0), ""))
             .toMap
+        } finally {
+            source.close()
+        }
+    }
 
 
     /** Loads, parses, updates and writes back a file with one key/val pair per line. */
