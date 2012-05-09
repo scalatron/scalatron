@@ -17,6 +17,7 @@ import akka.dispatch.ExecutionContext
 import java.security.Permission
 import java.io.FilePermission
 import java.net.URLDecoder
+import java.lang.reflect.ReflectPermission
 
 
 object ScalatronImpl
@@ -63,13 +64,15 @@ object ScalatronImpl
         if(verbose) println("Will search for sub-directories containing bot plug-ins in: " + pluginBaseDirectoryPath)
 
 
-        val sandboxUntrustedCode = argMap.get("-sandboxed").getOrElse("no") == "yes"
+        /** When running in secure mode, bot plug-ins are sandboxed, control functions are subject to timeouts
+          * and slave counts are restricted. */
+        val secureMode = argMap.get("-secure").getOrElse("no") == "yes"
         val scalatronJarFilePath = getClassPath(classOf[ScalatronImpl])
         implicit val executionContextForUntrustedCode = createExecutionContextForUntrustedCode(
             scalatronJarFilePath,
             scalatronInstallationDirectoryPath + "/out/",
             pluginBaseDirectoryPath,
-            sandboxUntrustedCode,
+            secureMode,
             verbose
         )
 
@@ -82,6 +85,7 @@ object ScalatronImpl
             samplesBaseDirectoryPath,
             pluginBaseDirectoryPath,
             TournamentState.Empty,
+            secureMode,
             verbose
         )(
             actorSystem,
@@ -108,28 +112,28 @@ object ScalatronImpl
       * @param applicationJarDirectoryPath a path prefix from which plug-ins may read
       * @param applicationOutDirectoryPath a path prefix from which plug-ins may read
       * @param pluginDirectoryPath a path prefix from which plug-ins may read
-      * @param sandboxing if true, the custom security manager is activated and plug-ins are sandboxed
-      * @param verbose if true, the custom security manager is activated and plug-ins are sandboxed
+      * @param secureMode if true, the custom security manager is activated and plug-ins are sandboxed
+      * @param verbose if true, verbose logging is enabled
       */
     def createExecutionContextForUntrustedCode(
         applicationJarDirectoryPath: String,
         applicationOutDirectoryPath: String,
         pluginDirectoryPath: String,
-        sandboxing: Boolean,
+        secureMode: Boolean,
         verbose: Boolean) =
     {
         val availableProcessors = Runtime.getRuntime.availableProcessors
         val threadCount = new java.util.concurrent.atomic.AtomicLong(0L)
 
-        // set maintains list of all currently running sandboxed thread IDs (so we can identify them in the SecurityManager)
+        // set maintains list of all currently running untrusted thread IDs (so we can identify them in the SecurityManager)
         val threadSet = new java.util.concurrent.ConcurrentSkipListSet[Long]
 
         class PluginThread(target: Runnable) extends Thread(target) {
             override def run() {
                 threadSet.add(getId)
-                // System.err.println("Launching sandboxed thread: " + getName)
+                // System.err.println("Launching untrusted thread: " + getName)
                 super.run()
-                // System.err.println("Sandboxed thread ending: " + getName)
+                // System.err.println("untrusted thread ending: " + getName)
                 threadSet.remove(getId)
             }
         }
@@ -143,7 +147,7 @@ object ScalatronImpl
             new ThreadFactory {
                 def newThread(runnable: Runnable) = {
                     val t = new PluginThread(runnable)
-                    t.setName("SandboxedThread-" + threadCount.incrementAndGet)
+                    t.setName("UntrustedThread-" + threadCount.incrementAndGet)
                     t.setDaemon(true)
                     t
                 }
@@ -151,7 +155,7 @@ object ScalatronImpl
             new ThreadPoolExecutor.CallerRunsPolicy
         )
 
-        val sandboxedExecutionContext = ExecutionContext.fromExecutorService(defaultThreadPool)
+        val executionContextForUntrustedCode = ExecutionContext.fromExecutorService(defaultThreadPool)
 
 
         case class PluginSecurityManager(
@@ -162,10 +166,7 @@ object ScalatronImpl
             override def checkPermission(perm: Permission, context: Any) { check(perm) }
 
             private def check(permission: Permission) {
-                val currentThread: Thread = Thread.currentThread()
-
-                // val threadName = currentThread.getName
-                // val isPluginThread = threadName.startsWith("SandboxedThread-")
+                val currentThread = Thread.currentThread()
 
                 val isPluginThread = threadSet.contains(currentThread.getId)
                 if(isPluginThread) {
@@ -185,15 +186,26 @@ object ScalatronImpl
                             }
 
                         case runtimePermission: RuntimePermission =>
-                            permission.getActions match {
-                                case "read" =>
-                                    // request for read-only access -- is the request inside permitted source directories?
-                                    val path = permission.getName
-                                    if( path.startsWith(applicationJarDirectoryPath) ||
-                                        path.startsWith(applicationOutDirectoryPath) ||
-                                        path.startsWith(pluginDirectoryPath) ) {
-                                        return // granted
-                                    }
+                            permission.getName match {
+                                case "createClassLoader" =>
+                                    // TODO: this is triggered by the control function factory invocation - without it, plug-ins fail to load :-(
+                                    // System.err.println("warning: granting permission to untrusted code: '%s'".format(permission))
+                                    return // granted
+
+                                case "accessClassInPackage.sun.reflect" =>
+                                    // TODO: this is triggered by the control function factory invocation - without it, plug-ins fail to load :-(
+                                    // System.err.println("warning: granting permission to untrusted code: '%s'".format(permission))
+                                    return // granted
+
+                                case _ => // denied
+                            }
+
+                        case reflectPermission: ReflectPermission =>
+                            permission.getName match {
+                                case "suppressAccessChecks" =>
+                                    // TODO: this is triggered by the control function factory invocation - without it, plug-ins fail to load :-(
+                                    // System.err.println("warning: granting permission to untrusted code: '%s'".format(permission))
+                                    return // granted
 
                                 case _ => // denied
                             }
@@ -208,7 +220,7 @@ object ScalatronImpl
         }
 
 
-        if(sandboxing) {
+        if(secureMode) {
             val pluginSecurityManager =
                 new PluginSecurityManager(
                     "/Users/dev/Scalatron/Scalatron/bin/Scalatron.jar",
@@ -221,7 +233,7 @@ object ScalatronImpl
         }
 
 
-        sandboxedExecutionContext
+        executionContextForUntrustedCode
     }
 
 
@@ -330,6 +342,7 @@ object ScalatronImpl
   * @param samplesBaseDirectoryPath the samples base directory, e.g. /samples
   * @param pluginBaseDirectoryPath the bot plug-in base directory, e.g. /bots
   * @param tournamentState the tournament state holding object (mutable), to allow external access to state
+  * @param secureMode if true, bot plug-ins are sandboxed and subject to timeouts
   * @param verbose if true, use verbose logging
   */
 case class ScalatronImpl(
@@ -339,6 +352,7 @@ case class ScalatronImpl(
     samplesBaseDirectoryPath: String, // e.g. /Scalatron/samples
     pluginBaseDirectoryPath: String, // e.g. /Scalatron/bots
     tournamentState: TournamentState, // receives and accumulates tournament round results
+    secureMode: Boolean,
     verbose: Boolean
 )(
     val actorSystem: ActorSystem,                           // the Akka actor system to use for trusted code, e.g. for compilation
@@ -364,9 +378,9 @@ case class ScalatronImpl(
         val headless = (argMap.get("-headless").getOrElse("no") == "yes")
         val executionContextForTrustedCode = actorSystem.dispatcher
         if(headless) {
-            game.runHeadless(pluginBaseDirectoryPath, argMap, rounds, tournamentState, verbose)(executionContextForTrustedCode, executionContextForUntrustedCode)
+            game.runHeadless(pluginBaseDirectoryPath, argMap, rounds, tournamentState, secureMode, verbose)(executionContextForTrustedCode, executionContextForUntrustedCode)
         } else {
-            game.runVisually(pluginBaseDirectoryPath, argMap, rounds, tournamentState, verbose)(executionContextForTrustedCode, executionContextForUntrustedCode)
+            game.runVisually(pluginBaseDirectoryPath, argMap, rounds, tournamentState, secureMode, verbose)(executionContextForTrustedCode, executionContextForUntrustedCode)
         }
     }
 

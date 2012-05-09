@@ -21,6 +21,7 @@ trait Game {
       * @param argMap the command line argument map to use to configure the tournament run
       * @param rounds the number of rounds to play in the tournament loop before returning
       * @param tournamentState the tournament state object to update whenever a round ends
+      * @param secureMode if true, certain bot processing restrictions apply
       * @param verbose if true, log to the console verbosely
       * @param executionContextForTrustedCode execution context for trusted code (e.g. from Akka ActorSystem)
       * @param executionContextForUntrustedCode execution context for untrusted code (e.g. for bot control functions)
@@ -30,6 +31,7 @@ trait Game {
         argMap: Map[String, String],
         rounds: Int,
         tournamentState: TournamentState,
+        secureMode: Boolean,
         verbose: Boolean
     )(
         executionContextForTrustedCode: ExecutionContext,
@@ -43,6 +45,7 @@ trait Game {
       * @param argMap the command line argument map to use to configure the tournament run
       * @param rounds the number of rounds to play in the tournament loop before returning
       * @param tournamentState the tournament state object to update whenever a round ends
+      * @param secureMode if true, certain bot processing restrictions apply
       * @param verbose if true, log to the console verbosely
       * @param executionContextForTrustedCode execution context for trusted code (e.g. from Akka ActorSystem)
       * @param executionContextForUntrustedCode execution context for untrusted code (e.g. for bot control functions)
@@ -52,6 +55,7 @@ trait Game {
         argMap: Map[String, String],
         rounds: Int,
         tournamentState: TournamentState,
+        secureMode: Boolean,
         verbose: Boolean
     )(
         executionContextForTrustedCode: ExecutionContext,

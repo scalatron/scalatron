@@ -59,6 +59,9 @@ object Config {
                 BoardParams.Perimeter.Open
         }
 
+        val maxSlaveCountFallback = if(permanentConfig.secureMode) 20 else Int.MaxValue
+        val maxSlaveCount = argMap.get("-maxslaves").map(_.toInt).getOrElse(maxSlaveCountFallback)
+
 
         val cellCount = boardSize.x * boardSize.y
         val boardParams =
@@ -69,7 +72,8 @@ object Config {
                 goodPlantCount = argMap.get("-zugars").map(_.toInt).getOrElse(cellCount / 250),
                 badPlantCount =  argMap.get("-toxifera").map(_.toInt).getOrElse(cellCount / 350),
                 goodBeastCount = argMap.get("-fluppets").map(_.toInt).getOrElse(cellCount / 350),
-                badBeastCount =  argMap.get("-snorgs").map(_.toInt).getOrElse(cellCount / 500)
+                badBeastCount =  argMap.get("-snorgs").map(_.toInt).getOrElse(cellCount / 500),
+                maxSlaveCount =  maxSlaveCount
             )
 
         Config(

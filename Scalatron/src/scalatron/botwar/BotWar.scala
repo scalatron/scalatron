@@ -29,6 +29,7 @@ case object BotWar extends Game
         argMap: Map[String,String],
         rounds: Int,
         tournamentState: TournamentState,   // receives tournament round results
+        secureMode: Boolean,
         verbose: Boolean
     )(
         executionContextForTrustedCode: ExecutionContext,
@@ -36,7 +37,7 @@ case object BotWar extends Game
     )
     {
         // determine the permanent configuration for the game
-        val permanentConfig = PermanentConfig.fromArgMap(argMap)
+        val permanentConfig = PermanentConfig.fromArgMap(secureMode, argMap)
 
         // pop up the display window, taking command line args into account
         val display = Display.create(argMap)
@@ -128,6 +129,7 @@ case object BotWar extends Game
         argMap: Map[String,String],
         rounds: Int,
         tournamentState: TournamentState,   // receives tournament round results
+        secureMode: Boolean,
         verbose: Boolean
     )(
         executionContextForTrustedCode: ExecutionContext,
@@ -135,7 +137,7 @@ case object BotWar extends Game
     )
     {
         // determine the permanent configuration for the game
-        val permanentConfig = PermanentConfig.fromArgMap(argMap)
+        val permanentConfig = PermanentConfig.fromArgMap(secureMode, argMap)
 
         // determine the maximum frames/second (to throttle CPU usage or sim loop; min: 1 fps)
         val maxFPS = argMap.get("-maxfps").map(_.toInt).getOrElse(50).max(1)
@@ -199,17 +201,19 @@ case object BotWar extends Game
 
     /** Starts a headless game simulation using the given plug-in collection.
       * @param plugins the collection of plug-ins to use as control function factories.
+      * @param secureMode if true, certain bot processing restrictions apply
       * @param argMap the command line arguments
       * @return the initial simulation state
       */
     def startHeadless(
         plugins: Iterable[Plugin.External],
+        secureMode: Boolean,
         argMap: Map[String,String]
     )(
         executionContextForUntrustedCode: ExecutionContext
     ) : SimState = {
         // determine the permanent configuration for the game
-        val permanentConfig = PermanentConfig.fromArgMap(argMap)
+        val permanentConfig = PermanentConfig.fromArgMap(secureMode, argMap)
 
         val roundIndex = 0
 

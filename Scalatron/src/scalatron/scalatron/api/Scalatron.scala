@@ -19,8 +19,14 @@ trait Scalatron
     // version, start/run/stop
     //----------------------------------------------------------------------------------------------
 
-    /** Returns the version of the Scalatron server exposing this API, e.g. "0.9.7". */
+    /** Returns the version of the Scalatron server exposing this API, e.g. "1.0.0.2". */
     def version : String
+
+    /** Returns whether the Scalatron server is running in secure mode. In secure mode, bot plug-in
+      * code is subject to a range of restrictions: access to sensitive resources (network, file system)
+      * is denied; control function processing time is restricted; number of entities a plug-in can
+      * have at any one time is restricted. */
+    def secureMode : Boolean
 
     /** Returns the path of the directory where Scalatron is installed.
       * Note: this path is passed into the API as a parameter; it is determined by detecting the
@@ -292,7 +298,7 @@ object Scalatron {
           *
           * This is intended for use by the web ui or custom tools using the web API when a
           * user wants to upload an already-built bot plug-in. Stream the plug-in .jar file to
-          * this location, then publish into the tournament or start a sandboxed game. */
+          * this location, then publish into the tournament or start a private game. */
         def unpublishedBotPluginPath : String
 
 
@@ -366,7 +372,7 @@ object Scalatron {
         // sandbox management
         //----------------------------------------------------------------------------------------------
 
-        /** Creates a new private sandboxed simulation for this user. The returned instance is a
+        /** Creates a new private simulation instance for this user. The returned instance is a
           * container for a unique sandbox ID and the initial state of the simulation generated for
           * that sandbox. See the notes on trait Sandbox for some caveats.
           *

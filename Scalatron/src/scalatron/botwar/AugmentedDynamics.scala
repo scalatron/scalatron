@@ -107,7 +107,7 @@ case object AugmentedDynamics extends ((State,Random,Iterable[(Entity.Id,Iterabl
             var updatedBoard = board
 
             command match {
-                case Command.Nop =>            // "Nop()"
+                case Command.Nop =>                   // "Nop()"
                     // nothing to do
 
                 case move: Command.Move =>            // "Move(dx=<int>,dy=<int>)"
@@ -129,9 +129,18 @@ case object AugmentedDynamics extends ((State,Random,Iterable[(Entity.Id,Iterabl
                     thisVariety match {
                         case thisPlayer: Bot.Player =>
                             val energy = spawn.map.get(Protocol.PropertyName.Energy).map(_.toInt).getOrElse( 100 )
-                            if( energy < 100 ) throw new IllegalStateException("Spawn(): energy less than minimum (100): " + energy)
+                            if( energy < 100 ) throw new IllegalStateException("Spawn(): requested energy less than minimum (100): " + energy)
                             val updatedBotEnergy = thisBot.energy - energy
-                            if( updatedBotEnergy < 0 ) throw new IllegalStateException("Spawn(): not enough energy: " + energy + " vs " + thisBot.energy )
+                            if( updatedBotEnergy < 0 ) throw new IllegalStateException("Spawn(): bot does not have enough energy: " + energy + " vs " + thisBot.energy )
+
+                            val maxSlaveCount = state.config.boardParams.maxSlaveCount
+                            if(maxSlaveCount < Int.MaxValue) {
+                                val siblings = board.siblingsOfBot(thisBot)
+                                val siblingCount = siblings.size
+                                if(siblingCount > maxSlaveCount + 1) {
+                                    throw new IllegalStateException("Spawn(): maximum permissible number of mini-bots has been reached: " + maxSlaveCount )
+                                }
+                            }
 
                             val direction = spawn.map.get(Protocol.PluginOpcode.ParameterName.Direction).map(s => XY(s)).getOrElse(XY.One)
                             val delta = direction.signum

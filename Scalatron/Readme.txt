@@ -54,6 +54,17 @@ in the public domain. Feel free to use, copy, and improve them!
 
 ## Version History
 
+### Version 1.0.0.2 -- 2012-05-10
+
+* there is now an experimental "secure mode" for Scalatron, which can be enabled with the command line argument
+  "-secure yes". This has the following effects:
+   (a) Plug-ins run in a sandbox and can no longer access the file system, network, etc. on the server
+       Note that plug-ins can also no longer access the file system for logging purposes.
+   (b) Each plug-in can only have a fixed maximum number of slave entities in the game at any one time;
+       the default value is 20, and can be adjusted with the argument "-maxslaves int"
+   (c) not yet quite working: timeouts for plug-in control functions.
+
+
 ### Version 1.0.0.1 -- 2012-05-09
 
 * added a favicon.ico to remove warning about missing file
@@ -72,7 +83,7 @@ in the public domain. Feel free to use, copy, and improve them!
 * version control is now available in the browser UI via "Save..." and "Revert..." buttons. Thanks @daniel_kuffner!
 * plug-ins can now optionally be isolated into a sandbox to prevent them from executing malicious code on the server.
   To enable this experimental feature, use the command line argument "-sandboxed yes". Note that plug-ins can no
-  longer access the file system for logging purposes.
+  longer access the file system for logging purposes. (updated 2012-05-09: command is now "-secure yes").
 
 
 ### Version 0.9.9.4 -- 2012-05-04

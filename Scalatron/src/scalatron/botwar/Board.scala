@@ -9,6 +9,8 @@ import scalatron.scalatron.impl.Plugin
 import BoardParams.Perimeter
 import akka.dispatch.{Await, Future, ExecutionContext}
 import akka.util.Duration
+import akka.util.duration._
+import java.util.concurrent.TimeoutException
 
 
 /** Contains the temporally variable aspects of the game state.
@@ -63,6 +65,18 @@ case class Board(
                     })
         }
     }
+
+    /** Returns the master bot and all mini-bots that are siblings of the given bot. */
+    def siblingsOfBot(bot: Bot) : Iterable[Bot] =
+        bot.variety match {
+            case thisPlayer: Bot.Player =>
+                botsThatArePlayers.filter(bot =>
+                    bot.variety match {
+                        case player: Bot.Player => player.masterId == thisPlayer.masterId
+                        case _ => false
+                    })
+            case _ => Iterable.empty
+        }
 
 
 
@@ -185,8 +199,17 @@ object Board
                     None
             }
         })
-        val result = Await.result(future, Duration.Inf)     // no timeout; maybe in the future
-        val pluginsAndControlFunctions = result.flatten     // remove failed instantiations
+
+        // Note: an overall timeout across all bots is a temporary solution - we want timeouts PER BOT
+        val pluginsAndControlFunctions =
+            try {
+                val result = Await.result(future, 2000 millis)      // generous timeout - note that this is over ALL plug-ins
+                result.flatten     // remove failed instantiations
+            } catch {
+                case t: TimeoutException =>
+                    System.err.println("warning: timeout while instantiating control function of one of the plugins")
+                    Iterable.empty          // temporary - disables ALL bots, which is not the intention
+            }
 
 
         // spawn players

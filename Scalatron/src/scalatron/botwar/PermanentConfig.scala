@@ -9,16 +9,18 @@ import scalatron.scalatron.impl.Plugin
 
 /** Configuration settings that won't change round-to-round */
 case class PermanentConfig(
+    secureMode: Boolean,                                    // if true, certain bot processing restrictions apply
     stepsPerRound: Int,                                     // number of steps to run the game
     internalPlugins: Iterable[Plugin.Internal]              // for debugging within the server
     )
 
 
 object PermanentConfig {
-    def fromArgMap(argMap: Map[String,String]) = {
+    def fromArgMap(secureMode: Boolean, argMap: Map[String,String]) = {
         val steps = argMap.get("-steps").map(_.toInt).getOrElse(5000)
 
         PermanentConfig(
+            secureMode = secureMode,
             stepsPerRound = steps,
             internalPlugins = Iterable(
                 // Plugin.Internal(":SimpleBot", () => new SimpleBot().respond _)

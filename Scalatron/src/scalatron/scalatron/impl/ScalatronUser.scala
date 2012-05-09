@@ -402,7 +402,7 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
         // TODO: ..or from some repository, such as /tutorial/bots
 
         // determine the permanent configuration for the game - in particular, that it should run forever
-        val permanentConfig = PermanentConfig(stepsPerRound = Int.MaxValue, internalPlugins = Iterable.empty)
+        val permanentConfig = PermanentConfig(secureMode = scalatron.secureMode, stepsPerRound = Int.MaxValue, internalPlugins = Iterable.empty)
 
         // determine the per-round configuration for the game
         val roundIndex = 0

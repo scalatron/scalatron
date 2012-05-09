@@ -46,8 +46,8 @@ object Simulation
     {
         /** @param plugins the collection of external plug-ins to bring into the simulation
           * @param randomSeed the random seed to use for initializing the simulation
-          * @param executionContextForTrustedCode execution context whose threads are not sandboxed (e.g. actor system)
-          * @param executionContextForUntrustedCode execution context whose threads are sandboxed by the security manager
+          * @param executionContextForTrustedCode execution context whose threads are trusted (e.g. actor system)
+          * @param executionContextForUntrustedCode execution context whose threads are untrusted (sandboxed by the security manager)
           * @return an optional simulation result (if the simulation was not prematurely aborted)
           */
         def apply(

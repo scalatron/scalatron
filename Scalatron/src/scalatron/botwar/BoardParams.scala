@@ -21,6 +21,7 @@ case class BoardParams(
     goodPlantCount: Int,
     badPlantCount: Int,
     goodBeastCount: Int,
-    badBeastCount: Int
+    badBeastCount: Int,
+    maxSlaveCount: Int
     )
 

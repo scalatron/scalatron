@@ -6,7 +6,9 @@ package scalatron.botwar
 import scala.util.Random
 import scalatron.scalatron.impl.TournamentRoundResult
 import akka.util.Duration
+import akka.util.duration._
 import akka.dispatch._
+import java.util.concurrent.TimeoutException
 
 
 /** Game dynamics. Function that, when applied to a game state, returns either a successor
@@ -14,12 +16,12 @@ import akka.dispatch._
   */
 case object Dynamics extends ((State, Random, ExecutionContext) => Either[State,TournamentRoundResult])
 {
-    def apply(state: State, rnd: Random, sandboxedExecutionContext: ExecutionContext) = {
+    def apply(state: State, rnd: Random, executionContextForUntrustedCode: ExecutionContext) = {
         // determine which bots are eligible to move in the nest step
         val eligibleBots = computeEligibleBots(state)
 
         // have each bot compute its command
-        val botCommandsAndTimes = computeBotCommands(state, eligibleBots)(sandboxedExecutionContext) // was: actorSystem
+        val botCommandsAndTimes = computeBotCommands(state, eligibleBots)(executionContextForUntrustedCode) // was: actorSystem
 
         // store time taken with each bot
         var updatedBoard = state.board
@@ -117,10 +119,17 @@ case object Dynamics extends ((State, Random, ExecutionContext) => Either[State,
                     // we inject a Disable() command as-if-issued-by-the-bot to report the error into the browser UI:
                     Some((bot.id,(0L,"",Iterable[Command](Command.Disable(t.getMessage)))))
             }
-
         })
-        val result = Await.result(future, Duration.Inf)     // no timeout; maybe in the future
-        result.flatten
+
+        // Note: an overall timeout across all bots is a temporary solution - we want timeouts PER BOT
+        try {
+            val result = Await.result(future, 2000 millis)      // generous timeout - note that this is over ALL plug-ins
+            result.flatten
+        } catch {
+            case t: TimeoutException =>
+                System.err.println("warning: timeout while invoking the control function of one of the plugins")
+                Iterable.empty          // temporary - disables ALL bots, which is not the intention
+        }
     }
 
 
