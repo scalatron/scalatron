@@ -41,8 +41,6 @@ Steps to Solve:
 * Install it and try again.
 
 
-
-
 **On Windows, running `java -jar /bin/Scalatron.jar` displays a "UnsupportedClassVersionError"**
 
 Probable Cause:
@@ -55,6 +53,42 @@ Steps to Solve:
 * Go to [the Java download site](http://www.java.com/download/)
 * Download a more recent Java Runtime Environment
 * Install it and try again.
+
+
+
+## Performance Problems
+
+**Server hangs intermittently**
+
+Probable Cause:
+
+* Very likely Java has too little memory and spends too much time running garbage collection.
+
+Steps to Solve:
+
+* give the Scalatron server more memory - as much as you can, in fact. Try starting it with the following options:
+
+    java -Xmx2G -server -jar Scalatron.jar
+
+
+
+**Compilations are slow or time out**
+
+Probable Cause:
+
+* The load on the server is too high, causing compilations to take too long.
+* This generally means that the ratio of users and bots to available CPU cycles is too high.
+
+
+Steps to Solve:
+
+* Run the server on a computer with more and/or faster CPU cores. Scalatron will use as many cores as you can provide.
+* Ask users to write better-behaved bots - they should not spawn mini-bots with abandon.
+* Spread your users across two servers, using one as a testing server (for frequent compilations) and
+  one as a tournament server (for competitive runs of debugged bots).
+* Provide more memory to the Scalatron server (see tips for "Server hangs intermittently").
+* Throttle the simulation using the `-maxfps` command line option, e.g. using `maxfps 20'.
+  This will keep the simulator from eating up all available CPU cycles.
 
 
 
