@@ -9,7 +9,7 @@ import scala.io.Source
 import java.io.{FileWriter, File}
 
 
-/** Client-side interface for the Scalatron RESTful API.
+/** Client-side interface for the Scalatron RESTful web API.
   */
 trait ScalatronRemote {
     //----------------------------------------------------------------------------------------------
@@ -39,6 +39,21 @@ trait ScalatronRemote {
       * @throws ScalatronException.CreationFailure if the user could not be created (e.g. because /src dir could not be created).
       */
     def createUser(name: String, password: String): User
+
+
+
+    //----------------------------------------------------------------------------------------------
+    // sample code management
+    //----------------------------------------------------------------------------------------------
+
+    /** Returns a collection of samples, i.e. of named source file packages, such as bot versions
+      * taken from the Scalatron tutorial. The samples are enumerated by enumerating the
+      * sub-directories of the /sample base directory on disk, e.g. "/Scalatron/samples/{sample}". */
+    def samples: SampleList
+
+    /** Creates a new sample with the given name from the given source file collection.
+      * Users can employ this to share bot code across the network. */
+    def createSample(name: String, sourceFiles: SourceFileCollection): Sample
 }
 
 object ScalatronRemote {
@@ -54,6 +69,9 @@ object ScalatronRemote {
     class ScalatronException(msg: String) extends RuntimeException(msg)
 
     object ScalatronException {
+
+        /** ScalatronException.Forbidden: if an operation is forbidden, such as deleting the Administrator account. */
+        case class Forbidden(serverMessage: String) extends ScalatronException(serverMessage)
 
         /** ScalatronException.NotAuthorized: unable to perform the action because of insufficient privileges. */
         case class NotAuthorized(serverMessage: String) extends ScalatronException(serverMessage)
@@ -89,7 +107,7 @@ object ScalatronRemote {
         /** Retrieves the user account with the given name. Returns a Some(User) if an account for
           * the given name exists and None if it does not.
           */
-        def user(name: String): Option[User]
+        def get(name: String): Option[User]
 
         /** Retrieves the Administrator user account with the given name.
           * Fails with an IllegalStateException if 'Administrator' is not in the user list.
@@ -119,6 +137,8 @@ object ScalatronRemote {
         //----------------------------------------------------------------------------------------------
 
         def name: String
+
+        def isAdministrator: Boolean
 
         /** Deletes the user account on the server. CAUTION: all user data is deleted.
           * This user object becomes unusable.
@@ -331,9 +351,11 @@ object ScalatronRemote {
       * indicating whether the build was successful (primarily: zero errors and not aborted),
       * the count of errors and warnings, and a collection of build message objects. */
     case class BuildResult(
-                              successful: Boolean,
-                              errorCount: Int, warningCount: Int,
-                              messages: Iterable[BuildResult.BuildMessage])
+        successful: Boolean,
+        duration: Int,          // milliseconds
+        errorCount: Int,
+        warningCount: Int,
+        messages: Iterable[BuildResult.BuildMessage])
 
     object BuildResult {
 
@@ -349,6 +371,16 @@ object ScalatronRemote {
         val Severity_Error = 2
         val Severity_Warning = 1
     }
+
+
+
+    trait SampleList extends Iterable[Sample] {
+        /** Returns the Sample instance associated with a particular name, which can then be used to
+          * retrieve the source file collection associated with the sample or to delete the sample.
+          * Returns Some(Sample) if a sample with the given name exists, None otherwise. */
+        def get(name: String): Option[Sample]
+    }
+
 
 
     /** ScalatronRemote.Sample: interface for dealing with source code samples.

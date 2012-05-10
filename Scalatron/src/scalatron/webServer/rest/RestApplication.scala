@@ -37,6 +37,7 @@ case class RestApplication(scalatron: Scalatron, verbose: Boolean) extends javax
     resourcesCls.add(classOf[SourcesBuildResource])
     resourcesCls.add(classOf[PublishResource])
     resourcesCls.add(classOf[UnpublishedResource])
+    resourcesCls.add(classOf[SamplesResource])
 
     override def getSingletons = resources
 

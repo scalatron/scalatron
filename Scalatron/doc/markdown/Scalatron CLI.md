@@ -62,6 +62,8 @@ where <command> may require addition parameters:
     deleteUser                  deletes an existing user (along with all content!); Administrator only
         -targetUser <name>      the name of the user to delete (required)
 
+    deleteAllUsers              deletes all existing users (along with all content!); Administrator only
+
     setUserAttribute            sets a configuration attribute for a user; as user or Administrator
         -targetUser <name>      the name of the user to set attribute on (default: name of '-user' option)
         -key <name>             the key of the attribute to set
@@ -85,8 +87,18 @@ where <command> may require addition parameters:
         -sourceDir <path>       the path of the local directory where the source files can be found
         -label <name>           the label to apply to the versions (default: empty)
 
+    getVersion                  retrieves the source code of the version with the given ID; as user only
+        -targetDir <path>       the path of the local directory where the source files should be stored
+        -id <int>               the version's ID
+
+    deleteVersion               deletes the version with the given ID; as user only
+        -id <int>               the version's ID
+
     benchmark                   runs standard isolated-bot benchmark on given source files; as user only
         -sourceDir <path>       the path of the local directory where the source files can be found
+
+    stresstest                  runs a stress test, simulating a hack-a-thon workload on the server; as Administrator only
+        -clients <int>          the number of clients to simulate (default: 1)
 
 
 ## Examples:
@@ -111,6 +123,7 @@ where <command> may require addition parameters:
 
     java -jar ScalatronCLI.jar -user Frankie -password a -cmd benchmark -sourceDir /tempsrc
 
+    java -jar ScalatronCLI.jar -cmd stresstest -clients 10
 
 
 

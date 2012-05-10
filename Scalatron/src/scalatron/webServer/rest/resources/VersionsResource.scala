@@ -158,7 +158,6 @@ object VersionsResource {
         def setFilename(name: String) { n = name }
         def setCode(co: String) { c = co }
     }
-
 }
 
 

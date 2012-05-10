@@ -20,22 +20,22 @@ object ScalatronRemoteImpl {
         val apiEntryPoint = connectionConfig.apiEntryPoint
 
         val connection = Connection(httpClient, hostname, port, verbose)
-        val (version, userResource) = GET_api(connection, apiEntryPoint, verbose)
+        val (version, usersResource, samplesResource) = GET_api(connection, apiEntryPoint, verbose)
 
         if(verbose) println("Connected to Scalatron server running " + version + " at http://" + hostname + ":" + port + apiEntryPoint)
 
-        ScalatronRemoteImpl(connection, version, userResource, verbose)
+        ScalatronRemoteImpl(connection, version, usersResource, samplesResource, verbose)
     }
 
 
     /** Performs the initial connection to the server and fetches the /api JSON data.
-      * @return (version, userResource)
+      * @return (version, usersResource, samplesResource)
       * @throws IllegalStateException on unexpected data
       */
-    private def GET_api(connection : Connection, apiEntryPoint : String, verbose : Boolean) : (String, String) = {
+    private def GET_api(connection : Connection, apiEntryPoint : String, verbose : Boolean) : (String, String, String) = {
         /*
         {
-            "version" : "0.9.7",
+            "version" : "1.0.0.2",
             "resources" :
             [
                 { "name" : "Users",         "url" : "/api/users"},
@@ -55,22 +55,34 @@ object ScalatronRemoteImpl {
             resources.foreach(r => println("   " + r._1 + " -> " + r._2))
         }
 
-        val userResource = resources.get("Users") match {
+        val usersResource = resources.get("Users") match {
             case Some(url) => url
             case _ => throw new IllegalStateException("invalid server response (no 'Users' resource): " + jsonOpt)
         }
 
-        (version, userResource)
+        val samplesResource = resources.get("Samples") match {
+            case Some(url) => url
+            case _ => throw new IllegalStateException("invalid server response (no 'Samples' resource): " + jsonOpt)
+        }
+
+        (version, usersResource, samplesResource)
     }
 }
 
 case class ScalatronRemoteImpl(
-                                  connection : Connection,
-                                  version : String,
-                                  userResource : String,
-                                  verbose : Boolean) extends ScalatronRemote {
+    connection : Connection,
+    version : String,
+    usersResource : String,
+    samplesResource : String,
+    verbose : Boolean) extends ScalatronRemote
+{
     def hostname = connection.hostname
     def port = connection.port
+
+
+    //----------------------------------------------------------------------------------------------
+    // (web) user management
+    //----------------------------------------------------------------------------------------------
 
     def users() : ScalatronUserList = {
         /*
@@ -84,23 +96,23 @@ case class ScalatronRemoteImpl(
             ]
         }
          */
-        val jsonOpt = connection.GET_json(userResource)
+        val jsonOpt = connection.GET_json(usersResource)
         val jsonMap = jsonOpt.asMap // throws on format error
-        val users = jsonMap.asKVVStrings("users", "name", "session", "resource")
+        val userTuples = jsonMap.asKVVStrings("users", "name", "session", "resource")
 
         if(verbose) {
             println("Discovered the following users:")
-            users.foreach(r => println("   " + r._1 + " -> " + r._2._1 + "; " + r._2._2))
+            userTuples.foreach(r => println("   " + r._1 + " -> " + r._2._1 + "; " + r._2._2))
         }
 
-        val userList = users.map(u => ScalatronUser(u._1, u._2._1, u._2._2, this))
+        val userList = userTuples.map(u => ScalatronUser(u._1, u._2._1, u._2._2, this))
 
         ScalatronUserList(userList, this)
     }
 
     def createUser(name : String, password : String) : User = {
         try {
-            val jsonOpt = connection.POST_json_json(userResource, "{ \"name\" : \"" + name + "\", \"password\" : \"" + password + "\"}")
+            val jsonOpt = connection.POST_json_json(usersResource, "{ \"name\" : \"" + name + "\", \"password\" : \"" + password + "\"}")
             val jsonMap = jsonOpt.asMap // throws on format error
             val createdUserName = jsonMap.asString("name")
             val createdUserSessionUrl = jsonMap.asString("session")
@@ -127,4 +139,36 @@ case class ScalatronRemoteImpl(
                 }
         }
     }
+
+
+    //----------------------------------------------------------------------------------------------
+    // sample code management
+    //----------------------------------------------------------------------------------------------
+
+    def samples : ScalatronSampleList = {
+        /*
+        {
+            "samples" :
+            [
+                { "name" : "Tutorial Bot 01", "url" : "/api/samples/Tutorial%20Bot%2001"},
+                { "name" : "Tutorial Bot 02", "url" : "/api/samples/Tutorial%20Bot%2002"},
+                { "name" : "Tutorial Bot 03", "url" : "/api/samples/Tutorial%20Bot%2003"},
+            ]
+        }
+         */
+        val jsonOpt = connection.GET_json(samplesResource)
+        val jsonMap = jsonOpt.asMap // throws on format error
+        val sampleTuples = jsonMap.asKVStrings("samples", "name", "url")
+
+        if(verbose) {
+            println("Discovered the following samples:")
+            sampleTuples.foreach(r => println("   " + r._1 + " -> " + r._2))
+        }
+
+        val sampleList = sampleTuples.map(u => ScalatronSample(u._1, u._2, this))
+
+        ScalatronSampleList(sampleList, this)
+    }
+
+    def createSample(name: String, sourceFiles: ScalatronRemote.SourceFileCollection) = throw new UnsupportedOperationException
 }

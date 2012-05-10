@@ -50,6 +50,8 @@ object CommandLineProcessor {
             println("   deleteUser                  deletes an existing user (along with all content!); Administrator only")
             println("       -targetUser <name>      the name of the user to delete (required)")
             println("")
+            println("   deleteAllUsers              deletes all existing users (along with all content!); Administrator only")
+            println("")
             println("   setUserAttribute            sets a configuration attribute for a user; as user or Administrator")
             println("       -targetUser <name>      the name of the user to set attribute on (default: name of '-user' option)")
             println("       -key <name>             the key of the attribute to set")
@@ -83,9 +85,13 @@ object CommandLineProcessor {
             println("   benchmark                   runs standard isolated-bot benchmark on given source files; as user only")
             println("       -sourceDir <path>       the path of the local directory where the source files can be found")
             println("")
+            println("   stresstest                  runs a stress test, simulating a hack-a-thon workload on the server; as Administrator only")
+            println("       -clients <int>          the number of clients to simulate (default: 1)")
+            println("")
             println("Examples:")
             println(" java -jar ScalatronCLI.jar -cmd users")
             println(" java -jar ScalatronCLI.jar -user Administrator -password a -cmd createUser -targetUser Frankie")
+            println(" java -jar ScalatronCLI.jar -user Administrator -password a -cmd deleteAllUsers")
             println(" java -jar ScalatronCLI.jar -user Administrator -password a -cmd setUserAttribute -targetUser Frankie -key theKey -value theValue")
             println(" java -jar ScalatronCLI.jar -user Administrator -password a -cmd getUserAttribute -targetUser Frankie -key theKey")
             println(" java -jar ScalatronCLI.jar -user Frankie -password a -cmd sources -targetDir /tempsrc")
@@ -96,6 +102,7 @@ object CommandLineProcessor {
             println(" java -jar ScalatronCLI.jar -user Frankie -password a -cmd getVersion -targetDir /tempsrc -id 1")
             println(" java -jar ScalatronCLI.jar -user Frankie -password a -cmd deleteVersion -id 1")
             println(" java -jar ScalatronCLI.jar -user Frankie -password a -cmd benchmark -sourceDir /tempsrc")
+            println(" java -jar ScalatronCLI.jar -cmd stresstest -clients 10")
             System.exit(0)
         }
 
@@ -120,6 +127,7 @@ object CommandLineProcessor {
                         case "users" => cmd_users(connectionConfig)
                         case "createUser" => cmd_createUser(connectionConfig, argMap)
                         case "deleteUser" => cmd_deleteUser(connectionConfig, argMap)
+                        case "deleteAllUsers" => cmd_deleteAllUsers(connectionConfig, argMap)
                         case "setUserAttribute" => cmd_setUserAttribute(connectionConfig, argMap)
                         case "getUserAttribute" => cmd_getUserAttribute(connectionConfig, argMap)
                         case "sources" => cmd_sources(connectionConfig, argMap)
@@ -130,6 +138,7 @@ object CommandLineProcessor {
                         case "getVersion" => cmd_getVersion(connectionConfig, argMap)
                         case "deleteVersion" => cmd_deleteVersion(connectionConfig, argMap)
                         case "benchmark" => cmd_benchmark(connectionConfig, argMap)
+                        case "stresstest" => cmd_stresstest(connectionConfig, argMap)
                         case _ => System.err.println("unknown command: " + command)
                     }
                 } catch {
@@ -199,7 +208,7 @@ object CommandLineProcessor {
                     connectionConfig,
                     argMap,
                     (scalatron: ScalatronRemote, users: ScalatronRemote.UserList) => {
-                        users.user(targetUser) match {
+                        users.get(targetUser) match {
                             case None =>
                                 System.err.println("error: user '" + targetUser + "' does not exist")
                                 System.exit(-1)
@@ -215,6 +224,26 @@ object CommandLineProcessor {
         }
     }
 
+
+    /** -command deleteAllUsers          deletes all existing users (along with all content!); Administrator only
+      */
+    def cmd_deleteAllUsers(connectionConfig: ConnectionConfig, argMap: Map[String, String]) {
+        doAsAdministrator(
+            connectionConfig,
+            argMap,
+            (scalatron: ScalatronRemote, users: ScalatronRemote.UserList) => {
+                if(connectionConfig.verbose) println("Deleting %d users on server '%s'...".format(users.size, scalatron.hostname))
+                users.foreach(user => {
+                    if(!user.isAdministrator) {
+                        handleScalatronExceptionsFor {
+                            user.delete()
+                            if(connectionConfig.verbose) println("Deleted user '%s'" format user.name)
+                        }
+                    }
+                })
+            }
+        )
+    }
 
     /** -command setUserAttribute       sets a configuration attribute for a user; user or Administrator
       * -key name               the key of the attribute to set
@@ -246,7 +275,7 @@ object CommandLineProcessor {
                             connectionConfig,
                             argMap,
                             (scalatron: ScalatronRemote, loggedonUser: ScalatronRemote.User, users: ScalatronRemote.UserList) => {
-                                users.user(targetUserName) match {
+                                users.get(targetUserName) match {
                                     case None =>
                                         System.err.println("error: user '" + targetUserName + "' does not exist")
                                         System.exit(-1)
@@ -287,7 +316,7 @@ object CommandLineProcessor {
                     connectionConfig,
                     argMap,
                     (scalatron: ScalatronRemote, loggedonUser: ScalatronRemote.User, users: ScalatronRemote.UserList) => {
-                        users.user(targetUserName) match {
+                        users.get(targetUserName) match {
                             case None =>
                                 System.err.println("error: user '" + targetUserName + "' does not exist")
                                 System.exit(-1)
@@ -586,9 +615,107 @@ object CommandLineProcessor {
 
 
 
+    /** -command stresstest     runs a stress test, simulating a hack-a-thon workload on the server; as Administrator only
+      * -clients int            the number of clients to simulate (default: 1)
+      */
+    def cmd_stresstest(connectionConfig: ConnectionConfig, argMap: Map[String, String])
+    {
+        // clean up the server before we start the stress test
+        cmd_deleteAllUsers(connectionConfig, argMap)
+
+        val clientCount = argMap.get("-clients").map(_.toInt).getOrElse(1)
+
+        def stressTask(clientId: Int) {
+            def log(s: String) { System.out.println("[" + clientId + "] " + s) }
+            try {
+                // create one connection per task
+                val scalatron = ScalatronRemote(connectionConfig)
+
+                // --- create temporary user ---
+
+                // retrieve Administrator credentials
+                val adminUserName = ScalatronRemote.Constants.AdminUserName
+                val adminPassword = argMap.get("-password").getOrElse("")
+
+                log("logging on as %s" format adminUserName)
+                val initialUsers = scalatron.users()       // retrieve user list (1 round-trip)
+                val adminUser = initialUsers.adminUser     // fetch Administrator user (no round-trips)
+                adminUser.logOn(adminPassword)      // log-on as Administrator (1 round-trip)
+
+                // create the new user account (1 round-trip)
+                val userName = "Stresstest_" + clientId
+                val userPassword = "Stresstest_" + clientId
+                log("creating user %s" format userName)
+                scalatron.createUser(userName, userPassword)
+
+                log("logging off as %s" format adminUserName)
+                adminUser.logOff()  // log off as Administrator (1 round-trip)
+
+
+                // --- outer stress loop ---
+                (0 until Int.MaxValue).foreach(outerCounter => {
+                    log("cycle %d: logging on as %s" format(outerCounter, userName))
+                    val updatedUsers = scalatron.users()                // retrieve user list (1 round-trip)
+                    val regularUser = updatedUsers.get(userName).get   // fetch Administrator user (no round-trips)
+                    regularUser.logOn(userPassword)                     // log-on as Administrator (1 round-trip)
+
+                    // update the source code to the reference bot
+                    val sampleList = scalatron.samples
+                    val referenceBotSample = sampleList.get("Example Bot 01 - Reference").get
+                    val referenceBotSourceFiles = referenceBotSample.sourceFiles
+                    regularUser.updateSourceFiles(referenceBotSourceFiles)
+
+                    // --- inner stress loop ---
+                    val innerCycleCount = 10
+                    (0 until innerCycleCount).foreach(innerCounter => {
+                        val (buildResult, buildTime) = timedResult { regularUser.buildSources() }
+                        log("%d:%d - buildSources() - %d ms total, %d ms pure - %s".format(
+                            outerCounter, innerCounter,
+                            buildTime, buildResult.duration,
+                            (if(buildResult.successful) "succeeded" else "failed (%s)".format(buildResult.messages.mkString(",")))))
+
+                        val (sandbox, sandboxTime) = timedResult { regularUser.createSandbox() }
+                        // log("%d:%d - createSandbox() - %d ms" format(outerCounter, innerCounter, sandboxTime))
+
+                        val publishTime = timed { regularUser.publish() }
+                        // log("%d:%d - publish() - %d ms" format(outerCounter, innerCounter, publishTime))
+                    })
+
+                    regularUser.logOff()    // log off as regular user password (1 round-trip)
+                })
+            } catch {
+                case t: Throwable =>
+                    log("exception: " + t)
+                    t.printStackTrace()
+                    throw t
+            }
+        }
+
+        (0 until clientCount).foreach(n => new Thread( new Runnable { def run() { stressTask(n) } }, "LoadThread-" + n).start() )
+    }
+
+
+
+
+
+
     //------------------------------------------------------------------------------------------------------------------
     // helpers
     //------------------------------------------------------------------------------------------------------------------
+
+    def timed(action: => Unit) : Long = {
+        val startTime = System.currentTimeMillis
+        action
+        System.currentTimeMillis - startTime
+    }
+
+    def timedResult[T](action: => T) : (T, Long) = {
+        val startTime = System.currentTimeMillis
+        val result = action
+        val duration = System.currentTimeMillis - startTime
+        (result, duration)
+    }
+
 
     /** Accepts a closure; handles typical server exceptions. Exists with error code on such exceptions.
       */
@@ -630,7 +757,7 @@ object CommandLineProcessor {
         // retrieve Administrator credentials
         val adminUserName = argMap.get("-user").getOrElse(ScalatronRemote.Constants.AdminUserName)
         if(adminUserName != ScalatronRemote.Constants.AdminUserName) {
-            System.err.println("error: command 'createUser' requires log-on as user '" + ScalatronRemote.Constants.AdminUserName + "'")
+            System.err.println("error: command requires log-on as user '" + ScalatronRemote.Constants.AdminUserName + "'")
             System.exit(-1)
         }
         val adminPassword = argMap.get("-password").getOrElse("")
@@ -659,7 +786,7 @@ object CommandLineProcessor {
                 System.exit(-1)
         }
 
-        // create the new user account (1 round-trip)
+        // perform the action (1+ round-trips)
         try {
             action(scalatron, users)
         } catch {
@@ -705,7 +832,7 @@ object CommandLineProcessor {
         val users = scalatron.users()
 
         // fetch user (no round-trips)
-        users.user(logonUserName) match {
+        users.get(logonUserName) match {
             case None =>
                 System.err.println("error: user '%s' does not exist".format(logonUserName))
                 System.exit(-1)
@@ -728,7 +855,7 @@ object CommandLineProcessor {
                         System.exit(-1)
                 }
 
-                // create the new user account (1 round-trip)
+                // perform the action (1+ round-trips)
                 try {
                     action(scalatron, loggedonUser, users)
                 } catch {

@@ -20,6 +20,8 @@ case class ScalatronUser(
 {
     override def toString = name + " -> " + sessionUrl
 
+    def isAdministrator = name == ScalatronRemote.Constants.AdminUserName
+
     var resourceMap: Option[Map[String, String]] = None // valid after log-in
 
     def resource(key: String): String = resourceMap match {
@@ -85,6 +87,9 @@ case class ScalatronUser(
         } catch {
             case e: HttpFailureCodeException =>
                 e.httpCode match {
+                    case HttpStatus.SC_FORBIDDEN =>
+                        // tried to delete the Administrator account
+                        throw ScalatronException.Forbidden(e.reason)
                     case HttpStatus.SC_UNAUTHORIZED =>
                         // not logged on as this user or as Administrator
                         throw ScalatronException.NotAuthorized(e.reason)
@@ -234,6 +239,7 @@ case class ScalatronUser(
             val jsonOpt = scalatron.connection.PUT_nothing_json(buildResource)
             val jsonMap = jsonOpt.asMap
             val successful = jsonMap.asBoolean("successful")
+            val duration = jsonMap.asInt("duration")
             val errorCount = jsonMap.asInt("errors")
             val warningCount = jsonMap.asInt("warnings")
             val messages = jsonMap.asList[Map[String, Any]]("messages")
@@ -246,7 +252,7 @@ case class ScalatronUser(
                     jsonMap.asInt("severity")
                 )
             })
-            BuildResult(successful, errorCount, warningCount, buildMessages)
+            BuildResult(successful, duration, errorCount, warningCount, buildMessages)
         } catch {
             case e: HttpFailureCodeException =>
                 e.httpCode match {
@@ -374,7 +380,27 @@ case class ScalatronUser(
     // tournament management
     //----------------------------------------------------------------------------------------------
 
-    def publish() { throw new UnsupportedOperationException }
+    def publish() {
+        try {
+            val publishResource = resource("Publish")
+            scalatron.connection.PUT_nothing_nothing(publishResource)
+        } catch {
+            case e: HttpFailureCodeException =>
+                e.httpCode match {
+                    case HttpStatus.SC_UNAUTHORIZED =>
+                        // not logged on as this user or as Administrator
+                        throw ScalatronException.NotAuthorized(e.reason)
+                    case HttpStatus.SC_NOT_FOUND =>
+                        // this user does not exist on the server
+                        throw ScalatronException.NotFound(e.reason)
+                    case HttpStatus.SC_INTERNAL_SERVER_ERROR =>
+                        // the user's bot .jar file not be read/written on the server
+                        throw ScalatronException.InternalServerError(e.reason)
+                    case _ =>
+                        throw e // rethrow
+                }
+        }
+    }
 
 
     //----------------------------------------------------------------------------------------------

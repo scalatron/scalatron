@@ -82,6 +82,8 @@ case class UserSession(session: HttpSession) {
         }
     }
 
+    def isLoggedOnAsAnyone = usernameOpt.isDefined
+
     def isLoggedOnAsAdministrator = usernameOpt match {
         case None => false  // not logged on
         case Some(sessionUserName) => sessionUserName == Scalatron.Constants.AdminUserName // logged on, but is it as Administrator?

@@ -79,7 +79,7 @@ Important Note:
     tested  /api/users/{user}/session               DELETE  -       -       204     401,404         Log-Off As User
 
     tested  /api/users                              POST    json    json    200     400,401,403,500 Create User
-    tested  /api/users/{user}                       DELETE  -       -       204     400,401,404,500 Delete User
+    tested  /api/users/{user}                       DELETE  -       -       204     400,401,403,404,500 Delete User
     tested  /api/users/{user}                       PUT     json    -       204     400,401,404     Update User Attributes
     tested  /api/users/{user}                       GET     -       json    200     400,401,404,500 Get User Attributes & Resources
 
@@ -102,10 +102,10 @@ Important Note:
     tested  /api/users/{user}/versions/{versionId}  GET     -       json    200     401,404         Get Version Files
     tested  /api/users/{user}/versions/{versionId}  DELETE  -       -       204     401,404         Delete Version
 
-    n/a     /api/samples                            GET     -       json    200     -               Get Existing Samples
-    n/a     /api/samples                            POST    json    -       201     401,415         Create Sample
-    n/a     /api/samples/{sample}                   GET     -       json    200     401,404         Get Sample Files
-    n/a     /api/samples/{sample}                   DELETE  -       -       204     401,404         Delete Sample
+    tested  /api/samples                            GET     -       json    200     401             Get Existing Samples
+    untstd  /api/samples                            POST    json    -       201     401,415,500     Create Sample
+    tested  /api/samples/{sample}                   GET     -       json    200     401,404,500     Get Sample Files
+    untstd  /api/samples/{sample}                   DELETE  -       -       204     401,403,404,500 Delete Sample
 
     n/a     /api/tournament                         GET     -       json    200     -               Get Tournament Resources
     n/a     /api/tournament/stats                   GET     -       json    200     -               Get Tournament Stats
@@ -131,7 +131,7 @@ Returns urls pointing to the primary resources exposed by the web API, such as `
 Response JSON example:
 
     {
-        "version" : "0.9.7",
+        "version" : "1.0.0.2",
         "resources" :
         [
             { "name" : "Users",         "url" : "/api/users"},
@@ -319,8 +319,9 @@ versions, private bot plug-in .jar, published bot plug-in .jar).
     * 204 No Content (success)
     * 400 Bad Request (if the user name was invalid; reason is provided)
     * 401 Unauthorized (if not logged on as that user or as Administrator)
+    * 403 Forbidden (if attempting to delete the Administrator account)
     * 404 Not Found (if user does not exist)
-    * 500 Not Found (if user does not exist)
+    * 500 Internal Server Error (if there was a problem deleting the user's files on disk)
 * Authentication:   must be logged on as Administrator
 
 Comments:
@@ -517,6 +518,7 @@ Result JSON example:
 
     {
         "successful" : true,
+        "duration" : 100,       // milliseconds taken to patch and compile sources and package into .jar
         "errors" : 1,
         "warnings" : 1,
         "messages" :
@@ -951,8 +953,10 @@ Lists all samples currently available on the server.
 
 * URL:              /api/samples
 * Method:           GET
-* Returns:          200 OK & JSON
-* Authentication:   no need to be logged in
+* Returns:
+    * 200 OK & JSON (success)
+    * 401 Unauthorized (if not logged on as any user)
+* Authentication:   must be logged on as some user (any user is OK)
 
 Response JSON example:
 
@@ -1008,6 +1012,7 @@ Returns the source code files for a particular sample.
     * 200 OK & JSON (success)
     * 401 Unauthorized (if not logged on as any user)
     * 404 Not Found (if sample does not exist)
+    * 500 Internal Server Error (if sample files could not be deleted on disk)
 * Authentication:   must be logged on as some user (any user is OK)
 
 Response JSON example:
@@ -1031,7 +1036,9 @@ Deletes a sample from the server, including all associated source code files.
 * Returns:
     * 204 No Content (success)
     * 401 Unauthorized (if not logged on as Administrator)
+    * 403 Forbidden (sample is protected from deletion, e.g. because it is a built-in sample)
     * 404 Not Found (if sample does not exist)
+    * 500 Internal Server Error (if sample files could not be deleted on disk)
 * Authentication:   must be logged on as Administrator
 
 

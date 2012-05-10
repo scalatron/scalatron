@@ -12,6 +12,7 @@ import org.apache.http.entity.StringEntity
 import org.apache.http.HttpStatus
 import scalatronRemote.impl.Connection.{HttpFailureCodeException, JsonMimeType}
 import org.apache.http.client.methods.{HttpPut, HttpDelete, HttpPost, HttpGet}
+import Connection.synchronizedJsonParser
 
 
 object Connection {
@@ -22,9 +23,17 @@ object Connection {
 
     class HttpFailureCodeException(val httpCode: Int, val reason: String, msg: String) extends RuntimeException(msg)
 
+
+    /** Scala Parsers are not thread safe. See
+      * http://scala-programming-language.1934581.n4.nabble.com/Combinator-Parsers-trait-is-not-thread-safe-td3079447.html
+      */
+    var lock : AnyRef = new Object()
+    def synchronizedJsonParser(s: String) : JSonOpt = { lock.synchronized { JSonOpt( JSON.parseFull(s) ) } }
+
 }
 
 case class Connection(httpClient: HttpClient, hostname: String, port: Int, verbose: Boolean = false) {
+
     /** Sends an HTTP GET to the server, retrieves a JSON string from the result and parses it.
       * Returns a wrapper object you can use to disassemble the JSON result. Throws on error.
       * @throws HttpFailureCodeException if an HTTP code other than SC_OK is received
@@ -48,12 +57,9 @@ case class Connection(httpClient: HttpClient, hostname: String, port: Int, verbo
         }
 
         val responseString = EntityUtils.toString(responseEntity)
-        if (verbose) println(responseString)
+        // if (verbose) println(responseString)
 
-        val parsedJson = JSON.parseFull(responseString)
-        if (verbose) println(parsedJson)
-
-        JSonOpt(parsedJson)
+        synchronizedJsonParser(responseString)
     }
 
     /** Sends an HTTP POST to the server with the given JSON payload, retrieves a JSON string from
@@ -80,12 +86,9 @@ case class Connection(httpClient: HttpClient, hostname: String, port: Int, verbo
         }
 
         val responseString = EntityUtils.toString(entity)
-        if (verbose) println(responseString)
+        // if (verbose) println(responseString)
 
-        val parsedJson = JSON.parseFull(responseString)
-        if (verbose) println(parsedJson)
-
-        JSonOpt(parsedJson)
+        synchronizedJsonParser(responseString)
     }
 
     /** Sends an HTTP POST to the server with the given JSON payload and retrieves a URL location
@@ -111,7 +114,7 @@ case class Connection(httpClient: HttpClient, hostname: String, port: Int, verbo
         }
 
         val responseString = EntityUtils.toString(entity)
-        if (verbose) println(responseString)
+        // if (verbose) println(responseString)
 
         responseString
     }
@@ -136,12 +139,9 @@ case class Connection(httpClient: HttpClient, hostname: String, port: Int, verbo
         }
 
         val responseString = EntityUtils.toString(entity)
-        if (verbose) println(responseString)
+        // if (verbose) println(responseString)
 
-        val parsedJson = JSON.parseFull(responseString)
-        if (verbose) println(parsedJson)
-
-        JSonOpt(parsedJson)
+        synchronizedJsonParser(responseString)
     }
 
     /** Sends an HTTP PUT to the server with the given JSON payload and no result value. Throws on error.
@@ -152,6 +152,20 @@ case class Connection(httpClient: HttpClient, hostname: String, port: Int, verbo
         val request = new HttpPut(uri)
         val requestEntity = new StringEntity(jsonString, JsonMimeType, null)
         request.setEntity(requestEntity)
+
+        val response = httpClient.execute(request)
+        val statusCode = response.getStatusLine.getStatusCode
+        if (statusCode != HttpStatus.SC_NO_CONTENT && statusCode != HttpStatus.SC_OK) {
+            throw new HttpFailureCodeException(statusCode, response.getStatusLine.getReasonPhrase, "PUT on '" + uri.toString + "' failed with HTTP code " + statusCode + ", reason: " + response.getStatusLine.getReasonPhrase)
+        }
+    }
+
+    /** Sends an HTTP PUT to the server with the given JSON payload and no result value. Throws on error.
+      */
+    def PUT_nothing_nothing(resource: String) {
+        val uri = URIUtils.createURI("http", hostname, port, resource, "", null);
+
+        val request = new HttpPut(uri)
 
         val response = httpClient.execute(request)
         val statusCode = response.getStatusLine.getStatusCode

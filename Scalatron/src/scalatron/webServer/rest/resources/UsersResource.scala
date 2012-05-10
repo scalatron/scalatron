@@ -16,8 +16,6 @@ class UsersResource extends Resource {
 
     @GET
     def listUsers = {
-        // was: val uri = uriInfo.getAbsolutePathBuilder.path(u.name + "/session").build()
-
         /*
         {
             "users" :
@@ -148,6 +146,8 @@ class UsersResource extends Resource {
                         Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, "user '" + userName + "' does not exist")).build()
                 }
             } catch {
+                case e: ScalatronException.Forbidden =>
+                    Response.status(CustomStatusType(HttpStatus.FORBIDDEN_403, e.getMessage)).build()
                 case e: ScalatronException.IllegalUserName =>
                     Response.status(CustomStatusType(HttpStatus.BAD_REQUEST_400, e.getMessage)).build()
                 case e: IOError =>
