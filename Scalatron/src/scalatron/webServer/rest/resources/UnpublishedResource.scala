@@ -34,11 +34,11 @@ class UnpublishedResource extends ResourceWithUser {
                                 case e: Exception => // Nothing to do
                             }
 
-                            buf += new UnpublishedResource.MessageDto(line, e.multiLineMessage, e.severity)
+                            buf += new UnpublishedResource.BuildMessage(line, e.multiLineMessage, e.severity)
                         }
                         )
 
-                        val buf = new ArrayBuffer[UnpublishedResource.MessageDto]();
+                        val buf = new ArrayBuffer[UnpublishedResource.BuildMessage]();
                         // Enumeration of messages doesn't work!
                         val messages = res.messages
                         messages.foreach(e => {
@@ -49,12 +49,12 @@ class UnpublishedResource extends ResourceWithUser {
                                 case e: Exception => // Nothing to do
                             }
 
-                            buf += new UnpublishedResource.MessageDto(line, e.multiLineMessage, e.severity)
+                            buf += new UnpublishedResource.BuildMessage(line, e.multiLineMessage, e.severity)
                         });
 
                         Response
                             .created(uriInfo.getAbsolutePath)
-                            .entity(new UnpublishedResource.BuildResultDto(res.successful, res.errorCount, res.warningCount, buf.toArray))
+                            .entity(new UnpublishedResource.BuildResult(res.successful, res.errorCount, res.warningCount, buf.toArray))
                             .build()
 
                     case None =>
@@ -62,9 +62,9 @@ class UnpublishedResource extends ResourceWithUser {
                 }
             } catch {
                 case e: TimeoutException =>
-                    new UnpublishedResource.BuildResultDto(
+                    new UnpublishedResource.BuildResult(
                         false, 1, 0,
-                        Array(new UnpublishedResource.MessageDto(0, "Compilation has timed out. Please try again.", 0))
+                        Array(new UnpublishedResource.BuildMessage(0, "Compilation has timed out. Please try again.", 0))
                     )
                 case e: IOError =>
                     // source files could not be written

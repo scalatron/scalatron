@@ -23,23 +23,20 @@ class SourcesBuildResource extends ResourceWithUser {
 
                         val messages =
                             buildResult.messages
-                            .map(e => new SourcesBuildResource.MessageDto(e.sourceFile, e.lineAndColumn._1, e.lineAndColumn._2, e.multiLineMessage, e.severity))
+                            .map(e => new SourcesBuildResource.BuildMessage(e.sourceFile, e.lineAndColumn._1, e.lineAndColumn._2, e.multiLineMessage, e.severity))
                             .toArray
 
-                        Response
-                        .ok(new SourcesBuildResource.BuildResultDto(buildResult.successful, buildResult.errorCount, buildResult.warningCount, messages))
-                        .build()
+                        SourcesBuildResource.BuildResult(
+                            buildResult.successful,
+                            buildResult.duration,
+                            buildResult.errorCount,
+                            buildResult.warningCount,
+                            messages)
 
                     case None =>
                         Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, "user '" + userName + "' does not exist")).build()
                 }
             } catch {
-                case e: TimeoutException =>
-                    new SourcesBuildResource.BuildResultDto(
-                        false, 1, 0,
-                        Array(new SourcesBuildResource.MessageDto("", 0, 0, "Compilation has timed out. Please try again.", 0))
-                    )
-
                 case e: IllegalStateException =>
                     // if compilation service is unavailable, sources don't exist etc.
                     Response.status(CustomStatusType(HttpStatus.INTERNAL_SERVER_ERROR_500, e.getMessage)).build()
@@ -53,14 +50,15 @@ class SourcesBuildResource extends ResourceWithUser {
 }
 
 object SourcesBuildResource {
-    case class BuildResultDto(successful: Boolean, errorCount: Int, warningCount: Int, mesgs: Array[MessageDto]) {
+    case class BuildResult(successful: Boolean, duration: Int, errorCount: Int, warningCount: Int, mesgs: Array[BuildMessage]) {
         def getSuccessful = successful
+        def getDuration = duration
         def getErrors = errorCount
         def getWarnings = warningCount
         def getMessages = mesgs
     }
 
-    class MessageDto(f: String, l: Int, c: Int, m: String, s: Int) {
+    class BuildMessage(f: String, l: Int, c: Int, m: String, s: Int) {
         def getFilename = f
         def getLine = l
         def getColumn = c

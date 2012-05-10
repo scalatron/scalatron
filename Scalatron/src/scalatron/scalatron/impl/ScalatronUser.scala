@@ -24,6 +24,7 @@ import scalatron.scalatron.api.Scalatron.Constants._
 import java.util.Date
 import scalatron.scalatron.api.Scalatron
 import scalatron.scalatron.api.Scalatron._
+import java.util.concurrent.TimeoutException
 
 
 case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatron.User {
@@ -427,7 +428,6 @@ object ScalatronUser {
       * @param jarDirectoryPath the path of the directory where the zipped-up .jar file should reside; created if it does not exist
       * @param jarFilePath the path where the zipped-up .jar file should reside
       * @param messageLineAdjustment how much to add/remove from line number error message (because of patched-in package statement)
-      * @param timeoutInSeconds the timeout for the compile job in seconds
       * @return a build result containing any compiler error messages that may have been generated
       * @throws IOError when building the .jar file encounters problems
       */
@@ -438,14 +438,13 @@ object ScalatronUser {
         compileJob: CompileJob,
         jarDirectoryPath: String,
         jarFilePath: String,
-        messageLineAdjustment: Int,
-        timeoutInSeconds: Int = 60
+        messageLineAdjustment: Int
     ): BuildResult = {
-        scalatron.compileActorRefOpt match {
+        scalatron.compileWorkerRouterOpt match {
             case None =>
                 throw new IllegalStateException("compile actor not available")
 
-            case Some(compileActorRef) =>
+            case Some(compileWorkerRouter) =>
                 // create the output directory if necessary
                 val outputDirectoryPath = compileJob.outputDirectoryPath
                 val outputDirectory = new File(outputDirectoryPath)
@@ -457,50 +456,63 @@ object ScalatronUser {
 
 
                 // compile the source file, using an Akka Actor with a fixed time-out
-                implicit val timeout = Timeout(timeoutInSeconds seconds)
-                val future = compileActorRef ? compileJob
-                val result = Await.result(future, timeout.duration)
-                val compileResult = result.asInstanceOf[CompileResult]
+                try {
+                    val timeoutInSeconds = 200      // Note: UI has a 60-second timeout
+                    implicit val timeout = Timeout(timeoutInSeconds seconds)
+                    val future = compileWorkerRouter ? compileJob
+                    val result = Await.result(future, timeout.duration)
+                    val compileResult = result.asInstanceOf[CompileResult]
 
-                if( compileResult.compilationSuccessful ) {
-                    // create the .jar directory, if necessary
-                    val localJarDirectory = new File(jarDirectoryPath)
-                    if( !localJarDirectory.exists() ) {
-                        if( !localJarDirectory.mkdirs() ) {
-                            throw new IllegalStateException("failed to create directory for .jar file: " + jarDirectoryPath)
+                    if( compileResult.compilationSuccessful ) {
+                        // create the .jar directory, if necessary
+                        val localJarDirectory = new File(jarDirectoryPath)
+                        if( !localJarDirectory.exists() ) {
+                            if( !localJarDirectory.mkdirs() ) {
+                                throw new IllegalStateException("failed to create directory for .jar file: " + jarDirectoryPath)
+                            }
+                            if( scalatron.verbose ) println("created .jar directory at: " + jarDirectoryPath)
                         }
-                        if( scalatron.verbose ) println("created .jar directory at: " + jarDirectoryPath)
+
+                        // build the .jar archive file
+                        JarBuilder(outputDirectoryPath, jarFilePath, scalatron.verbose)
+
+                        // delete the output directory - it is no longer needed
+                        deleteRecursively(outputDirectoryPath, scalatron.verbose)
                     }
 
-                    // build the .jar archive file
-                    JarBuilder(outputDirectoryPath, jarFilePath, scalatron.verbose)
-
-                    // delete the output directory - it is no longer needed
-                    deleteRecursively(outputDirectoryPath, scalatron.verbose)
-                }
-
-                // transform compiler output into the BuildResult format expected by the Scalatron API
-                val sourceDirectoryPrefix = sourceDirectoryPath + "/"
-                BuildResult(
-                    compileResult.compilationSuccessful,
-                    compileResult.errorCount,
-                    compileResult.warningCount,
-                    compileResult.compilerMessages.map(msg => {
-                        val absoluteSourceFilePath = msg.pos.source.path
-                        val relativeSourceFilePath =
-                            if(absoluteSourceFilePath.startsWith(sourceDirectoryPrefix)) {
-                                absoluteSourceFilePath.drop(sourceDirectoryPrefix.length)
-                            } else {
-                                absoluteSourceFilePath
-                            }
-                        BuildResult.BuildMessage(
-                            relativeSourceFilePath,
-                            (msg.pos.line + messageLineAdjustment, msg.pos.column),
-                            msg.msg,
-                            msg.severity
-                        )}
+                    // transform compiler output into the BuildResult format expected by the Scalatron API
+                    val sourceDirectoryPrefix = sourceDirectoryPath + "/"
+                    BuildResult(
+                        compileResult.compilationSuccessful,
+                        compileResult.duration,
+                        compileResult.errorCount,
+                        compileResult.warningCount,
+                        compileResult.compilerMessages.map(msg => {
+                            val absoluteSourceFilePath = msg.pos.source.path
+                            val relativeSourceFilePath =
+                                if(absoluteSourceFilePath.startsWith(sourceDirectoryPrefix)) {
+                                    absoluteSourceFilePath.drop(sourceDirectoryPrefix.length)
+                                } else {
+                                    absoluteSourceFilePath
+                                }
+                            BuildResult.BuildMessage(
+                                relativeSourceFilePath,
+                                (msg.pos.line + messageLineAdjustment, msg.pos.column),
+                                msg.msg,
+                                msg.severity
+                            )}
+                        )
                     )
-                )
+                } catch {
+                    case t: TimeoutException =>
+                        BuildResult(
+                            successful = false,
+                            duration = 0,
+                            errorCount = 1,
+                            warningCount = 0,
+                            messages = Iterable(BuildResult.BuildMessage("", (0,0), "Compile job timed out while waiting on the server. The server may be too busy. You could try it again in a minute.", 0))
+                        )
+                }
         }
     }
 }

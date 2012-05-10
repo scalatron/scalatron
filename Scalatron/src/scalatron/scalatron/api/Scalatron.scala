@@ -35,7 +35,7 @@ trait Scalatron
     def installationDirectoryPath : String
 
     /** Starts any background threads required by the Scalatron server (e.g., the compile server). */
-    def start()
+    def start(argMap: Map[String, String] = Map.empty)
 
     /** Passes control of the current thread to a loop that simulates tournament rounds in a
       * Scalatron game server, either until user exits (e.g. by closing the main window) or
@@ -161,8 +161,7 @@ object Scalatron {
         /** ScalatronException.CreationFailure: if a user/version/sample/etc. could not be created. */
         case class CreationFailed(entityName: String, reason: String) extends ScalatronException("'" + entityName + "' could not be created: " + reason)
 
-        /** ScalatronException.Forbidden: if an operation is forbidden, such as deleting the
-          * Administrator account. */
+        /** ScalatronException.Forbidden: if an operation is forbidden, such as deleting the Administrator account. */
         case class Forbidden(reason: String) extends ScalatronException(reason)
     }
 
@@ -536,10 +535,13 @@ object Scalatron {
 
     /** A container for build results that can be reported back to a user. Contains a flag
       * indicating whether the build was successful (primarily: zero errors and not aborted),
-      * the count of errors and warnings, and a collection of build message objects. */
+      * the count of errors and warnings, and a collection of build message objects.
+      * The duration is the time actually spent building the files, excluding the queue wait time. */
     case class BuildResult(
         successful: Boolean,
-        errorCount: Int, warningCount: Int,
+        duration: Int,
+        errorCount: Int,
+        warningCount: Int,
         messages: Iterable[BuildResult.BuildMessage])
     object BuildResult {
         /** A single build message, such as an error or a warning.
@@ -564,10 +566,14 @@ object Scalatron {
           * directory on disk, e.g. "/Scalatron/samples/Tutorial Bot 01". */
         def name: String
 
-        /** Returns the source code files associated with this sample. */
+        /** Returns the source code files associated with this sample.
+          * @throws IOError on IO errors encountered while loading source file contents from disk
+          */
         def sourceFiles: SourceFileCollection
 
-        /** Deletes this sample, including all associated source code files. */
+        /** Deletes this sample, including all associated source code files.
+          * @throws IOError if sample's source files cannot be deleted on disk
+          */
         def delete()
     }
 

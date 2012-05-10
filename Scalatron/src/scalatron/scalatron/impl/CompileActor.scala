@@ -5,22 +5,18 @@ package scalatron.scalatron.impl
   */
 
 
-import akka.actor.Actor
 import scala.tools.nsc.{Global, Settings}
 import tools.nsc.reporters.StoreReporter
 import scalatron.scalatron.api.Scalatron
 import scala.tools.nsc.util.{BatchSourceFile, Position}
-import scala.tools.nsc.io.VirtualFile
+import akka.actor.Actor
 
 
-/** We use Akka to manage the compiler queue. A single Scala compiler instance is held by
-  * a CompileActor, which processes CompileJob messages (containing the source files to
-  * compile and the output directory) and returns CompileResult messages (containing the
-  * error and warning counts and the individual error messages).
+/** Each compile actor holds a Scala compiler instance and uses it to process CompileJob messages
+  * (containing the source files to compile and the output directory) and returns CompileResult messages
+  * (containing the error and warning counts and the individual error messages).
   */
-case class CompileActor(verbose: Boolean) extends Actor {
-    var compilerGlobalOpt: Option[Global] = None
-
+object CompileActor {
     /** Returns a collection of one or more class paths to be appended to the classPath property of the
       * Scala compiler settings. It tries to deal with the following scenarios:
       * (a) running from unpackaged .class files:
@@ -32,7 +28,7 @@ case class CompileActor(verbose: Boolean) extends Actor {
       *
       * @return a collection of class paths to append to the classPath property of the Scala compiler
       */
-    private def detectScalaClassPaths : Iterable[String] = {
+    private def detectScalaClassPaths(verbose: Boolean) : Iterable[String] = {
         val scalatronJarFilePath = ScalatronImpl.getClassPath(classOf[CompileActor])
         val scalaCompilerClassPath = ScalatronImpl.getClassPath(classOf[Global])
         val scalaLibraryClassPath = ScalatronImpl.getClassPath(classOf[List[_]])
@@ -89,9 +85,13 @@ case class CompileActor(verbose: Boolean) extends Actor {
 
         classPaths
     }
+}
+
+case class CompileActor(verbose: Boolean) extends Actor {
+    var compilerGlobalOpt: Option[Global] = None
 
     override def preStart() {
-        val detectedScalaClassPaths = detectScalaClassPaths
+        val detectedScalaClassPaths = CompileActor.detectScalaClassPaths(verbose)
 
         // called in the event of a compilation error
         def error(message: String) {println(message)}
@@ -123,9 +123,9 @@ case class CompileActor(verbose: Boolean) extends Actor {
     /** Compiles a given collection of source files residing on disk into a given output directory.
       * @param sourceFilePathList the collection of source files to compile
       * @param outputDirectoryPath the output directory path where the class files should go
-      * @return (successful, errorCount, warningCount, compilerMessages)
       */
     private def compileFromFiles(sourceFilePathList: Iterable[String], outputDirectoryPath: String): CompileResult = {
+        // System.err.println("COMPILE WORKER ACTOR = " + self.toString())
         compile(
             (run: Global#Run) => { run.compile(sourceFilePathList.toList) },
             outputDirectoryPath,
@@ -194,7 +194,7 @@ case class CompileActor(verbose: Boolean) extends Actor {
                 compilerInvocation(run)
 
                 val endTime = System.currentTimeMillis
-                val elapsed = endTime - startTime
+                val elapsed = (endTime - startTime).toInt
                 if( verbose ) println("    ...compilation completed (" + elapsed + "ms)")
 
                 val errorList = compilerGlobal.reporter.asInstanceOf[StoreReporter].infos.map(info => CompilerMessage(info.pos, info.msg, info.severity.id))
@@ -204,7 +204,7 @@ case class CompileActor(verbose: Boolean) extends Actor {
 
                 compilerGlobal.reporter.reset() // clear all errors before next compilation
 
-                CompileResult(!hasErrors, errorCount, warningCount, errorList)
+                CompileResult(!hasErrors, elapsed, errorCount, warningCount, errorList)
         }
     }
 }
@@ -226,6 +226,7 @@ object CompileJob {
 
 case class CompileResult(
     compilationSuccessful: Boolean,
+    duration: Int,  // milliseconds of actual build time (excluding build queue wait time)
     errorCount: Int,
     warningCount: Int,
     compilerMessages: Iterable[CompilerMessage])
