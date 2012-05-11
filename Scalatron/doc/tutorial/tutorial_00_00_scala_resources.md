@@ -1,3 +1,7 @@
+---
+layout: default
+title: Scala Resources on the Web
+---
 <div id='TutorialDocumentData' data-prev='/tutorial/index.html' data-next='/tutorial/tutorial_00_01_intro_to_scala.html' />
 
 # Scala Resources on the Web

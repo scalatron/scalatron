@@ -1,3 +1,7 @@
+---
+layout: default
+title: Example Bot #1 - The Reference Bot
+---
 <div id='TutorialDocumentData' data-prev='/tutorial/tutorial_20_bot_10.html' data-next='/tutorial/tutorial_80_example_02.html' />
 
 # Example Bot #1: The Reference Bot

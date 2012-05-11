@@ -1,3 +1,7 @@
+---
+layout: default
+title: Scalatron BotWar Game Rules
+---
 <div id='TutorialDocumentData' data-prev='/tutorial/tutorial_00_01_intro_to_scala.html' data-next='/tutorial/tutorial_00_30_protocol.html' />
 
 # Scalatron BotWar Game Rules

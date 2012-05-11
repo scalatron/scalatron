@@ -1,3 +1,7 @@
+---
+layout: default
+title: Example Bot #4 - The Debug Status Logger
+---
 <div id='TutorialDocumentData' data-prev='/tutorial/tutorial_80_example_03.html' data-next='/tutorial/tutorial_90_cheatsheet_00_string.html' />
 
 # Example Bot #4: The Debug Status Logger

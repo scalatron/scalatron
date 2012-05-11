@@ -1,3 +1,7 @@
+---
+layout: default
+title: String Cheat Sheet
+---
 <div id='TutorialDocumentData' data-prev='/tutorial/tutorial_80_example_04.html' data-next='/tutorial/tutorial_90_cheatsheet_01_map.html' />
 
 # Cheat Sheet: `String`

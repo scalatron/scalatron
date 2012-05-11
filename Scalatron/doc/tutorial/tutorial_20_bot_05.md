@@ -1,3 +1,7 @@
+---
+layout: default
+title: Bot #5 - Creating a Command Parser Function
+---
 <div id='TutorialDocumentData' data-prev='/tutorial/tutorial_20_bot_04.html' data-next='/tutorial/tutorial_20_bot_06.html' />
 
 # Bot #5: Creating a Command Parser Function

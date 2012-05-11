@@ -1,3 +1,7 @@
+---
+layout: default
+title: Bot #6 - Extracting the Command Parser
+---
 <div id='TutorialDocumentData' data-prev='/tutorial/tutorial_20_bot_05.html' data-next='/tutorial/tutorial_20_bot_07.html' />
 
 # Bot #6: Extracting the Command Parser

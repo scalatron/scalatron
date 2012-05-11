@@ -1,3 +1,7 @@
+---
+layout: default
+title: Bot #12 - Handler Object
+---
 # Bot #12: Handler Object
 
 ## Objective

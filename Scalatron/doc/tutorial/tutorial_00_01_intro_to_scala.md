@@ -1,3 +1,7 @@
+---
+layout: default
+title: Introduction To Scala
+---
 <div id='TutorialDocumentData' data-prev='/tutorial/tutorial_00_00_scala_resources.html' data-next='/tutorial/tutorial_00_10_intro_to_scalatron.html' />
 
 # Introduction To Scala

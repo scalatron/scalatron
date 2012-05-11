@@ -1,3 +1,7 @@
+---
+layout: default
+title: Bot #3 - Checking the Opcode
+---
 <div id='TutorialDocumentData' data-prev='/tutorial/tutorial_20_bot_02.html' data-next='/tutorial/tutorial_20_bot_04.html' />
 
 # Bot #3: Checking the Opcode

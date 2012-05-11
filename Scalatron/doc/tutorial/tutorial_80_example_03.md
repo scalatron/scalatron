@@ -1,3 +1,7 @@
+---
+layout: default
+title: Example Bot #3 - The Debug File Logger
+---
 <div id='TutorialDocumentData' data-prev='/tutorial/tutorial_80_example_02.html' data-next='/tutorial/tutorial_80_example_04.html' />
 
 # Example Bot #3: The Debug File Logger

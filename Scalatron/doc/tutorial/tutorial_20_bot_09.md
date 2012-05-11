@@ -1,3 +1,7 @@
+---
+layout: default
+title: Bot #9 - Missile Launcher II
+---
 <div id='TutorialDocumentData' data-prev='/tutorial/tutorial_20_bot_08.html' data-next='/tutorial/tutorial_20_bot_10.html' />
 
 # Bot #9: Missile Launcher II

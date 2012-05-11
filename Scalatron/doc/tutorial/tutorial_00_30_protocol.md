@@ -1,3 +1,7 @@
+---
+layout: default
+title: Scalatron Protocol
+---
 <div id='TutorialDocumentData' data-prev='/tutorial/tutorial_00_20_game_rules.html' data-next='/tutorial/tutorial_20_bot_01.html' />
 
 # Scalatron Protocol

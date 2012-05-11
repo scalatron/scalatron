@@ -1,3 +1,7 @@
+---
+layout: default
+title: Bot #2 - Counting Cycles
+---
 <div id='TutorialDocumentData' data-prev='/tutorial/tutorial_20_bot_01.html' data-next='/tutorial/tutorial_20_bot_03.html' />
 
 # Bot #2: Counting Cycles

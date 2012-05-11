@@ -1,3 +1,7 @@
+---
+layout: default
+title: Bot #10 - Food Finder
+---
 <div id='TutorialDocumentData' data-prev='/tutorial/tutorial_20_bot_09.html' data-next='/tutorial/tutorial_80_example_01.html' />
 
 # Bot #10: Food Finder

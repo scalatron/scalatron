@@ -1,3 +1,7 @@
+---
+layout: default
+title: Bot #4 - Expanded Input Parser
+---
 <div id='TutorialDocumentData' data-prev='/tutorial/tutorial_20_bot_03.html' data-next='/tutorial/tutorial_20_bot_05.html' />
 
 # Bot #4: Expanded Input Parser

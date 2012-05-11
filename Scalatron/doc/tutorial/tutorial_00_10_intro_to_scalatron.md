@@ -1,3 +1,7 @@
+---
+layout: default
+title: Introduction To Scalatron
+---
 <div id='TutorialDocumentData' data-prev='/tutorial/tutorial_00_01_intro_to_scala.html' data-next='/tutorial/tutorial_00_20_game_rules.html' />
 
 # Introduction To Scalatron

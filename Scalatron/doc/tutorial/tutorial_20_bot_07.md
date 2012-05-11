@@ -1,3 +1,7 @@
+---
+layout: default
+title: Bot #7 - Brownian Motion
+---
 <div id='TutorialDocumentData' data-prev='/tutorial/tutorial_20_bot_06.html' data-next='/tutorial/tutorial_20_bot_08.html' />
 
 # Bot #7: Brownian Motion

@@ -1,3 +1,7 @@
+---
+layout: default
+title: Scalatron Tutorial Index
+---
 <div id='TutorialDocumentData' data-next='/tutorial/tutorial_00_00_scala_resources.html' />
 
 # Scalatron Tutorial Index

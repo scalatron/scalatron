@@ -1,3 +1,7 @@
+---
+layout: default
+title: Bot #1 - Hello World
+---
 <div id='TutorialDocumentData' data-prev='/tutorial/tutorial_00_30_protocol.html' data-next='/tutorial/tutorial_20_bot_02.html' />
 
 # Bot #1: Hello World

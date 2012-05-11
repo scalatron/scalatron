@@ -1,3 +1,7 @@
+---
+layout: default
+title: Map Cheat Sheet
+---
 <div id='TutorialDocumentData' data-prev='/tutorial/tutorial_90_cheatsheet_00_string.html' />
 
 # Cheat Sheet: `Map`
