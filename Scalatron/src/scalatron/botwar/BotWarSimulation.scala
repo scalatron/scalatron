@@ -6,18 +6,19 @@ package scalatron.botwar
 import scala.util.Random
 import scalatron.scalatron.impl.{Plugin, TournamentRoundResult}
 import akka.dispatch.ExecutionContext
+import akka.actor.ActorSystem
 
 
 /** Implementations of generic Simulation traits for the BotWar game. */
 object BotWarSimulation
 {
     case class SimState(gameState: State) extends Simulation.State[SimState,TournamentRoundResult] {
-        def step(executionContextForUntrustedCode: ExecutionContext) = {
+        def step(actorSystem: ActorSystem, executionContextForUntrustedCode: ExecutionContext) = {
             // to make results reproducible, generate a freshly seeded randomizer for every cycle
             val rnd = new Random(gameState.time)
 
             // apply the game dynamics to the game state
-            Dynamics(gameState, rnd, executionContextForUntrustedCode) match {
+            Dynamics(gameState, rnd, actorSystem, executionContextForUntrustedCode) match {
                 case Left(updatedGameState) => Left(SimState(updatedGameState))
                 case Right(gameResult) => Right(gameResult)
             }

@@ -14,10 +14,11 @@ case class ScalatronSandboxState(sandbox: ScalatronSandbox, simState: BotWarSimu
     def time = simState.gameState.time.toInt      // CBB: warn on truncation from Long to Int
 
     def step(count: Int): SandboxState = {
+        val actorSystem = sandbox.user.scalatron.actorSystem
         val executionContextForUntrustedCode = sandbox.user.scalatron.executionContextForUntrustedCode
         var updatedState = simState
         for( i <- 0 until count ) {
-            updatedState.step(executionContextForUntrustedCode) match {
+            updatedState.step(actorSystem, executionContextForUntrustedCode) match {
                 case Left(successorState) =>
                     updatedState = successorState
 

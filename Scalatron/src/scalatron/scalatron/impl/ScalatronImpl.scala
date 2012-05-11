@@ -239,9 +239,9 @@ case class ScalatronImpl(
         val headless = (argMap.get("-headless").getOrElse("no") == "yes")
         val executionContextForTrustedCode = actorSystem.dispatcher
         if(headless) {
-            game.runHeadless(pluginBaseDirectoryPath, argMap, rounds, tournamentState, secureMode, verbose)(executionContextForTrustedCode, executionContextForUntrustedCode)
+            game.runHeadless(pluginBaseDirectoryPath, argMap, rounds, tournamentState, secureMode, verbose)(actorSystem, executionContextForUntrustedCode)
         } else {
-            game.runVisually(pluginBaseDirectoryPath, argMap, rounds, tournamentState, secureMode, verbose)(executionContextForTrustedCode, executionContextForUntrustedCode)
+            game.runVisually(pluginBaseDirectoryPath, argMap, rounds, tournamentState, secureMode, verbose)(actorSystem, executionContextForUntrustedCode)
         }
     }
 

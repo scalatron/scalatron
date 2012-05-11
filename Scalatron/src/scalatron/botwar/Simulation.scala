@@ -6,6 +6,7 @@ package scalatron.botwar
 import scalatron.scalatron.impl.Plugin
 import akka.util.Duration
 import akka.dispatch.{ExecutionContext, Future, Await}
+import akka.actor.ActorSystem
 
 
 /** Traits for generic simulations, of which a game like BotWar is an example.
@@ -22,7 +23,7 @@ object Simulation
       * @tparam R type of the result returned by the simulator (arbitrary)
       */
     trait State[S <: State[S, R], R] extends UntypedState {
-        def step(executionContextForUntrustedCode: ExecutionContext) : Either[S, R]
+        def step(actorSystem: ActorSystem, executionContextForUntrustedCode: ExecutionContext) : Either[S, R]
     }
 
 
@@ -46,7 +47,7 @@ object Simulation
     {
         /** @param plugins the collection of external plug-ins to bring into the simulation
           * @param randomSeed the random seed to use for initializing the simulation
-          * @param executionContextForTrustedCode execution context whose threads are trusted (e.g. actor system)
+          * @param actorSystem execution context whose threads are trusted (e.g. actor system)
           * @param executionContextForUntrustedCode execution context whose threads are untrusted (sandboxed by the security manager)
           * @return an optional simulation result (if the simulation was not prematurely aborted)
           */
@@ -54,7 +55,7 @@ object Simulation
             plugins: Iterable[Plugin.External],
             randomSeed: Int
         )(
-            executionContextForTrustedCode: ExecutionContext,
+            actorSystem: ActorSystem,
             executionContextForUntrustedCode: ExecutionContext
         ): Option[R] =
         {
@@ -68,7 +69,8 @@ object Simulation
                 // the callback will generally render the prior state to the screen.
 
                 // process state update, returns either next state or result
-                val stepFuture = Future( { currentState.step(executionContextForUntrustedCode) } )(executionContextForTrustedCode) // compute next state
+                val executionContextForTrustedCode = actorSystem.dispatcher
+                val stepFuture = Future( { currentState.step(actorSystem, executionContextForUntrustedCode) } )(executionContextForTrustedCode) // compute next state
 
                 // process callback (usually rendering) on prior state, returns true if to continue simulating, false if not
                 val callbackFuture = Future( {

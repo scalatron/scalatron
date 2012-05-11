@@ -9,6 +9,7 @@ import java.awt.event.{WindowEvent, WindowAdapter, KeyEvent, KeyListener}
 import scalatron.scalatron.api.Scalatron
 import scalatron.scalatron.impl.{TournamentRoundResult, TournamentState, Plugin, PluginCollection, Game}
 import akka.dispatch.ExecutionContext
+import akka.actor.ActorSystem
 
 
 /** BotWar: an implementation of the Scalatron Game trait.
@@ -32,7 +33,7 @@ case object BotWar extends Game
         secureMode: Boolean,
         verbose: Boolean
     )(
-        executionContextForTrustedCode: ExecutionContext,
+        actorSystem: ActorSystem,
         executionContextForUntrustedCode: ExecutionContext
     )
     {
@@ -74,6 +75,7 @@ case object BotWar extends Game
         val stepCallback = (state: SimState) => {
             tournamentState.updateMostRecentState(state)
 
+            val executionContextForTrustedCode = actorSystem.dispatcher
             renderer.draw(display.renderTarget, state.gameState)(executionContextForTrustedCode)
 
             // enforce maxFPS (max frames per second) by putting this thread to sleep if appropriate
@@ -113,7 +115,7 @@ case object BotWar extends Game
 
             // run game
             val runner = Simulation.Runner(factory, stepCallback, resultCallback)
-            runner(plugins, randomSeed)(executionContextForTrustedCode, executionContextForUntrustedCode)
+            runner(plugins, randomSeed)(actorSystem, executionContextForUntrustedCode)
 
             roundIndex += 1
 
@@ -132,7 +134,7 @@ case object BotWar extends Game
         secureMode: Boolean,
         verbose: Boolean
     )(
-        executionContextForTrustedCode: ExecutionContext,
+        actorSystem: ActorSystem,
         executionContextForUntrustedCode: ExecutionContext
     )
     {
@@ -186,7 +188,7 @@ case object BotWar extends Game
 
             // run game
             val runner = Simulation.Runner(factory, stepCallback, resultCallback)
-            runner(plugins, randomSeed)(executionContextForTrustedCode, executionContextForUntrustedCode)
+            runner(plugins, randomSeed)(actorSystem, executionContextForUntrustedCode)
 
             roundIndex += 1
 

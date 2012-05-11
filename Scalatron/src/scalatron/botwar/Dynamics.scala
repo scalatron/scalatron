@@ -5,23 +5,23 @@ package scalatron.botwar
 
 import scala.util.Random
 import scalatron.scalatron.impl.TournamentRoundResult
-import akka.util.Duration
 import akka.util.duration._
 import akka.dispatch._
 import java.util.concurrent.TimeoutException
+import akka.actor.ActorSystem
 
 
 /** Game dynamics. Function that, when applied to a game state, returns either a successor
   *  game state or a game result.
   */
-case object Dynamics extends ((State, Random, ExecutionContext) => Either[State,TournamentRoundResult])
+case object Dynamics extends ((State, Random, ActorSystem, ExecutionContext) => Either[State,TournamentRoundResult])
 {
-    def apply(state: State, rnd: Random, executionContextForUntrustedCode: ExecutionContext) = {
+    def apply(state: State, rnd: Random, actorSystem: ActorSystem, executionContextForUntrustedCode: ExecutionContext) = {
         // determine which bots are eligible to move in the nest step
         val eligibleBots = computeEligibleBots(state)
 
         // have each bot compute its command
-        val botCommandsAndTimes = computeBotCommands(state, eligibleBots)(executionContextForUntrustedCode) // was: actorSystem
+        val botCommandsAndTimes = computeBotCommands(state, eligibleBots, actorSystem)(executionContextForUntrustedCode) // was: actorSystem
 
         // store time taken with each bot
         var updatedBoard = state.board
@@ -100,11 +100,12 @@ case object Dynamics extends ((State, Random, ExecutionContext) => Either[State,
                 }
             })
 
+    type BotResponse = (Entity.Id,(Long,String,Iterable[Command]))
 
     // returns a collection of tuples: (id, (nanoSeconds, commandList))
-    def computeBotCommands(state: State, eligibleBots: Iterable[Bot])(implicit executionContextForUntrustedCode: ExecutionContext): Iterable[(Entity.Id,(Long,String,Iterable[Command]))] = {
-        // use Akka to work this out
-        val future = Future.traverse(eligibleBots)(bot => Future {
+    def computeBotCommands(state: State, eligibleBots: Iterable[Bot], actorSystem: ActorSystem)(implicit executionContextForUntrustedCode: ExecutionContext): Iterable[(Entity.Id,(Long,String,Iterable[Command]))] = {
+        // use Akka Futures to work this out
+        val outerFuture = Future.traverse(eligibleBots)(bot => Future {
             try {
                 val timeBefore = System.nanoTime
                 val (inputString,commands) = bot.respondTo(state)
@@ -121,9 +122,71 @@ case object Dynamics extends ((State, Random, ExecutionContext) => Either[State,
             }
         })
 
+
+        /*
+        // This is based on Viktor Klang's proposal, see https://groups.google.com/forum/?fromgroups#!topic/akka-user/5MY8lsYGbYM
+        val TimeoutSentinel : Option[BotResponse] = None
+        val timeout = Promise[Option[BotResponse]]()
+        val c = actorSystem.scheduler.scheduleOnce(1000 millis){ timeout.success(TimeoutSentinel) }
+        timeout onComplete { case _ => c.cancel() }
+
+        val outerFuture = Future.traverse(eligibleBots)(bot =>
+            Promise[Option[BotResponse]]()
+            .completeWith(Future {
+                try {
+                    val timeBefore = System.nanoTime
+                    val (inputString,commands) = bot.respondTo(state)
+                    val timeSpent = System.nanoTime - timeBefore
+                    if(commands.isEmpty) None else Some((bot.id,(timeSpent,inputString,commands)))
+                } catch {
+                    case t: NoClassDefFoundError =>
+                        // we fake a Log() command issued by the bot to report the error into the browser UI:
+                        Some((bot.id,(0L,"",Iterable[Command](Command.Disable("error: class not found: " + t.getMessage)))))
+
+                    case t: Throwable =>
+                        // we inject a Disable() command as-if-issued-by-the-bot to report the error into the browser UI:
+                        Some((bot.id,(0L,"",Iterable[Command](Command.Disable(t.getMessage)))))
+                }
+            })
+            .completeWith(timeout)
+        )
+        */
+        /*
+        // this is an attempt based on nested Futures. Does not seems to work at all: every call times out. ?!?
+        val TimeoutSentinel : Option[BotResponse] = None
+        val outerFuture = Future.traverse(eligibleBots)(bot =>
+            Future {
+                val innerFuture = Future {
+                    try {
+                        val timeBefore = System.nanoTime
+                        val (inputString,commands) = bot.respondTo(state)
+                        val timeSpent = System.nanoTime - timeBefore
+                        if(commands.isEmpty) None else Some((bot.id,(timeSpent,inputString,commands)))
+                    } catch {
+                        case t: NoClassDefFoundError =>
+                            // we fake a Log() command issued by the bot to report the error into the browser UI:
+                            Some((bot.id,(0L,"",Iterable[Command](Command.Disable("error: class not found: " + t.getMessage)))))
+
+                        case t: Throwable =>
+                            // we inject a Disable() command as-if-issued-by-the-bot to report the error into the browser UI:
+                            Some((bot.id,(0L,"",Iterable[Command](Command.Disable(t.getMessage)))))
+                    }
+                }
+                try {
+                    Await.result(innerFuture, 5000 millis)      // generous timeout - for now, we only want to capture infinite loops
+                } catch {
+                    case t: TimeoutException =>
+                        System.err.println("warning: timeout while invoking the control function of bot: " + bot.name)
+                        TimeoutSentinel
+                }
+            }
+        )
+        */
+
         // Note: an overall timeout across all bots is a temporary solution - we want timeouts PER BOT
         try {
-            val result = Await.result(future, 2000 millis)      // generous timeout - note that this is over ALL plug-ins
+            val result = Await.result(outerFuture, 10000 millis)      // generous timeout - note that this is over ALL plug-ins
+            // result.filter(TimeoutSentinel ==).foreach(r => println("bot timed out"))
             result.flatten
         } catch {
             case t: TimeoutException =>

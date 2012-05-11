@@ -1,6 +1,7 @@
 package scalatron.scalatron.impl
 
 import akka.dispatch.ExecutionContext
+import akka.actor.ActorSystem
 
 /** This material is intended as a community resource and is licensed under the
   * Creative Commons Attribution 3.0 Unported License. Feel free to use, modify and share it.
@@ -23,7 +24,7 @@ trait Game {
       * @param tournamentState the tournament state object to update whenever a round ends
       * @param secureMode if true, certain bot processing restrictions apply
       * @param verbose if true, log to the console verbosely
-      * @param executionContextForTrustedCode execution context for trusted code (e.g. from Akka ActorSystem)
+      * @param actorSystem execution context for trusted code (e.g. from Akka ActorSystem)
       * @param executionContextForUntrustedCode execution context for untrusted code (e.g. for bot control functions)
       */
     def runVisually(
@@ -34,7 +35,7 @@ trait Game {
         secureMode: Boolean,
         verbose: Boolean
     )(
-        executionContextForTrustedCode: ExecutionContext,
+        actorSystem: ActorSystem,
         executionContextForUntrustedCode: ExecutionContext
     )
 
@@ -47,7 +48,7 @@ trait Game {
       * @param tournamentState the tournament state object to update whenever a round ends
       * @param secureMode if true, certain bot processing restrictions apply
       * @param verbose if true, log to the console verbosely
-      * @param executionContextForTrustedCode execution context for trusted code (e.g. from Akka ActorSystem)
+      * @param actorSystem execution context for trusted code (e.g. from Akka ActorSystem)
       * @param executionContextForUntrustedCode execution context for untrusted code (e.g. for bot control functions)
       */
     def runHeadless(
@@ -58,7 +59,7 @@ trait Game {
         secureMode: Boolean,
         verbose: Boolean
     )(
-        executionContextForTrustedCode: ExecutionContext,
+        actorSystem: ActorSystem,
         executionContextForUntrustedCode: ExecutionContext
     )
 
