@@ -199,7 +199,7 @@ object Main {
                     .map(array => if(array.length==2) Some((array(0).trim,array(1).trim)) else None)// Array => Option[Tuple2]
                     .flatten                                                                        // remove None values
                     .toMap
-                val remainingLines = inputLines.drop(linesTaken + 2) // start marker, lines, end marker
+                val remainingLines = inputLines.drop(linesTaken + 1) // start marker, lines, end marker
                 (map, remainingLines.mkString("\n"))
             } else {
                 (Map.empty, inputLines.mkString("\n"))
