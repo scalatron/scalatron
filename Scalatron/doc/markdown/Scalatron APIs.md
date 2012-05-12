@@ -100,7 +100,6 @@ Important Note:
     tested  /api/users/{user}/versions              GET     -       json    200     401,404         Get Existing Versions
     tested  /api/users/{user}/versions              POST    json    url     201     401,415         Create Version
     tested  /api/users/{user}/versions/{versionId}  GET     -       json    200     401,404         Get Version Files
-    tested  /api/users/{user}/versions/{versionId}  DELETE  -       -       204     401,404         Delete Version
 
     tested  /api/samples                            GET     -       json    200     401             Get Existing Samples
     untstd  /api/samples                            POST    json    -       201     401,415,500     Create Sample
@@ -917,20 +916,6 @@ Response JSON example:
             { "filename" : "Util.scala", "code" : "class View { ... }" }
         ]
     }
-
-
-
-### Delete Version
-
-Delets a particular version on the server.
-
-* URL:              /api/users/{user}/versions/{versionId}
-* Method:           DELETE
-* Returns:
-    * 204 No Content (success)
-    * 401 Unauthorized (if not logged on as that user)
-    * 404 Not Found (if user or version does not exist)
-* Authentication:   must be logged on as that user
 
 
 

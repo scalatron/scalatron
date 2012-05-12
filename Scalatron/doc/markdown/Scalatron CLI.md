@@ -91,9 +91,6 @@ where <command> may require addition parameters:
         -targetDir <path>       the path of the local directory where the source files should be stored
         -id <int>               the version's ID
 
-    deleteVersion               deletes the version with the given ID; as user only
-        -id <int>               the version's ID
-
     benchmark                   runs standard isolated-bot benchmark on given source files; as user only
         -sourceDir <path>       the path of the local directory where the source files can be found
 
