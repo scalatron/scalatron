@@ -7,7 +7,7 @@ import javax.servlet.http.HttpServlet
 import rest.RestApplication
 import scalatron.scalatron.api.Scalatron
 import com.sun.jersey.spi.container.servlet.ServletContainer
-import servelets.{AdminServlet, UserServlet, HomePageServlet, WebContext}
+import servelets.{AdminServlet, UserServlet, HomePageServlet, WebContext, GitServlet}
 import akka.actor.ActorSystem
 
 
@@ -83,6 +83,7 @@ object WebServer {
         context.addServlet(holder(HomePageServlet(webCtx)), "/*")
         context.addServlet(holder(UserServlet(webCtx)), "/user/*")
         context.addServlet(holder(AdminServlet(webCtx)), "/admin/*")
+        context.addServlet(holder(GitServlet(webCtx)), "/git/*")
 
         val jerseyServlet: ServletContainer = new ServletContainer(new RestApplication(scalatron, verbose))
 
