@@ -319,7 +319,7 @@ object Scalatron {
         /** Returns the version with the given ID, as a Some(Version) if it exists or None if it
           * does not exist. Will attempt to locate the version in the approriate directory below
           * the 'versions' directory, e.g. at "/Scalatron/users/{user}/versions/{versionId}" */
-        def version(id: Int): Option[Version]
+        def version(id: String): Option[Version]
 
         /** Creates a new version by storing the given source files into a version directory
           * below the 'versions' directory.
@@ -582,7 +582,7 @@ object Scalatron {
       */
     trait Version {
         /** Returns the user-unique version ID of this version. */
-        def id: Int
+        def id: String
 
         /** Returns the label string of this version. */
         def label: String
