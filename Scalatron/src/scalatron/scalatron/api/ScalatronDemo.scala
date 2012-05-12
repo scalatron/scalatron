@@ -107,10 +107,10 @@ object ScalatronDemo
             assert(new File(usersBaseDirPath + "/ExampleUser/versions/1/Bot.scala").exists())
 
             val versionList = user.versions
-            assert(versionList.size == 2)
-            assert(versionList.head.id == 0)
-            assert(versionList.head.label == "testVersion0")
-            assert(versionList.last.id == 1)
+            assert(versionList.size == 3)
+            assert(versionList.tail.head.id == version0.id)
+            assert(versionList.tail.head.label == "testVersion0")
+            assert(versionList.last.id == version1.id)
             assert(versionList.last.label == "testVersion1")
 
             // retrieve version object
