@@ -596,9 +596,6 @@ object Scalatron {
 
         /** Returns the source code files associated with this version. */
         def sourceFiles: SourceFileCollection
-
-        /** Deletes this version, including all associated source code files. */
-        def delete()
     }
 
 
