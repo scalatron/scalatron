@@ -1,14 +1,14 @@
 package scalatron.scalatron.impl
 
-import scalatron.util.FileUtil
-import FileUtil.deleteRecursively
 import scalatron.scalatron.api.Scalatron
-import Scalatron.SourceFileCollection
+import org.eclipse.jgit.revwalk.RevCommit
+import org.eclipse.jgit.treewalk.TreeWalk
+import scalatron.scalatron.api.Scalatron.{SourceFile, SourceFileCollection, User}
 
-
-case class ScalatronVersion(id: Int, label: String, date: Long, user: ScalatronUser)
+case class ScalatronVersion(commit: RevCommit, user: ScalatronUser)
     extends Scalatron.Version {
-    val versionDirectoryPath = user.versionBaseDirectoryPath + "/" + id
-    def sourceFiles = SourceFileCollection.loadFrom(versionDirectoryPath, user.scalatron.verbose)
-    def delete() { deleteRecursively(versionDirectoryPath, user.scalatron.verbose) }
+
+  def id = commit.getId.name
+  def label = commit.getShortMessage
+  def date = commit.getCommitterIdent.getWhen.getTime
 }
