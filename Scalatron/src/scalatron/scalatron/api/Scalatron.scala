@@ -306,9 +306,7 @@ object Scalatron {
         //----------------------------------------------------------------------------------------------
 
         /** Returns a sorted collection of version identifiers of the bot sources, as tuples of
-          * (id, label, date). The versions are enumerated by listing the directories below the
-          * 'versions' directory, e.g. at "/Scalatron/users/{user}/versions/{versionId}", then sorted by
-          * ID, with lowest ID first.
+          * (id, label, date), sorted by age.
           * @throws IOError if version directory cannot be read from disk, etc.
           */
         def versions: Iterable[Version]
@@ -317,18 +315,21 @@ object Scalatron {
         def latestVersion: Option[Version] = versions.lastOption
 
         /** Returns the version with the given ID, as a Some(Version) if it exists or None if it
-          * does not exist. Will attempt to locate the version in the approriate directory below
-          * the 'versions' directory, e.g. at "/Scalatron/users/{user}/versions/{versionId}" */
-        def version(id: Int): Option[Version]
+          * does not exist.
+          **/
+        def version(id: String): Option[Version]
 
-        /** Creates a new version by storing the given source files into a version directory
-          * below the 'versions' directory.
+        /** Creates a new version with the given label
           * @param label an optional label to apply to the version (may be empty).
           * @param sourceFiles the source files that will be stored in the version.
           * @throws IllegalStateException if version (base) directory could not be created
           * @throws IOError if source files cannot be written to disk, etc.
           * */
         def createVersion(label: String, sourceFiles: SourceFileCollection): Version
+
+        /** Reverts the source directory to a given version.
+         */
+        def checkout(version: Version): Unit
 
         /** Creates a new version by storing a backup copy of the source files currently present in the source
           * code directory of the user if the given version creation policy requires it. This method is intended as
@@ -582,7 +583,7 @@ object Scalatron {
       */
     trait Version {
         /** Returns the user-unique version ID of this version. */
-        def id: Int
+        def id: String
 
         /** Returns the label string of this version. */
         def label: String
@@ -593,12 +594,6 @@ object Scalatron {
 
         /** Returns the user object of the user that owns this version. */
         def user: User
-
-        /** Returns the source code files associated with this version. */
-        def sourceFiles: SourceFileCollection
-
-        /** Deletes this version, including all associated source code files. */
-        def delete()
     }
 
 

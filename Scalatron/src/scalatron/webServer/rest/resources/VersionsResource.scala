@@ -23,7 +23,7 @@ class VersionsResource extends ResourceWithUser {
                     case Some(user) =>
                         val v = user.versions
                         val versionList = v.map(e => {
-                            val url = "/api/users/%s/versions/%d".format(userName, e.id)
+                            val url = "/api/users/%s/versions/%s".format(userName, e.id)
                             val dateString = e.date.toString // milliseconds since the epoch, as string
                             VersionsResource.Version(e.id, e.label, dateString, url)
                         }).toArray
@@ -52,7 +52,7 @@ class VersionsResource extends ResourceWithUser {
                         val sourceFiles = sources.getFiles.map(sf => Scalatron.SourceFile(sf.getFilename, sf.getCode))
                         val version = user.createVersion(label, sourceFiles)
 
-                        val url = "/api/users/%s/versions/%d".format(userName, version.id)
+                        val url = "/api/users/%s/versions/%s".format(userName, version.id)
                         val dateString = version.date.toString // milliseconds since the epoch, as string
                         VersionsResource.Version(version.id, version.label, dateString, url)
                     case None =>
@@ -73,7 +73,7 @@ class VersionsResource extends ResourceWithUser {
 
     @GET
     @Path("{id}")
-    def getVersionFiles(@PathParam("id") id: Int) = {
+    def getVersionFiles(@PathParam("id") id: String) = {
         if(!userSession.isLoggedOnAsUserOrAdministrator(userName)) {
             Response.status(CustomStatusType(HttpStatus.UNAUTHORIZED_401, "must be logged on as '" + userName + "' or '" + Scalatron.Constants.AdminUserName + "'")).build()
         } else {
@@ -82,39 +82,11 @@ class VersionsResource extends ResourceWithUser {
                     case Some(user) =>
                         user.version(id) match {
                             case None =>
-                                Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, "version %d of user %s does not exist".format(id,userName))).build()
+                                Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, "version %s of user %s does not exist".format(id,userName))).build()
                             case Some(version) =>
-                                val s = version.sourceFiles
-                                val sourceFiles = s.map(sf => SourcesResource.SourceFile(sf.filename, sf.code)).toArray
+                                user.checkout(version)
+                                val sourceFiles = user.sourceFiles.map(sf => SourcesResource.SourceFile(sf.filename, sf.code)).toArray
                                 SourcesResource.SourceFiles(sourceFiles)
-                        }
-                    case None =>
-                        Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, "user '" + userName + "' does not exist")).build()
-                }
-            } catch {
-                case e: IOError =>
-                    // source files could not be read
-                    Response.status(CustomStatusType(HttpStatus.INTERNAL_SERVER_ERROR_500, e.getMessage)).build()
-            }
-        }
-    }
-
-
-    @DELETE
-    @Path("{id}")
-    def deleteVersion(@PathParam("id") id: Int) = {
-        if(!userSession.isLoggedOnAsUserOrAdministrator(userName)) {
-            Response.status(CustomStatusType(HttpStatus.UNAUTHORIZED_401, "must be logged on as '" + userName + "' or '" + Scalatron.Constants.AdminUserName + "'")).build()
-        } else {
-            try {
-                scalatron.user(userName) match {
-                    case Some(user) =>
-                        user.version(id) match {
-                            case None =>
-                                Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, "version %d of user %s does not exist".format(id,userName))).build()
-                            case Some(version) =>
-                                version.delete()
-                                Response.noContent().build()
                         }
                     case None =>
                         Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, "user '" + userName + "' does not exist")).build()
@@ -134,7 +106,7 @@ object VersionsResource {
         def getVersions = versionlist
     }
 
-    case class Version(id: Int, label: String, date: String, url: String) {
+    case class Version(id: String, label: String, date: String, url: String) {
         def getId = id
         def getLabel = label
         def getDate = date

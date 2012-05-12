@@ -107,23 +107,18 @@ object ScalatronDemo
             assert(new File(usersBaseDirPath + "/ExampleUser/versions/1/Bot.scala").exists())
 
             val versionList = user.versions
-            assert(versionList.size == 2)
-            assert(versionList.head.id == 0)
-            assert(versionList.head.label == "testVersion0")
-            assert(versionList.last.id == 1)
+            assert(versionList.size == 3)
+            assert(versionList.tail.head.id == version0.id)
+            assert(versionList.tail.head.label == "testVersion0")
+            assert(versionList.last.id == version1.id)
             assert(versionList.last.label == "testVersion1")
 
             // retrieve version object
-            val version0retrieved = user.version(0).get
+            val version0retrieved = user.version(versionList.head.id).get
             assert(version0retrieved.id == version0.id)
             assert(version0retrieved.label == version0.label)
             assert(version0retrieved.date == version0.date)
             assert(version0retrieved.user.name == "ExampleUser")
-
-            // retrieve version files
-            val version0files = version0retrieved.sourceFiles
-            assert(version0files.size == 1)
-            assert(version0files.head.filename == "Bot.scala")
 
             // we could now push an older version into the user's workspace with user.updateSources()
 

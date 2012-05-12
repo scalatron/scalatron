@@ -7,6 +7,7 @@ package scalatron.scalatron.impl
 
 import scalatron.botwar.{Config, PermanentConfig, BotWar}
 import java.io._
+import scala.collection.JavaConverters._
 
 import akka.util.duration._
 import akka.pattern.ask
@@ -25,6 +26,10 @@ import java.util.Date
 import scalatron.scalatron.api.Scalatron
 import scalatron.scalatron.api.Scalatron._
 import java.util.concurrent.TimeoutException
+import org.eclipse.jgit.lib.RepositoryCache.FileKey
+import org.eclipse.jgit.util.FS
+import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.lib.{ObjectId, RepositoryCache}
 
 
 case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatron.User {
@@ -41,7 +46,7 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
     val sourceFilePath = sourceDirectoryPath + "/" + UsersSourceFileName
     val patchedSourceDirectoryPath = userDirectoryPath + "/" + UsersPatchedSourceDirectoryName
 
-    val versionBaseDirectoryPath = userDirectoryPath + "/" + UsersVersionsDirectoryName
+    val gitBaseDirectoryPath = sourceDirectoryPath + "/.git"
 
     val outputDirectoryPath = userDirectoryPath + "/" + UsersOutputDirectoryName
 
@@ -52,6 +57,8 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
     val publishedJarFilePath = userPluginDirectoryPath + "/" + JarFilename
     val backupJarFilePath = userPluginDirectoryPath + "/" + BackupJarFilename
 
+    val gitRepository = RepositoryCache.open(FileKey.exact(new File(gitBaseDirectoryPath), FS.DETECTED), false)
+    val git = new Git(gitRepository)
 
     //----------------------------------------------------------------------------------------------
     // interface
@@ -105,8 +112,6 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
 
 
     def updateSourceFiles(transientSourceFiles: SourceFileCollection) {
-        // delete existing content
-        deleteRecursively(sourceDirectoryPath, scalatron.verbose)
         new File(sourceDirectoryPath).mkdirs()
 
         // write source files to disk
@@ -187,127 +192,42 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
     //----------------------------------------------------------------------------------------------
 
     def versions: Iterable[ScalatronVersion] = {
-        val versionBaseDirectory = new File(versionBaseDirectoryPath)
-
-        // enumerate the version directories below '.../versions'
-        val versionDirectories = versionBaseDirectory.listFiles()
-        if( versionDirectories == null || versionDirectories.isEmpty ) {
-            // no versions there yet!
-            Iterable.empty
-        } else {
-            versionDirectories
-            .filter(_.isDirectory)
-            .map(dir => {
-                val versionId = dir.getName.toInt
-                val versionConfigFilename = dir.getAbsolutePath + "/" + ConfigFilename
-                val paramMap = loadConfigFile(versionConfigFilename)
-                val label = paramMap.getOrElse("label", "")
-                val date = paramMap.getOrElse("date", "").toLong
-                ScalatronVersion(versionId, label, date, this)
-            })
-            .toArray
-            .sortBy(_.id)
-        }
+        git.log().call().asScala.map(ScalatronVersion(_, this))
     }
 
 
-    def version(id: Int): Option[Version] = {
-        val versionDirectoryPath = versionBaseDirectoryPath + "/" + id
-        val versionDirectory = new File(versionDirectoryPath)
-        if( !versionDirectory.exists() ) {
-            None
-        } else {
-            val versionConfigFilename = versionDirectoryPath + "/" + ConfigFilename
-            val paramMap = loadConfigFile(versionConfigFilename)
-            val label = paramMap.getOrElse("label", "")
-            val date = paramMap.getOrElse("date", "").toLong
-            Some(ScalatronVersion(id, label, date, this))
-        }
-    }
+    def version(id: String): Option[Version] =
+        git.log().add(ObjectId.fromString(id)).setMaxCount(1).call().asScala.map(ScalatronVersion(_, this)).headOption
 
 
     def createVersion(label: String, sourceFiles: SourceFileCollection): ScalatronVersion = {
-        val versionBaseDirectory = new File(versionBaseDirectoryPath)
-        if( !versionBaseDirectory.exists ) {
-            if( !versionBaseDirectory.mkdirs() ) {
-                System.err.println("error: failed to create user /versions directory for '" + name + "'")
-                throw new IllegalStateException("could not create user /versions directory for '" + name + "'")
-            }
-            if( scalatron.verbose ) println("created user /versions directory '" + versionBaseDirectoryPath + "'")
+        updateSourceFiles(sourceFiles)
+        git.add().addFilepattern(".").call
+        if(git.status().call().isClean()) {
+           versions.head
+        } else {
+          // TODO Email address and full name?!?
+          return ScalatronVersion(git.commit().setCommitter(name, name + "@scalatron.github.com").setMessage(label).call, this)
         }
-
-        // enumerate the existing versions
-        val versionList = versions
-        val versionId =
-            if( versionList.isEmpty ) {
-                0 // no versions there yet!
-            } else {
-                val maxExistingVersion = versionList.map(_.id).max
-                maxExistingVersion + 1
-            }
-
-        // create a new version directory
-        val versionDirectoryPath = versionBaseDirectoryPath + "/" + versionId
-        if( !new File(versionDirectoryPath).mkdirs() ) {
-            System.err.println("error: failed to create new version directory for '" + name + "': " + versionDirectoryPath)
-            throw new IllegalStateException("could not create version directory for '" + name + "': " + versionDirectoryPath)
-        }
-
-        // create a new version config file
-        val versionConfigFilePath = versionDirectoryPath + "/" + ConfigFilename
-        val date = new Date().getTime
-        val dateString = date.toString
-        updateConfigFileMulti(versionConfigFilePath, Map("label" -> label, "date" -> dateString))
-
-        // write the given source files into the version directory
-        SourceFileCollection.writeTo(versionDirectoryPath, sourceFiles, scalatron.verbose)
-
-        /*
-                // 2012-04-16 was: copy the current contents of the source directory into the version directory
-                val sourceDirectory = new File(sourceDirectoryPath)
-                val sourceFiles = sourceDirectory.listFiles()
-                if( sourceFiles == null || sourceFiles.isEmpty ) {
-                    // no source files there yet! -> nothing to do
-                } else {
-                    sourceFiles.foreach(sourceFile => {
-                        val destPath = versionDirectoryPath + "/" + sourceFile.getName
-                        copyFile(sourceFile.getAbsolutePath, destPath)
-                        if( scalatron.verbose ) println("copied user source file for '" + name + "' to version: " + destPath)
-                    })
-                }
-        */
-
-        ScalatronVersion(versionId, label, date, this)
     }
+
+
+    def checkout(version: Version) = git.checkout().addPath("Bot.scala").setStartPoint(version.id).call
 
 
     def createBackupVersion(policy: VersionPolicy, label: String, updatedSourceFiles: SourceFileCollection) =
         policy match {
             case VersionPolicy.IfDifferent =>
-                val sourceFilesCurrentlyInWorkspace = sourceFiles
-
-                val workspaceEqualsUpdated = SourceFileCollection.areEqual(sourceFilesCurrentlyInWorkspace, updatedSourceFiles, scalatron.verbose)
-
-                val workspaceEqualsLatestVersion = latestVersion match {
-                    case None =>
-                        false
-                    case Some(latestVersionInHistory) =>
-                        val sourceFilesOfLatestVersion = latestVersionInHistory.sourceFiles
-                        SourceFileCollection.areEqual(sourceFilesCurrentlyInWorkspace, sourceFilesOfLatestVersion, scalatron.verbose)
-                }
-
-                if(workspaceEqualsUpdated || workspaceEqualsLatestVersion) {
+                if (git.status().call().isClean()) {
                     if(scalatron.verbose) println("VersionPolicy.IfDifferent, files are unchanged => not creating backup version")
                     None
                 } else {
                     if(scalatron.verbose) println("VersionPolicy.IfDifferent, files are different => creating backup version")
-                    Some(createVersion(label, sourceFilesCurrentlyInWorkspace))    // backup old files as a version
+                    Some(createVersion(label, sourceFiles))    // backup old files as a version
                 }
-
             case VersionPolicy.Always =>
                 if(scalatron.verbose) println("VersionPolicy.Always => creating backup version")
-                val oldSourceFiles = sourceFiles
-                Some(createVersion(label, oldSourceFiles))       // backup old files as a version
+                Some(createVersion(label, sourceFiles))       // backup old files as a version
 
             case VersionPolicy.Never =>
                 if(scalatron.verbose) println("VersionPolicy.Never => not creating backup version")

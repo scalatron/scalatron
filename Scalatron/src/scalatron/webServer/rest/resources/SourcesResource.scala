@@ -54,7 +54,7 @@ class SourcesResource extends ResourceWithUser {
                         val versionLabel = if(sourceFileUpdate.versionLabel == null) "" else sourceFileUpdate.versionLabel
                         val updatedSourceFiles = sourceFileUpdate.getFiles.map(sf => Scalatron.SourceFile(sf.getFilename, sf.getCode))
 
-                        val versionOpt = user.createBackupVersion(versionPolicy, versionLabel, updatedSourceFiles)
+                        user.createBackupVersion(versionPolicy, versionLabel, updatedSourceFiles)
                         user.updateSourceFiles(updatedSourceFiles)
 
                         // CBB: return information about the optionally created version to the caller as JSON (see 'create version' result)

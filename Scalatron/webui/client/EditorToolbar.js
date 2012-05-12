@@ -198,7 +198,18 @@
                 }
             });
 
+            var cloneAction = Ext.create('Ext.Action', {
+                text: "Clone",
+                handler:function (c) {
+                    var url = window.location.protocol + "//" + getUserName() + "@" + window.location.host + '/git/' + getUserName();
+                    Ext.MessageBox.alert('Clone', "To clone your bot locally, execute this command: <br/>" +
+                        "git clone " + url
+                    )
+                }
+            });
+
             actions.push(saveAction);
+            actions.push(cloneAction);
             actions.push(buildAction);
             actions.push(buildAndPubAction);
             actions.push(sandbox);
@@ -234,7 +245,7 @@
             };
 
 
-            return [ saveAction, revertAction, "-", buildAction, sandbox, buildAndPubAction, "->", spinner, signOut]
+            return [ saveAction, revertAction, cloneAction, "-", buildAction, sandbox, buildAndPubAction, "->", spinner, signOut]
         }
     };
 
