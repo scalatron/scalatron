@@ -330,6 +330,10 @@ object Scalatron {
           * */
         def createVersion(label: String, sourceFiles: SourceFileCollection): Version
 
+        /** Reverts the source directory to a given version.
+         */
+        def checkout(version: Version): Unit
+
         /** Creates a new version by storing a backup copy of the source files currently present in the source
           * code directory of the user if the given version creation policy requires it. This method is intended as
           * a convenience call you can perform before overwriting the source code in the user's workspace with
@@ -593,9 +597,6 @@ object Scalatron {
 
         /** Returns the user object of the user that owns this version. */
         def user: User
-
-        /** Returns the source code files associated with this version. */
-        def sourceFiles: SourceFileCollection
     }
 
 
