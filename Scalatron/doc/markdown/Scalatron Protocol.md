@@ -336,6 +336,9 @@ Parameters:
 
 These are the opcodes valid for commands returned by a plug-in to a server. Multiple such
 commands can be combined into a multi-command by separating them with a pipe (`|`) character.
+However, the server will process only one command instance per opcode; this means you should
+not return a string containing multiple instances of e.g. `Move`, `Set` or `Log` - only one
+of them would end up being used.
 
 
 
