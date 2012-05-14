@@ -44,6 +44,7 @@ object Protocol {
         val Time = "time"
         val View = "view"
         val Debug = "debug"
+        val Bonked = "bonked"
         val Generation = "generation"
         val Name = "name"
 
