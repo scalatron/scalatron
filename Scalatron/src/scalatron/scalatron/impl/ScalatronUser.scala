@@ -143,7 +143,7 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
         // so the compiler chokes while trying to sort its dependent files by rank, or something like that.
 
         // so, as a temporary work-around, we create temp files on disk:
-        // TODO: this code shiould probably exist within writeSourceFiles() - refactor!
+        // TODO: this code should probably exist within writeSourceFiles() - refactor!
         val patchedSourceDirectory = new File(patchedSourceDirectoryPath)
         if(!patchedSourceDirectory.exists) {
             if(!patchedSourceDirectory.mkdirs()) {
