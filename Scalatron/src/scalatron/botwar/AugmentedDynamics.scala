@@ -364,9 +364,15 @@ case object AugmentedDynamics extends ((State,Random,Iterable[(Entity.Id,Iterabl
     }
 
 
-
-
-    /** The moving bot desires to replace its currently still active precursor version.
+    /** This method is invoked to determine the effects of a bot attempting to step on a cell that is already
+      * occupied by another entity. The invocation can be understood by thinking "the moving bot desires to replace
+      * its currently still active precursor version", and this method computes what should happen.
+      * @param movingBot the bot that desires to move to a new cell
+      * @param proposedPos the position of the cell to which a move is proposed
+      * @param steppedOnBot the bot that currently occupies the cell to which a move is proposed
+      * @param state the current game state (for access to time and configuration)
+      * @param board the current board state (which is updated and returned)
+      * @return the updated board state
       */
     def processCollision(movingBot: Bot, proposedPos: XY, steppedOnBot: Bot, state: State, board: Board): Board = {
         val movingBotPos = movingBot.pos
@@ -374,10 +380,13 @@ case object AugmentedDynamics extends ((State,Random,Iterable[(Entity.Id,Iterabl
         var updatedBoard = board
         movingBot.variety match {
             case movingPlayer: Bot.Player =>
-                def extendState(extension: (String, String)) =
-                    updatedBoard = updatedBoard updateBot (movingBot updateVariety (movingPlayer extendState extension))
-                def bonk =
-                    extendState(Protocol.PropertyName.Bonked, (proposedPos - movingBotPos).toString)
+
+                /** Update an entity's state map */
+                def updateStateMap(extension: (String, String)) { updatedBoard = updatedBoard.updateBot(movingBot.updateVariety(movingPlayer.updatedStateMap(extension))) }
+
+                /** Record the collision in the entity's state map */
+                def bonk() { updateStateMap(Protocol.PropertyName.Collision, (proposedPos - movingBotPos).toString) }
+
                 steppedOnBot.variety match {
                     case steppedOnPlayer: Bot.Player =>      // player on player -- depends...
                         if(movingPlayer.isMaster) {
@@ -385,7 +394,7 @@ case object AugmentedDynamics extends ((State,Random,Iterable[(Entity.Id,Iterabl
                             if(steppedOnPlayer.isMaster) {
                                 // master on master -- bonk
                                 updatedBoard = updatedBoard.addDecoration(movingBotPos, state.time, Bonk)
-                                bonk
+                                bonk()
                             } else {
                                 // master on slave
                                 if(movingPlayer.plugin == steppedOnPlayer.plugin) {
@@ -425,7 +434,7 @@ case object AugmentedDynamics extends ((State,Random,Iterable[(Entity.Id,Iterabl
                                 if(movingPlayer.masterId == steppedOnPlayer.masterId) {
                                     // slave on sibling slave -- bonk
                                     updatedBoard = updatedBoard.addDecoration(movingBotPos, time, Bonk)
-                                    bonk
+                                    bonk()
                                 } else {
                                     // slave on enemy slave -- annihilation
                                     updatedBoard = updatedBoard.removeBot(movingBot.id)
@@ -446,7 +455,7 @@ case object AugmentedDynamics extends ((State,Random,Iterable[(Entity.Id,Iterabl
                         updatedBoard = updatedBoard.updateBot(movingBot.updateEnergyBy(energyDelta))
                         updatedBoard = updatedBoard.updateBot(steppedOnBot.updateEnergyBy(energyDelta))
                         updatedBoard = updatedBoard.addDecoration(movingBotPos, time, Bonus(energyDelta))   // signal for player
-                        bonk
+                        bonk()
 
                     case Bot.GoodPlant =>   // player on good plant -- plant gets eaten
                         updatedBoard = updatedBoard.removeBot(steppedOnBot.id)
@@ -465,7 +474,7 @@ case object AugmentedDynamics extends ((State,Random,Iterable[(Entity.Id,Iterabl
                         updatedBoard = updatedBoard.updateBot(movingBot.updateEnergyBy(energyDelta).stunUntil(time + Constants.StunTime.MasterHitsWall))
                         updatedBoard = updatedBoard.addDecoration(movingBotPos, state.time, Bonk)
                         updatedBoard = updatedBoard.addDecoration(movingBotPos, state.time, Bonus(energyDelta))
-                        bonk
+                        bonk()
 
                     case _ =>
                         assert(false)

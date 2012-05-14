@@ -35,13 +35,18 @@ case object Dynamics extends ((State, Random, ActorSystem, ExecutionContext) => 
                 case Some(bot) => bot.variety match {
                     case player: Bot.Player =>
                         val nanoSeconds = tuple._2._1
-                        // update CPU time & input string
+
+                        // update the bot:
+                        // - record how much CPU time it used
+                        // - record its control function input and output strings (for display in browser UI)
+                        // - remove ephemeral values from the state parameter map: debug output & collision state
                         val updatedPlayer = player.copy(
                             cpuTime = player.cpuTime + nanoSeconds,
                             controlFunctionInput = tuple._2._2,
                             controlFunctionOutput = commands,
-                            stateMap = player.stateMap - Protocol.PropertyName.Debug - Protocol.PropertyName.Bonked
+                            stateMap = player.stateMap - Protocol.PropertyName.Debug - Protocol.PropertyName.Collision
                         )
+
                         val updatedBot = bot.updateVariety(updatedPlayer)
                         updatedBoard = updatedBoard.updateBot(updatedBot)
                         if(!player.isMaster) {

@@ -90,24 +90,30 @@ object Bot {
         def name: String
     }
 
-    // CBB: we could pack masterId and rank into an Either[Entity.Id,Int]
+
     case class Player(
         controlFunction: (String => String),
         plugin: Plugin,
         generation: Int,
         masterId: Entity.Id,                // for slaves: ID of master that owns them; for masters: their own ID
         rankAndQuartile: (Int,Int),         // for masters: index of the player in the most recent ranking, and the resulting quartile
-        cpuTime: Long,                      // total nanoseconds of CPU time
+        cpuTime: Long,                      // nanoseconds of CPU time, accumulated across all cycles
         controlFunctionInput: String,               // for bot debugging: the input string most recently used as input to the control function
         controlFunctionOutput: Iterable[Command],   // for bot debugging: the output string most recently received as output from the control function
-        stateMap: Map[String,String]                // for bot debugging: map of key/value pairs settable by the control function
+        stateMap: Map[String,String]                // state parameter map: key/value pairs settable by the control function
         ) extends Variety
     {
         def isMaster = generation == MasterGeneration
         def isSlave = generation > MasterGeneration
 
         def name = stateMap.getOrElse(Protocol.PropertyName.Name, "?")
-        def extendState(extension: (String, String)) : Player = copy(stateMap = stateMap + extension)
+
+        /** Returns a copy of this bot whose state parameter map was extended or updated with an additional
+          * key/value pair.
+          * @param extension the key/value pair to add or update in the state parameter map
+          * @return a copy of this bot
+          */
+        def updatedStateMap(extension: (String, String)) = copy(stateMap = stateMap + extension)
 
         override def respondTo(state: State, bot: Bot) = {
             def computeBotInputForSlave(bot: Bot, state: State) : String = {
