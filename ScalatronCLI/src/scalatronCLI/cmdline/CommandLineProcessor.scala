@@ -79,9 +79,6 @@ object CommandLineProcessor {
             println("       -targetDir <path>       the path of the local directory where the source files should be stored")
             println("       -id <int>               the version's ID")
             println("")
-            println("   deleteVersion               deletes the version with the given ID; as user only")
-            println("       -id <int>               the version's ID")
-            println("")
             println("   benchmark                   runs standard isolated-bot benchmark on given source files; as user only")
             println("       -sourceDir <path>       the path of the local directory where the source files can be found")
             println("")
@@ -100,7 +97,6 @@ object CommandLineProcessor {
             println(" java -jar ScalatronCLI.jar -user Frankie -password a -cmd versions")
             println(" java -jar ScalatronCLI.jar -user Frankie -password a -cmd createVersion -sourceDir /tempsrc -label \"updated\"")
             println(" java -jar ScalatronCLI.jar -user Frankie -password a -cmd getVersion -targetDir /tempsrc -id 1")
-            println(" java -jar ScalatronCLI.jar -user Frankie -password a -cmd deleteVersion -id 1")
             println(" java -jar ScalatronCLI.jar -user Frankie -password a -cmd benchmark -sourceDir /tempsrc")
             println(" java -jar ScalatronCLI.jar -cmd stresstest -clients 10")
             System.exit(0)
@@ -136,7 +132,6 @@ object CommandLineProcessor {
                         case "versions" => cmd_versions(connectionConfig, argMap)
                         case "createVersion" => cmd_createVersion(connectionConfig, argMap)
                         case "getVersion" => cmd_getVersion(connectionConfig, argMap)
-                        case "deleteVersion" => cmd_deleteVersion(connectionConfig, argMap)
                         case "benchmark" => cmd_benchmark(connectionConfig, argMap)
                         case "stresstest" => cmd_stresstest(connectionConfig, argMap)
                         case _ => System.err.println("unknown command: " + command)
@@ -511,42 +506,6 @@ object CommandLineProcessor {
                 }
         }
     }
-
-
-    /** -command deleteVersion      deletes the version with the given ID; as user only
-      *     -id int                 the version's ID
-      */
-    def cmd_deleteVersion(connectionConfig: ConnectionConfig, argMap: Map[String, String]) {
-        argMap.get("-id") match {
-            case None =>
-                System.err.println("error: command 'deleteVersion' requires option '-id'")
-                System.exit(-1)
-
-            case Some(versionIdStr) =>
-                val versionId = versionIdStr.toInt
-                doAsUser(
-                    connectionConfig,
-                    argMap,
-                    (scalatron: ScalatronRemote, loggedonUser: ScalatronRemote.User, users: ScalatronRemote.UserList) => {
-                        // get user source files (1 round-trip)
-                        handleScalatronExceptionsFor {
-                            loggedonUser.version(versionId) match {
-                                case None =>
-                                    System.err.println("error: cannot locate version with id %d".format(versionId))
-                                    System.exit(-1)
-
-                                case Some(version) =>
-                                    version.delete()
-
-                                    if(connectionConfig.verbose)
-                                        println("Deleted version with id %d".format(versionId))
-                            }
-                        }
-                    }
-                )
-        }
-    }
-
 
     /** -command benchmark
       * -sourceDir path     the path of the local directory where the source files can be found
