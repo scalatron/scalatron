@@ -96,11 +96,6 @@ class ScalatronApiSpec extends mutable.Specification
                 assert(version0retrieved.date == version0.date)
                 assert(version0retrieved.user.name == "ExampleUser")
 
-                // retrieve version files
-                val version0files = version0retrieved.sourceFiles
-                assert(version0files.size == 1)
-                assert(version0files.head.filename == "Bot.scala")
-
                 // we could now push an older version into the user's workspace with user.updateSources()
                 success
             })

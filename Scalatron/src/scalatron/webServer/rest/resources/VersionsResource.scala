@@ -84,8 +84,8 @@ class VersionsResource extends ResourceWithUser {
                             case None =>
                                 Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, "version %s of user %s does not exist".format(id,userName))).build()
                             case Some(version) =>
-                                val s = version.sourceFiles
-                                val sourceFiles = s.map(sf => SourcesResource.SourceFile(sf.filename, sf.code)).toArray
+                                user.checkout(version)
+                                val sourceFiles = user.sourceFiles.map(sf => SourcesResource.SourceFile(sf.filename, sf.code)).toArray
                                 SourcesResource.SourceFiles(sourceFiles)
                         }
                     case None =>
