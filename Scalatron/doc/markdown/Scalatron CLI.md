@@ -87,9 +87,9 @@ where <command> may require addition parameters:
         -sourceDir <path>       the path of the local directory where the source files can be found
         -label <name>           the label to apply to the versions (default: empty)
 
-    getVersion                  retrieves the source code of the version with the given ID; as user only
+    restoreVersion              restores the version with the given ID in the user's workspace and fetches the associated files; as user only
         -targetDir <path>       the path of the local directory where the source files should be stored
-        -id <int>               the version's ID
+        -id <string>            the version's ID
 
     benchmark                   runs standard isolated-bot benchmark on given source files; as user only
         -sourceDir <path>       the path of the local directory where the source files can be found
@@ -117,6 +117,8 @@ where <command> may require addition parameters:
     java -jar ScalatronCLI.jar -user Frankie -password a -cmd versions
 
     java -jar ScalatronCLI.jar -user Frankie -password a -cmd createVersion -sourceDir /tempsrc -label "updated"
+
+    java -jar ScalatronCLI.jar -user Frankie -password a -cmd restoreVersion -targetDir /tempsrc -id a1ae813f274b4a33bc61535e0e0de5345bb08d42
 
     java -jar ScalatronCLI.jar -user Frankie -password a -cmd benchmark -sourceDir /tempsrc
 

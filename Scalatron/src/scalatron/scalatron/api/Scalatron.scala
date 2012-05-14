@@ -305,31 +305,37 @@ object Scalatron {
         // version control & sample bots
         //----------------------------------------------------------------------------------------------
 
-        /** Returns a sorted collection of version identifiers of the bot sources, as tuples of
-          * (id, label, date), sorted by age.
+        /** Returns a sorted collection of versions, sorted by age, with newest version first.
           * @throws IOError if version directory cannot be read from disk, etc.
           */
         def versions: Iterable[Version]
 
-        /** Returns the version with the highest version ID, if any. */
-        def latestVersion: Option[Version] = versions.lastOption
+        /** Returns the newest version, if any. */
+        def latestVersion: Option[Version] = versions.headOption
 
         /** Returns the version with the given ID, as a Some(Version) if it exists or None if it
-          * does not exist.
-          **/
+          * does not exist. **/
         def version(id: String): Option[Version]
 
-        /** Creates a new version with the given label
+        /** Creates a new version with the given label from the files currently present in the workspace (/src directory)
+          * if any changes were made to them.
+          * @param label an optional label to apply to the version (may be empty).
+          * @throws IllegalStateException if version (base) directory could not be created
+          * @throws IOError if source files cannot be written to disk, etc.
+          * @return Some(version) if a version was created, None otherwise.
+          * */
+        def createVersion(label: String): Option[Version]
+
+/*
+        /** Creates a new version with the given label if any changes were made. Creating a version overwrites the
+          * source files that are currently in the user's working directory, then generates a new version from them.
           * @param label an optional label to apply to the version (may be empty).
           * @param sourceFiles the source files that will be stored in the version.
           * @throws IllegalStateException if version (base) directory could not be created
           * @throws IOError if source files cannot be written to disk, etc.
           * */
-        def createVersion(label: String, sourceFiles: SourceFileCollection): Version
-
-        /** Reverts the source directory to a given version.
-         */
-        def checkout(version: Version): Unit
+        @deprecated("use udateSources() and createVersion() separately")
+        def updateSourcesAndCreateVersion(label: String, sourceFiles: SourceFileCollection): Option[Version]
 
         /** Creates a new version by storing a backup copy of the source files currently present in the source
           * code directory of the user if the given version creation policy requires it. This method is intended as
@@ -350,7 +356,10 @@ object Scalatron {
           * @throws IllegalStateException if version (base) directory could not be created or source directory could not be read.
           * @throws IOError if source files cannot be written to disk, etc.
           * */
-         def createBackupVersion(policy: VersionPolicy, label: String, b: SourceFileCollection): Option[Version]
+        @deprecated("obsolete; use udateSources() and createVersion() separately")
+        def createBackupVersion(policy: VersionPolicy, label: String, b: SourceFileCollection): Option[Version]
+*/
+
 
 
         //----------------------------------------------------------------------------------------------
@@ -594,6 +603,9 @@ object Scalatron {
 
         /** Returns the user object of the user that owns this version. */
         def user: User
+
+        /** Reverts the contents of the source directory to this version. */
+        def restore()
     }
 
 

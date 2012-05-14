@@ -75,9 +75,9 @@ object CommandLineProcessor {
             println("       -sourceDir <path>       the path of the local directory where the source files can be found")
             println("       -label <name>           the label to apply to the versions (default: empty)")
             println("")
-            println("   getVersion                  retrieves the source code of the version with the given ID; as user only")
+            println("   restoreVersion              restores the version with the given ID in the user's workspace and fetches the associated files; as user only")
             println("       -targetDir <path>       the path of the local directory where the source files should be stored")
-            println("       -id <int>               the version's ID")
+            println("       -id <string>            the version's ID")
             println("")
             println("   benchmark                   runs standard isolated-bot benchmark on given source files; as user only")
             println("       -sourceDir <path>       the path of the local directory where the source files can be found")
@@ -96,7 +96,7 @@ object CommandLineProcessor {
             println(" java -jar ScalatronCLI.jar -user Frankie -password a -cmd build")
             println(" java -jar ScalatronCLI.jar -user Frankie -password a -cmd versions")
             println(" java -jar ScalatronCLI.jar -user Frankie -password a -cmd createVersion -sourceDir /tempsrc -label \"updated\"")
-            println(" java -jar ScalatronCLI.jar -user Frankie -password a -cmd getVersion -targetDir /tempsrc -id 1")
+            println(" java -jar ScalatronCLI.jar -user Frankie -password a -cmd restoreVersion -targetDir /tempsrc -id a1ae813f274b4a33bc61535e0e0de5345bb08d42")
             println(" java -jar ScalatronCLI.jar -user Frankie -password a -cmd benchmark -sourceDir /tempsrc")
             println(" java -jar ScalatronCLI.jar -cmd stresstest -clients 10")
             System.exit(0)
@@ -131,7 +131,7 @@ object CommandLineProcessor {
                         case "build" => cmd_buildSources(connectionConfig, argMap)
                         case "versions" => cmd_versions(connectionConfig, argMap)
                         case "createVersion" => cmd_createVersion(connectionConfig, argMap)
-                        case "getVersion" => cmd_getVersion(connectionConfig, argMap)
+                        case "restoreVersion" => cmd_restoreVersion(connectionConfig, argMap)
                         case "benchmark" => cmd_benchmark(connectionConfig, argMap)
                         case "stresstest" => cmd_stresstest(connectionConfig, argMap)
                         case _ => System.err.println("unknown command: " + command)
@@ -464,20 +464,20 @@ object CommandLineProcessor {
     }
 
 
-    /** -command getVersion         retrieves the source code of the version with the given ID; as user only
+    /** -command restoreVersion     restores the version with the given ID in the user's workspace and fetches the associated files; as user only
       *     -targetDir path         the path of the local directory where the source files should be stored
       *     -id int                 the version's ID
       */
-    def cmd_getVersion(connectionConfig: ConnectionConfig, argMap: Map[String, String]) {
+    def cmd_restoreVersion(connectionConfig: ConnectionConfig, argMap: Map[String, String]) {
         argMap.get("-targetDir") match {
             case None =>
-                System.err.println("error: command 'getVersion' requires option '-targetDir'")
+                System.err.println("error: command 'restoreVersion' requires option '-targetDir'")
                 System.exit(-1)
 
             case Some(targetDirPath) =>
                 argMap.get("-id") match {
                     case None =>
-                        System.err.println("error: command 'getVersion' requires option '-id'")
+                        System.err.println("error: command 'restoreVersion' requires option '-id'")
                         System.exit(-1)
 
                     case Some(versionIdStr) =>

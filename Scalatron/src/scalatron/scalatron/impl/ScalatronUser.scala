@@ -46,7 +46,8 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
     val sourceFilePath = sourceDirectoryPath + "/" + UsersSourceFileName
     val patchedSourceDirectoryPath = userDirectoryPath + "/" + UsersPatchedSourceDirectoryName
 
-    val gitBaseDirectoryPath = sourceDirectoryPath + "/.git"
+    val gitDirectoryName = ".git"
+    val gitBaseDirectoryPath = sourceDirectoryPath + "/" + gitDirectoryName
 
     val outputDirectoryPath = userDirectoryPath + "/" + UsersOutputDirectoryName
 
@@ -192,6 +193,8 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
     //----------------------------------------------------------------------------------------------
 
     def versions: Iterable[ScalatronVersion] = {
+        // TODO: Charles, the versions used to be sorted by ID, with lowest ID first.
+        // TODO: The Scalatron.User.latestVersion call relies on this. What are we now promising about sorting order?
         git.log().call().asScala.map(ScalatronVersion(_, this))
     }
 
@@ -200,39 +203,45 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
         git.log().add(ObjectId.fromString(id)).setMaxCount(1).call().asScala.map(ScalatronVersion(_, this)).headOption
 
 
-    def createVersion(label: String, sourceFiles: SourceFileCollection): ScalatronVersion = {
-        updateSourceFiles(sourceFiles)
+    def createVersion(label: String): Option[ScalatronVersion] = {
+        // TODO: Charles, can you confirm that we are adding all source files in the directory?
         git.add().addFilepattern(".").call
-        if(git.status().call().isClean()) {
-           versions.head
+
+        if(git.status().call().isClean) {
+           None
         } else {
-          // TODO Email address and full name?!?
-          return ScalatronVersion(git.commit().setCommitter(name, name + "@scalatron.github.com").setMessage(label).call, this)
+          Some(ScalatronVersion(git.commit().setCommitter(name, name + "@scalatron.github.com").setMessage(label).call, this))
         }
     }
 
 
-    def checkout(version: Version) = git.checkout().addPath("Bot.scala").setStartPoint(version.id).call
+/*
+    def updateSourcesAndCreateVersion(label: String, sourceFiles: SourceFileCollection): Option[ScalatronVersion] = {
+        updateSourceFiles(sourceFiles)  // this overwrites the files currently present in the workspace
+
+        createVersion(label)
+    }
 
 
     def createBackupVersion(policy: VersionPolicy, label: String, updatedSourceFiles: SourceFileCollection) =
         policy match {
             case VersionPolicy.IfDifferent =>
-                if (git.status().call().isClean()) {
+                if (git.status().call().isClean) {
                     if(scalatron.verbose) println("VersionPolicy.IfDifferent, files are unchanged => not creating backup version")
                     None
                 } else {
                     if(scalatron.verbose) println("VersionPolicy.IfDifferent, files are different => creating backup version")
-                    Some(createVersion(label, sourceFiles))    // backup old files as a version
+                    Some(updateSourcesAndCreateVersion(label, sourceFiles))    // backup old files as a version
                 }
             case VersionPolicy.Always =>
                 if(scalatron.verbose) println("VersionPolicy.Always => creating backup version")
-                Some(createVersion(label, sourceFiles))       // backup old files as a version
+                Some(updateSourcesAndCreateVersion(label, sourceFiles))       // backup old files as a version
 
             case VersionPolicy.Never =>
                 if(scalatron.verbose) println("VersionPolicy.Never => not creating backup version")
                 None // OK - nothing to back up
         }
+*/
 
 
 

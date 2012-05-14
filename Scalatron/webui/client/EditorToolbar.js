@@ -116,30 +116,48 @@
                 text: "Save...",
 
                 saveHandler: function(label) {
-                    var self = this;
+                    /* var self = this; */
 
                     disableActions(true);
                     var botCode = Editor.getContent();
                     if (botCode) {
-                        var backupLabel = "auto-backup before Save of '" + label + "'";
-                        API.updateSourceFiles({
-                            // Create a version of the previous content - if different.
+                        /* var backupLabel = "Auto-backup before Save of '" + label + "'"; */
+
+                        API.createVersion({
                             jsonData:{
-                                versionLabel: backupLabel,
-                                versionPolicy: "ifDifferent",
-                                files: [ { filename: "Bot.scala", code: botCode} ] },
+                                label: label,
+                                files: [
+                                    { filename: "Bot.scala", code: botCode }
+                                ]
+                            },
                             success:function () {
                                 disableActions(false);
                                 Events.fireEvent("documentSaved");
-
-                                self.saveVersion(label, botCode);
                             },
-
-                            failure:errorHandler
+                            failure: errorHandler
                         });
+
+                        /*
+                                                API.updateSourceFiles({
+                                                    // Create a version of the previous content - if different.
+                                                    jsonData:{
+                                                        versionLabel: backupLabel,
+                                                        versionPolicy: "ifDifferent",
+                                                        files: [ { filename: "Bot.scala", code: botCode} ] },
+                                                    success:function () {
+                                                        disableActions(false);
+                                                        Events.fireEvent("documentSaved");
+
+                                                        self.saveVersion(label, botCode);
+                                                    },
+
+                                                    failure:errorHandler
+                                                });
+                        */
                     }
                 },
 
+/*
                 saveVersion: function(label, botCode) {
                     API.createVersion({
                         jsonData:{
@@ -151,6 +169,7 @@
                         failure: errorHandler
                     });
                 },
+*/
 
                 handler:function (c) {
                     Ext.MessageBox.prompt('Save...', 'Please enter label name:', function(btn, label) {
@@ -245,7 +264,7 @@
             };
 
 
-            return [ saveAction, revertAction, cloneAction, "-", buildAction, sandbox, buildAndPubAction, "->", spinner, signOut]
+            return [ saveAction, revertAction, /* cloneAction, */ "-", buildAction, sandbox, buildAndPubAction, "->", spinner, signOut]
         }
     };
 

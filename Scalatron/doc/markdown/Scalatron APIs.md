@@ -99,7 +99,7 @@ Important Note:
 
     tested  /api/users/{user}/versions              GET     -       json    200     401,404         Get Existing Versions
     tested  /api/users/{user}/versions              POST    json    url     201     401,415         Create Version
-    tested  /api/users/{user}/versions/{versionId}  GET     -       json    200     401,404         Get Version Files
+    tested  /api/users/{user}/versions/{versionId}  GET     -       json    200     401,404         Restore Version
 
     tested  /api/samples                            GET     -       json    200     401             Get Existing Samples
     untstd  /api/samples                            POST    json    -       201     401,415,500     Create Sample
@@ -459,8 +459,8 @@ Response JSON example:
 ### Update Source Files
 
 Updates the source code files in the user's workspace on the server.
-Optionally creates a backup version of the source files currently in the workspace before overwriting them
-with the uploaded source files.
+Before overwriting the currently present files with the uploaded source files, creates a backup version if
+the currently active source files are different from the latest version (using the given version label).
 
 * URL:              /api/users/{user}/sources
 * Method:           PUT
@@ -480,7 +480,6 @@ Request JSON example:
             { "filename" : "Bot.scala", "code" : "class ControlFunctionFactory { ... }" },
             { "filename" : "Util.scala", "code" : "class View { ... }" }
         ],
-        "versionPolicy" : "ifDifferent",      // or: "always", "never"
         "versionLabel" : "before Build and Publish into Tournament"
     }
 
@@ -492,6 +491,9 @@ Comments:
   The source files are treated like a property of the user object. Updating the sources files
   updates that property. The operation is idempotent because the same source files can be
   PUT multiple times, always resulting in the same final state.
+* Actually, as of 1.0.0.1 backup versions are created if the files on the server are different
+  from the latest version on the server, which only happens the first time, so the idempotency is
+  no longer quite as accurate.
 
 
 
@@ -856,7 +858,8 @@ constructor to work with the value.
 
 ### Create Version
 
-Creates a new version on the server from the given source files.
+Creates a new version on the server from the given source files. Creating a version overwrites the source
+files that are currently in the user's working directory, then generates a new version from them.
 
 * URL:              /api/users/{user}/versions
 * Method:           POST
@@ -895,9 +898,9 @@ Comments:
 
 
 
-### Get Version Files
+### Restore Version
 
-Retrieves the source files associated with a particular version ID.
+Restores the user's workspace to the version with the given ID and returns the associated source files.
 
 * URL:              /api/users/{user}/versions/{versionId}
 * Method:           GET
@@ -917,7 +920,8 @@ Response JSON example:
         ]
     }
 
-
+Comments: doing this with GET is not REST compliant; it is a temporary effect of the conversion to
+versioning with git. This needs to be fixed.
 
 
 

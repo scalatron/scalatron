@@ -86,25 +86,21 @@ object ScalatronDemo
             // test versioning
             //------------------------------------------------------------------------------------------
 
-            // initially, there should be no versions
-            assert(user.versions.isEmpty)
+            // initially, there should be one version, the auto-generated initial commit
+            assert(user.versions.size == 1)
+            assert(new File(usersBaseDirPath + "/ExampleUser/.git").exists())
 
-            val version0 = user.createVersion("testVersion0", sourceFiles)
+            user.updateSourceFiles(sourceFiles)
+            val version0 = user.createVersion("testVersion0").get
             assert(version0.id == 0)
             assert(version0.label == "testVersion0")
             assert(version0.user.name == "ExampleUser")
-            assert(new File(usersBaseDirPath + "/ExampleUser/versions").exists())
-            assert(new File(usersBaseDirPath + "/ExampleUser/versions/0").exists())
-            assert(new File(usersBaseDirPath + "/ExampleUser/versions/0/config.txt").exists())
-            assert(new File(usersBaseDirPath + "/ExampleUser/versions/0/Bot.scala").exists())
 
-            val version1 = user.createVersion("testVersion1", sourceFiles)
+            user.updateSourceFiles(sourceFiles)
+            val version1 = user.createVersion("testVersion1").get
             assert(version1.id == 1)
             assert(version1.label == "testVersion1")
             assert(version1.user.name == "ExampleUser")
-            assert(new File(usersBaseDirPath + "/ExampleUser/versions/1").exists())
-            assert(new File(usersBaseDirPath + "/ExampleUser/versions/1/config.txt").exists())
-            assert(new File(usersBaseDirPath + "/ExampleUser/versions/1/Bot.scala").exists())
 
             val versionList = user.versions
             assert(versionList.size == 3)

@@ -56,6 +56,7 @@ class ScalatronApiSpec extends mutable.Specification
         "initially contain one version" in {
             runTest((scalatron: Scalatron, usersBaseDirPath: String, samplesBaseDirPath: String, pluginBaseDirPath: String) => {
                 val user = scalatron.createUser("ExampleUser", "", sourceFiles)
+                assert(new File(usersBaseDirPath + "/ExampleUser/src/.git").exists())
                 user.versions.size must beEqualTo(1)
             })
         }
@@ -64,14 +65,16 @@ class ScalatronApiSpec extends mutable.Specification
         "be able to create a new version" in {
             runTest((scalatron: Scalatron, usersBaseDirPath: String, samplesBaseDirPath: String, pluginBaseDirPath: String) => {
                 val user = scalatron.createUser("ExampleUser", "", sourceFiles)
+                assert(new File(usersBaseDirPath + "/ExampleUser/src/.git").exists())
 
-                val version0 = user.createVersion("testVersion0", Iterable(Scalatron.SourceFile("Bot.scala", "a")))
+                user.updateSourceFiles(Iterable(Scalatron.SourceFile("Bot.scala", "a")))
+                val version0 = user.createVersion("testVersion0").get
                 assert(version0.id != null)
                 assert(version0.label == "testVersion0")
                 assert(version0.user.name == "ExampleUser")
-                assert(new File(usersBaseDirPath + "/ExampleUser/src/.git").exists())
 
-                val version1 = user.createVersion("testVersion1", Iterable(Scalatron.SourceFile("Bot.scala", "b")))
+                user.updateSourceFiles(Iterable(Scalatron.SourceFile("Bot.scala", "b")))
+                val version1 = user.createVersion("testVersion1").get
                 assert(version1.id != version0.id)
                 assert(version1.label == "testVersion1")
                 assert(version1.user.name == "ExampleUser")
@@ -90,7 +93,10 @@ class ScalatronApiSpec extends mutable.Specification
                 assert(version0retrieved.date == version0.date)
                 assert(version0retrieved.user.name == "ExampleUser")
 
-                // we could now push an older version into the user's workspace with user.updateSources()
+                // TODO: don't update the files, then verify that no version is generated
+                // TODO: verify that latestVersion returns the latest version
+                // TODO: test restoring an older version
+
                 success
             })
         }

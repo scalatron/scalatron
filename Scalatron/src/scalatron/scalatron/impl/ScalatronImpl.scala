@@ -15,6 +15,8 @@ import scalatron.scalatron.api.Scalatron.{SourceFileCollection, ScalatronExcepti
 import akka.dispatch.ExecutionContext
 import java.net.URLDecoder
 import akka.routing.{SmallestMailboxRouter, RoundRobinRouter}
+import scalatron.util.FileUtil
+import FileUtil.use
 
 
 object ScalatronImpl
@@ -240,7 +242,6 @@ case class ScalatronImpl(
     def run(argMap: Map[String, String]) {
         val rounds = argMap.get("-rounds").map(_.toInt).getOrElse(Int.MaxValue)
         val headless = (argMap.get("-headless").getOrElse("no") == "yes")
-        val executionContextForTrustedCode = actorSystem.dispatcher
         if(headless) {
             game.runHeadless(pluginBaseDirectoryPath, argMap, rounds, tournamentState, secureMode, verbose)(actorSystem, executionContextForUntrustedCode)
         } else {
@@ -407,18 +408,14 @@ case class ScalatronImpl(
             if(verbose) println("created user /src directory '" + sourceDirectoryPath + "'")
         }
 
-        // write the initial source files to disk
-        // CBB: this should be wrapped into try/catch, with cleanup on error
-        initialSourceFiles.foreach(sf => {
-            val path = sourceDirectoryPath + "/" + sf.filename
-            val sourceFile = new FileWriter(path)
-            sourceFile.append(sf.code)
-            sourceFile.close()
-            if(verbose) println("created initial source file for user '" + name + "': " + path)
-        })
+        // create the initial source files in the workspace
+        user.updateSourceFiles(initialSourceFiles)
+        if(verbose) println("created initial source file for user '" + name)
 
+        // create the initial version from the source files in the workspace
         user.gitRepository.create()
-        user.createVersion("Initial commit", user.sourceFiles)
+        user.createVersion("Auto-generated initial version")
+        if(verbose) println("created git repo and initial commit for user '" + name)
 
         user
     }
