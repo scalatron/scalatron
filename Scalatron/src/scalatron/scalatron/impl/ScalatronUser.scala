@@ -207,7 +207,7 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
            versions.head
         } else {
           // TODO Email address and full name?!?
-          return ScalatronVersion(git.commit().setCommitter(name, name + "@scalatron.com").setMessage(label).call, this)
+          return ScalatronVersion(git.commit().setCommitter(name, name + "@scalatron.github.com").setMessage(label).call, this)
         }
     }
 
