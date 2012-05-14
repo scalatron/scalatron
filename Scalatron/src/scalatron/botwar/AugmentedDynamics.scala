@@ -374,6 +374,10 @@ case object AugmentedDynamics extends ((State,Random,Iterable[(Entity.Id,Iterabl
         var updatedBoard = board
         movingBot.variety match {
             case movingPlayer: Bot.Player =>
+                def extendState(extension: (String, String)) =
+                    updatedBoard = updatedBoard updateBot (movingBot updateVariety (movingPlayer extendState extension))
+                def bonk =
+                    extendState(Protocol.PropertyName.Bonked, (proposedPos - movingBotPos).toString)
                 steppedOnBot.variety match {
                     case steppedOnPlayer: Bot.Player =>      // player on player -- depends...
                         if(movingPlayer.isMaster) {
@@ -381,6 +385,7 @@ case object AugmentedDynamics extends ((State,Random,Iterable[(Entity.Id,Iterabl
                             if(steppedOnPlayer.isMaster) {
                                 // master on master -- bonk
                                 updatedBoard = updatedBoard.addDecoration(movingBotPos, state.time, Bonk)
+                                bonk
                             } else {
                                 // master on slave
                                 if(movingPlayer.plugin == steppedOnPlayer.plugin) {
@@ -420,6 +425,7 @@ case object AugmentedDynamics extends ((State,Random,Iterable[(Entity.Id,Iterabl
                                 if(movingPlayer.masterId == steppedOnPlayer.masterId) {
                                     // slave on sibling slave -- bonk
                                     updatedBoard = updatedBoard.addDecoration(movingBotPos, time, Bonk)
+                                    bonk
                                 } else {
                                     // slave on enemy slave -- annihilation
                                     updatedBoard = updatedBoard.removeBot(movingBot.id)
@@ -440,6 +446,7 @@ case object AugmentedDynamics extends ((State,Random,Iterable[(Entity.Id,Iterabl
                         updatedBoard = updatedBoard.updateBot(movingBot.updateEnergyBy(energyDelta))
                         updatedBoard = updatedBoard.updateBot(steppedOnBot.updateEnergyBy(energyDelta))
                         updatedBoard = updatedBoard.addDecoration(movingBotPos, time, Bonus(energyDelta))   // signal for player
+                        bonk
 
                     case Bot.GoodPlant =>   // player on good plant -- plant gets eaten
                         updatedBoard = updatedBoard.removeBot(steppedOnBot.id)
@@ -458,6 +465,7 @@ case object AugmentedDynamics extends ((State,Random,Iterable[(Entity.Id,Iterabl
                         updatedBoard = updatedBoard.updateBot(movingBot.updateEnergyBy(energyDelta).stunUntil(time + Constants.StunTime.MasterHitsWall))
                         updatedBoard = updatedBoard.addDecoration(movingBotPos, state.time, Bonk)
                         updatedBoard = updatedBoard.addDecoration(movingBotPos, state.time, Bonus(energyDelta))
+                        bonk
 
                     case _ =>
                         assert(false)

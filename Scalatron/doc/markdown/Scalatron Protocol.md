@@ -231,6 +231,7 @@ following property names are reserved and must not be used for custom properties
 * "view"
 * "direction"
 * "master"
+* "bonked"
 
 Custom state properties cannot have empty strings as their values. Setting a custom state property
 to an empty string deletes it from the state.
@@ -273,7 +274,7 @@ Parameters:
             incremented each time.
 
 
-### React(generation=int,name=string,time=int,view=string,energy=string,master=int:int,...)
+### React(generation=int,name=string,time=int,view=string,energy=string,master=int:int,bonked=int:int,...)
 
 "React" is invoked by the server once for each entity for each step in which the entity is
 allowed to move (mini-bots every cycle, bots every second cycle - see the *Game Rules* for
@@ -301,6 +302,9 @@ Parameters:
 * `master`  for mini-bots only: relative position of the master, in cells, in the format
             "x:y", e.g. "-1:1". To return to the master, the mini-bot can use this as the
             move direction (with some obstacle avoidance, of course).
+* `bonked`  only set if the bot bonked, i.e., the last move command for the bot failed due
+            to a collision. The value provided is the displacement direction for the
+	    failed move, e.g. "1:-1" if a move right and up could not be executed.
 
 In addition to these system-generated parameters, the server passes in all state parameters of
 the entity that were set by the player via `Spawn()` or `Set()` (see below). If, for example,
