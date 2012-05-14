@@ -417,6 +417,9 @@ case class ScalatronImpl(
             if(verbose) println("created initial source file for user '" + name + "': " + path)
         })
 
+        user.gitRepository.create()
+        user.createVersion("Initial commit", user.sourceFiles)
+
         user
     }
 
