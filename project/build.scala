@@ -38,12 +38,15 @@ object build extends Build {
                 "org.codehaus.jackson" % "jackson-jaxrs" % "1.9.2",
                 "com.sun.jersey" % "jersey-bundle" % "1.12",
                 "javax.servlet" % "servlet-api" % "2.5",
+                "org.eclipse.jgit" % "org.eclipse.jgit" % "1.3.0.201202151440-r",
+                "org.eclipse.jgit" % "org.eclipse.jgit.http.server" % "1.3.0.201202151440-r",
                 "org.scalatest" %% "scalatest" % "1.7.2" % "test",
                 "org.testng" % "testng" % "6.5.1" % "test",
                 "org.specs2" %% "specs2" % "1.9" % "test",
                 "org.specs2" %% "specs2-scalaz-core" % "6.0.1"
             ),
-            resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
+            resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
+            resolvers += "JGit Repository" at "http://download.eclipse.org/jgit/maven"
         ) ++ Seq (
             jarName in assembly := "Scalatron.jar" // , logLevel in assembly := Level.Debug
         )
