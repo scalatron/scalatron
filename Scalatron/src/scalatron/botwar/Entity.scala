@@ -107,6 +107,7 @@ object Bot {
         def isSlave = generation > MasterGeneration
 
         def name = stateMap.getOrElse(Protocol.PropertyName.Name, "?")
+        def extendState(extension: (String, String)) : Player = copy(stateMap = stateMap + extension)
 
         override def respondTo(state: State, bot: Bot) = {
             def computeBotInputForSlave(bot: Bot, state: State) : String = {

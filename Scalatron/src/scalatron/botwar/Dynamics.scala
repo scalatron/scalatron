@@ -35,27 +35,17 @@ case object Dynamics extends ((State, Random, ExecutionContext) => Either[State,
                 case Some(bot) => bot.variety match {
                     case player: Bot.Player =>
                         val nanoSeconds = tuple._2._1
-                        if(player.isMaster) {
-                            val updatedPlayer = player.copy(
-                                cpuTime = player.cpuTime + nanoSeconds,
-                                controlFunctionInput = tuple._2._2,
-                                controlFunctionOutput = commands,
-                                stateMap = player.stateMap - Protocol.PropertyName.Debug
-                            )
-                            val updatedBot = bot.updateVariety(updatedPlayer)
-                            updatedBoard = updatedBoard.updateBot(updatedBot)
-                        } else {
-                            // update slave's CPU time & input string
-                            val updatedPlayer = player.copy(
-                                cpuTime = player.cpuTime + nanoSeconds,
-                                controlFunctionInput = tuple._2._2,
-                                controlFunctionOutput = commands,
-                                stateMap = player.stateMap - Protocol.PropertyName.Debug
-                            )
-                            val updatedBot = bot.updateVariety(updatedPlayer)
-                            updatedBoard = updatedBoard.updateBot(updatedBot)
-
-                            // update master's CPU time
+                        // update CPU time & input string
+                        val updatedPlayer = player.copy(
+                            cpuTime = player.cpuTime + nanoSeconds,
+                            controlFunctionInput = tuple._2._2,
+                            controlFunctionOutput = commands,
+                            stateMap = player.stateMap - Protocol.PropertyName.Debug - Protocol.PropertyName.Bonked
+                        )
+                        val updatedBot = bot.updateVariety(updatedPlayer)
+                        updatedBoard = updatedBoard.updateBot(updatedBot)
+                        if(!player.isMaster) {
+                            // for slaves, update master's CPU time
                             val masterId = player.masterId
                             updatedBoard.getBot(masterId) match {
                                 case None => // ?!?
