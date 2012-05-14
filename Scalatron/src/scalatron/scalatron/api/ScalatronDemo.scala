@@ -114,7 +114,7 @@ object ScalatronDemo
             assert(versionList.last.label == "testVersion1")
 
             // retrieve version object
-            val version0retrieved = user.version(0).get
+            val version0retrieved = user.version(versionList.head.id).get
             assert(version0retrieved.id == version0.id)
             assert(version0retrieved.label == version0.label)
             assert(version0retrieved.date == version0.date)
