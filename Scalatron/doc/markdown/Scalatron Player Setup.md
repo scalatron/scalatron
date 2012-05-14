@@ -108,16 +108,17 @@ steps:
 
 ## Set up Java
 
-* Scala source code compiles into Java byte code, which can be executed with a *Java Virtual Machine (JVM)*.
+* Scala source code compiles into Java byte code, which can be executed with a *[Java Virtual Machine (JVM)](http://en.wikipedia.org/wiki/Java_virtual_machine)*.
   In order to execute applications written in Scala, you therefore need such a JVM on your computer.
   The JVM is part of the *Java Runtime Environment (JRE)*, which is generally pre-installed on
-  most operating systems.
+  most operating systems. If it is not, you can [download it for free](http://www.java.com/).
 * To compile Scala code and to properly work with the Java library (e.g., to see its source code),
-  however, you also need the the *Java Development Environment (JDE)*. If you have already been
-  developing for Java, you should obviously already have this, too. If not, download a JDE from
-  Oracle or from the web site of your OS provider.
+  however, you also need the the *[Java Development Kit (JDK)](http://en.wikipedia.org/wiki/Java_Development_Kit)*.
+  If you have already been developing for Java, you should obviously already have this, too.
+  If not, download a JDK [from Oracle](http://www.oracle.com/technetwork/java/javase/downloads)
+  or from the web site of your OS provider.
 * Please refer to the documentation of the IDE you will be using on how to configure it to use
-  the appropriate JDE. Maybe some day we�ll be able to also add the steps to this guide...
+  the appropriate JDK. Maybe some day we'll be able to also add the steps to this guide...
 
 
 ## Set up Scala
@@ -125,13 +126,12 @@ steps:
 * Compiled Scala code relies on functionality defined in the Scala standard library, which is
   therefore required to be present on your computer (as a Java archive .jar file).  There are
   several ways to obtain and install this package, but the most convenient way is to get
-  the entire �stack� of Scala technologies available from Typesafe, a company that supports a
+  the entire 'stack' of Scala technologies available from Typesafe, a company that supports a
   range of key Scala projects. So:
 
 * Download the Typesafe Stack from http://typesafe.com
 * Install the Typesafe stack
     * on OSX, the default directory is `/Applications/typesafe-stack`
-
     * on Windows, the default directory is `C:/Program Files/typesafe-stack`
 
 
@@ -172,7 +172,7 @@ on MacOS X.
 * In the main menu, select **IntelliJ IDEA** > **Preferences**
 * In the list on the left, scroll down to to the entry **Plugins**
 * At the bottom of the pane that appears, choose **Browse Repositories**
-* Via the search box at the top right, search for *�Scala�*
+* Via the search box at the top right, search for *'Scala'*
 * In the list that appears on the left, scroll down to the entry called **Scala**
 * Control-click on that entry and select **Download and Install...**
 * After the plug-in was downloaded and installed, you will have to re-start IDEA
@@ -185,19 +185,19 @@ on MacOS X.
   within IDEA) where it can find the Scala compiler. The Scala compiler comes as part of the
   Typesafe stack which we already installed, and resides in a Java archive file called
   `scala-compiler.jar`.
-* We now need to create a kind of �library bundle� containing both the Scala compiler and the
-  Scala library, which we�ll then tell the plug-in to use when it wants to compile our code.
+* We now need to create a kind of 'library bundle' containing both the Scala compiler and the
+  Scala library, which we'll then tell the plug-in to use when it wants to compile our code.
 * In the main menu, select **File** > **Project Structure...**
 * In list at upper left, select **Global Libraries**
-* We want to add an entry called �scala-compiler� to the list of �library packages� in the
+* We want to add an entry called 'scala-compiler' to the list of 'library packages' in the
   center. To do that, we...
-* Click on the �+� icon above the list in the center
+* Click on the '+' icon above the list in the center
 * In the **Select Library Files** dialog that appears...
 * Browse for and select the following libraries on disk:
     * /Applications/typesafe-stack/lib/scala-compiler.jar
     * /Applications/typesafe-stack/lib/scala-library.jar
 * this will add an entry "scala-compiler" to the global library list
-* We can now configure the IDEA Scala plug-in to use this �library package� in order to access
+* We can now configure the IDEA Scala plug-in to use this 'library package' in order to access
   the compiler and to compile our Scala code.
 
 
@@ -208,8 +208,8 @@ on MacOS X.
 * This will pop up a dialog with the title Settings
 * In this dialog, in the tree at left navigate to **Compiler** > **Scala Compiler**
 * In the right hand panel, find the box titled **Project FSC**
-* In the drop-down list **Compiler library**, select the Scala compiler �library package� we
-  created earlier: `scala-compiler.jar` (or something similar, whatever you�d entered as the name).
+* In the drop-down list **Compiler library**, select the Scala compiler 'library package' we
+  created earlier: `scala-compiler.jar` (or something similar, whatever you'd entered as the name).
 * This will allow IDEA to do fast incremental compilations using an internal compilation server.
 
 
@@ -217,10 +217,10 @@ on MacOS X.
 ### Configure the Scala Library
 
 * Note: this step is NOT a duplicate of the preceding step! You really need to do this, too!
-* Before, we created a �library package� for the IDEA Scala plug-in that contained the Scala
-  compiler and the Scala standard library. For our own projects, we�ll also need to include
-  the Scala standard library as a dependency - but we don�t need the compiler. We�ll therefore
-  create another �library package�, but this time one that contains ONLY the Scala standard
+* Before, we created a 'library package' for the IDEA Scala plug-in that contained the Scala
+  compiler and the Scala standard library. For our own projects, we'll also need to include
+  the Scala standard library as a dependency - but we don't need the compiler. We'll therefore
+  create another 'library package', but this time one that contains ONLY the Scala standard
   library (`scala-library.jar`).
 
 *   File > Project structure...
@@ -249,9 +249,9 @@ The following steps are specific to IntelliJ IDEA and were tested with IDEA vers
 
 ### Add the Scala Facet to you Project
 
-* A �Facet� is IDEA�s way of knowing what technologies your project uses and to store
-  configuration information for these technologies. We need to add the �Scala� facet to your
-  project. In the next step, we�ll configure it.
+* A 'Facet' is IDEA's way of knowing what technologies your project uses and to store
+  configuration information for these technologies. We need to add the 'Scala' facet to your
+  project. In the next step, we'll configure it.
 *   File > Project Structure...
 *   in list at upper left, select "Facets"
 *   above the middle list, click the '+' icon to add a new facet
@@ -260,14 +260,14 @@ The following steps are specific to IntelliJ IDEA and were tested with IDEA vers
 
 ### Configure the Scala Facet
 
-* First we�ll configure your project to use the *Fast Scala Compiler*. The Fast Scala Compiler
+* First we'll configure your project to use the *Fast Scala Compiler*. The Fast Scala Compiler
   is an incremental compile server managed by the Scala plug-in within IDEA. Using it dramatically
   accelerates your build times because symbols do not need to be re-loaded for every build.
 * From the preceding step, you should still have the **Project Structure** dialog visible. In
   the list at the left, you should have selected **Facet** and in the list in the middle you
   should have selected the **Scala** facet.
 * Now in the panel on the right titled **Compiler instantiation**, check the box **use project FSC**
-  (�FSC� is the �Fast Scala Compiler�).
+  ('FSC' is the 'Fast Scala Compiler').
 * This tells IDEA that to compile your Scala source code, it should use the Fast Scala Compiler.
   We configured this compiler earlier on to use the appropriate Scala compiler library.
 * In the same dialog, check the box **Explain type errors** further down. This tells the compiler
@@ -276,8 +276,8 @@ The following steps are specific to IntelliJ IDEA and were tested with IDEA vers
 
 ### Configure Scala Library as Module Dependency
 
-* We now need to tell IDEA that your Scala �ScalatronBot� project depends on the Scala
-  �library package� containing `scala-library.jar` which we created earlier.
+* We now need to tell IDEA that your Scala 'ScalatronBot' project depends on the Scala
+  'library package' containing `scala-library.jar` which we created earlier.
 * From the preceding step, you should still have the **Project Structure** dialog visible.
 *   in list at upper left, select "Modules"
 *   click on your module ("ScalatronBot")
@@ -290,7 +290,7 @@ The following steps are specific to IntelliJ IDEA and were tested with IDEA vers
 
 ### Configure the .jar Artifact
 
-* An �artifact� is something of (hopefully) permanent value generated by the build process.
+* An 'artifact' is something of (hopefully) permanent value generated by the build process.
   In our case it will be a Java archive (`.jar`) file that contains the compiled bot. The
   server will attempt to locate and open this `.jar` file and to extract a factory class from
   it which it can then use to instantiate a control function for our bot.
@@ -310,7 +310,7 @@ The following steps are specific to IntelliJ IDEA and were tested with IDEA vers
   `.scala` source files in the plug-in (these will be closer to 25KB). This also saves a bit of
   copy time each time you build.
 * Confirm with OK
-* In the main dialog, in the list in the middle, an entry called �ScalatronBot.jar� should have
+* In the main dialog, in the list in the middle, an entry called 'ScalatronBot.jar' should have
   appeared and be selected. In the associated panel on the right, check the box **Build on make**.
   This will tell IDEA to automatically create the plug-in `.jar` file we just configured as an
   artifact each time you build your code.
@@ -346,15 +346,15 @@ The following steps are specific to IntelliJ IDEA and were tested with IDEA vers
 
 ### Build your Bot
 
-* In the main menu, select **Build** > **Make Project**. You�ll soon use this a lot.
+* In the main menu, select **Build** > **Make Project**. You'll soon use this a lot.
   Make a mental note of the keyboard shortcut...
 * This should compile the Scala code in your `Bot.scala` file into the `.jar` artifact file we
   configured earlier.
-* If you configured your artifact�s destination path to be your personal directory below the
+* If you configured your artifact's destination path to be your personal directory below the
   shared plug-in directory on the game server, the `.jar` file will be copied into that
   directory and the next time the server starts a game round and re-scans the plug-in
   directories, your plug-in will be picked up and your bot should appear in the game arena,
-  saying �Hello World�.
+  saying 'Hello World'.
 * Now read the **Game Rules**, the **Protocol** and then get started with the **Tutorial**! Have fun!
 
 
@@ -591,17 +591,17 @@ available on his blog at http://jmhofer.johoop.de/?p=292 and gave permission to 
 
 ## Background
 
-J. M. Hofer says: "Unfortunately, it�s not yet well documented or obvious how to set the
+J. M. Hofer says: "Unfortunately, it's not yet well documented or obvious how to set the
 Scalatron environment up, except for a huuuge instructions document for IntelliJ IDEA. I mean,
-13 pages?! - That just has to be doable in an easier way! As I�m an Eclipse user and somewhat
-fluent with SBT, I thought I�d try to setup Scalatron with an SBT build. With the sbteclipse
-(and sbt-idea) plugins, I�ll then get the IDE setup for free."
+13 pages?! - That just has to be doable in an easier way! As I'm an Eclipse user and somewhat
+fluent with SBT, I thought I'd try to setup Scalatron with an SBT build. With the sbteclipse
+(and sbt-idea) plugins, I'll then get the IDE setup for free."
 
 
 ## A Basic SBT Build File
 
-So, let�s create a basic SBT build file. As I already suspect that I�ll need a build that�s a bit
-more complicated than a few lines of configuring standard settings, let�s start with a `Build.scala`
+So, let's create a basic SBT build file. As I already suspect that I'll need a build that's a bit
+more complicated than a few lines of configuring standard settings, let's start with a `Build.scala`
 file:
 
     import sbt._
@@ -628,14 +628,14 @@ This simply initializes my bot project and adds a few standard Scala options I u
 
 ## Scalatron Dependency and Tests
 
-Next, I want to add the dependency to the Scalatron jar file to the project. As Scalatron isn�t
-published anywhere, I�ll just create a lib directory and put the jar file from the Scalatron
+Next, I want to add the dependency to the Scalatron jar file to the project. As Scalatron isn't
+published anywhere, I'll just create a lib directory and put the jar file from the Scalatron
 distribution in there.
 
-Another basic thing that�s still missing from the build is the configuration of some kind of
-tests. I absolutely want to write tests against my bot�s functionality, as it�s very difficult
-to debug a bot during a running bot war. I�ll use *Specs2* for that, of course, because it�s
-all kinds of genius. We�ll add the following lines to our `botSettings`:
+Another basic thing that's still missing from the build is the configuration of some kind of
+tests. I absolutely want to write tests against my bot's functionality, as it's very difficult
+to debug a bot during a running bot war. I'll use *Specs2* for that, of course, because it's
+all kinds of genius. We'll add the following lines to our `botSettings`:
 
     libraryDependencies ++= Seq(
       "org.specs2" %% "specs2" % "1.8.2" % "test",
@@ -663,8 +663,8 @@ specifications. And I tell it to create HTML reports, too, and where to put them
 
 ## Starting the Scalatron Simulation
 
-I can now already hack and test my bot to my heart�s content. However, I can�t yet try it out
-in the Scalatron environment. Let�s do something about this. I need a way to start the Scalatron
+I can now already hack and test my bot to my heart's content. However, I can't yet try it out
+in the Scalatron environment. Let's do something about this. I need a way to start the Scalatron
 simulation, and I probably want to configure the directory where all the bots are kept (the
 enemy bots as well as my own).
 
@@ -686,7 +686,7 @@ require quite a few dependencies as inputs:
 * `name`: in order to name my bot in the bot directory,
 * `javaOptions`: so that I can configure memory settings and the like for the simulation,
 * `unmanagedClasspath` in Compile: to retrieve the Scalatron.jar from and finally
-* `Keys.package` in Compile: to retrieve my bot�s jar from.
+* `Keys.package` in Compile: to retrieve my bot's jar from.
 
 So, here we go (again, add this to the `botSettings`):
 
@@ -709,7 +709,7 @@ So, here we go (again, add this to the `botSettings`):
 
 ## Conclusion
 
-And that�s it!
+And that's it!
 
 I can now deploy my bot to the bot directory and run the simulation from within SBT just by
 typing play into the SBT console.
@@ -720,11 +720,11 @@ java option for this:
     javaOptions += "-Xmx1g"
 
 And also, the Eclipse project I generate via the sbteclipse plugin unfortunately warns me about
-two Scala runtimes (one generated by the plugin, one inside the Scalatron jar). I won�t do
-anything against this, hoping that we�ll soon get a clean published Scalatron jar that doesn�t
+two Scala runtimes (one generated by the plugin, one inside the Scalatron jar). I won't do
+anything against this, hoping that we'll soon get a clean published Scalatron jar that doesn't
 automatically include the Scala runtime...
 
-Here�s my complete build file as a gist: https://gist.github.com/2260897
+Here's my complete build file as a gist: https://gist.github.com/2260897
 
 Now go and create your own Scalatron bot!
 
