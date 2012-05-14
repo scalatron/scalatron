@@ -54,6 +54,12 @@ in the public domain. Feel free to use, copy, and improve them!
 
 ## Version History
 
+### Version 1.0.0.3 -- 2012-05-15
+
+* Now state property: `collision`, reports when a move failed due to a collision; Protocol doc has details. Thanks U.G. Dietrich!
+* Minor fix to how class paths are reported on Windows (eliminated leading slash from `/C:/Docs...`.
+
+
 ### Version 1.0.0.2 -- 2012-05-10
 
 * there is now an experimental "secure mode" for Scalatron, which can be enabled with the command line argument
