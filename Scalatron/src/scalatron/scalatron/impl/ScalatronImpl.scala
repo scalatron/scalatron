@@ -105,7 +105,10 @@ object ScalatronImpl
 
         // so we URL-decode the path before returning it:
         val characterEncoding = "UTF-8"         // Eight-bit UCS Transformation Format
-        URLDecoder.decode(jarFilePathAsURL, characterEncoding)
+        val decoded = URLDecoder.decode(jarFilePathAsURL, characterEncoding)
+
+        // on Windows, we still have paths like this: "/C:/Documents and Settings/"; so we clean it up once more:
+        new File(decoded).getAbsolutePath
     }
 
 
