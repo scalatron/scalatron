@@ -282,9 +282,9 @@ case class ScalatronUser(
             {
                 "versions" :
                 [
-                    { "id" : "1", "label" : "Label 1", "date" : "2012-04-13 08:22", "url" : "/api/users/{user}/versions/1" },
-                    { "id" : "2", "label" : "Label 2", "date" : "2012-04-13 08:23", "url" : "/api/users/{user}/versions/2" },
-                    { "id" : "3", "label" : "Label 3", "date" : "2012-04-13 08:24", "url" : "/api/users/{user}/versions/3" }
+                    { "id" : "1499f03b85b29eac6bde835eed92f68336fb901b", "label" : "Label 1", "date" : "2012-04-13 08:22", "url" : "/api/users/{user}/versions/1499f03b85b29eac6bde835eed92f68336fb901b" },
+                    { "id" : "56e43c370bfaaa9773f7cf1fb41b6cec494a3c43", "label" : "Label 2", "date" : "2012-04-13 08:23", "url" : "/api/users/{user}/versions/56e43c370bfaaa9773f7cf1fb41b6cec494a3c43" },
+                    { "id" : "a1ae813f274b4a33bc61535e0e0de5345bb08d42", "label" : "Label 3", "date" : "2012-04-13 08:24", "url" : "/api/users/{user}/versions/a1ae813f274b4a33bc61535e0e0de5345bb08d42" }
                 ]
             }
             */
@@ -295,7 +295,7 @@ case class ScalatronUser(
             versionList.map(m => {
                 val jsonMap = JSonMap(m, jsonOpt)
                 ScalatronVersion(
-                    jsonMap.asInt("id"),
+                    jsonMap.asString("id"),
                     jsonMap.asString("label"),
                     jsonMap.asString("date").toLong,
                     jsonMap.asString("url"),
@@ -320,7 +320,7 @@ case class ScalatronUser(
         }
     }
 
-    def version(id: Int): Option[Version] = versions.find(_.id == id)
+    def version(id: String): Option[Version] = versions.find(_.id == id)
 
     def createVersion(label: String, sourceFileCollection: SourceFileCollection): ScalatronVersion = {
         try {
@@ -351,7 +351,7 @@ case class ScalatronUser(
              */
             val jsonMap = jsonOpt.asMap
             ScalatronVersion(
-                jsonMap.asInt("id"),
+                jsonMap.asString("id"),
                 jsonMap.asString("label"),
                 jsonMap.asString("date").toLong,
                 jsonMap.asString("url"),

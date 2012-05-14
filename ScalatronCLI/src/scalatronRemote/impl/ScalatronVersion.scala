@@ -11,7 +11,7 @@ import scalatronRemote.api.ScalatronRemote.{ScalatronException, SourceFile}
 
 
 case class ScalatronVersion(
-    id: Int,
+    id: String,
     label: String,
     date: Long,
     resourceUrl: String, // e.g. "/api/users/{user}/versions/{id}"
@@ -46,27 +46,6 @@ case class ScalatronVersion(
                         throw ScalatronException.NotFound(e.reason)
                     case HttpStatus.SC_INTERNAL_SERVER_ERROR =>
                         // the user's source files could not be read
-                        throw ScalatronException.InternalServerError(e.reason)
-                    case _ =>
-                        throw e // rethrow
-                }
-        }
-    }
-
-    def delete() {
-        try {
-            val jsonOpt = user.scalatron.connection.DELETE(resourceUrl)
-        } catch {
-            case e: HttpFailureCodeException =>
-                e.httpCode match {
-                    case HttpStatus.SC_UNAUTHORIZED =>
-                        // not logged on as this user or as Administrator
-                        throw ScalatronException.NotAuthorized(e.reason)
-                    case HttpStatus.SC_NOT_FOUND =>
-                        // this user does not exist on the server
-                        throw ScalatronException.NotFound(e.reason)
-                    case HttpStatus.SC_INTERNAL_SERVER_ERROR =>
-                        // the user's version files could not be deleted
                         throw ScalatronException.InternalServerError(e.reason)
                     case _ =>
                         throw e // rethrow

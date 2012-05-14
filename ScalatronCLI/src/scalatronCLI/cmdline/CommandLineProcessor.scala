@@ -426,7 +426,7 @@ object CommandLineProcessor {
                 // get version list (1 round-trip)
                 handleScalatronExceptionsFor {
                     val versionList = loggedonUser.versions
-                    versionList.foreach(v => println("id=%d, label=\"%s\", date=\"%s\"".format(v.id, v.label, DateFormat.getDateTimeInstance.format(new Date(v.date)))))
+                    versionList.foreach(v => println("id=\"%s\", label=\"%s\", date=\"%s\"".format(v.id, v.label, DateFormat.getDateTimeInstance.format(new Date(v.date)))))
                 }
             }
         )
@@ -456,7 +456,7 @@ object CommandLineProcessor {
                             val version = loggedonUser.createVersion(label, sourceFileCollection)
 
                             if(connectionConfig.verbose)
-                                println("Create version #%d from %d source files from '%s'".format(version.id, sourceFileCollection.size, sourceDirPath))
+                                println("Create version %s from %d source files from '%s'".format(version.id, sourceFileCollection.size, sourceDirPath))
                         }
                     }
                 )
@@ -481,16 +481,15 @@ object CommandLineProcessor {
                         System.exit(-1)
 
                     case Some(versionIdStr) =>
-                        val versionId = versionIdStr.toInt
                         doAsUser(
                             connectionConfig,
                             argMap,
                             (scalatron: ScalatronRemote, loggedonUser: ScalatronRemote.User, users: ScalatronRemote.UserList) => {
                                 // get user source files (1 round-trip)
                                 handleScalatronExceptionsFor {
-                                    loggedonUser.version(versionId) match {
+                                    loggedonUser.version(versionIdStr) match {
                                         case None =>
-                                            System.err.println("error: cannot locate version with id %d".format(versionId))
+                                            System.err.println("error: cannot locate version with id '%s'".format(versionIdStr))
                                             System.exit(-1)
 
                                         case Some(version) =>
@@ -506,6 +505,8 @@ object CommandLineProcessor {
                 }
         }
     }
+
+
 
     /** -command benchmark
       * -sourceDir path     the path of the local directory where the source files can be found

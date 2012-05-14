@@ -226,7 +226,7 @@ object ScalatronRemote {
           * Note that the current implementation calls 'versions()' to fetch the list of versions,
           * so if you already have that, you are better of finding the version yourself.
           * */
-        def version(id: Int): Option[Version]
+        def version(id: String): Option[Version]
 
         /** Creates a new version by storing the given source files into a version directory
           * below the 'versions' directory. */
@@ -403,7 +403,7 @@ object ScalatronRemote {
       */
     trait Version {
         /** Returns the user-unique version ID of this version. */
-        def id: Int
+        def id: String
 
         /** Returns the label string of this version. */
         def label: String
@@ -417,9 +417,6 @@ object ScalatronRemote {
 
         /** Returns the source code files associated with this version. */
         def sourceFiles: SourceFileCollection
-
-        /** Deletes this version, including all associated source code files. */
-        def delete()
     }
 
 
