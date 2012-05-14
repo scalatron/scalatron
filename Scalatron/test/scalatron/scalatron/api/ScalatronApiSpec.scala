@@ -53,10 +53,10 @@ class ScalatronApiSpec extends mutable.Specification
         // test versioning
         //------------------------------------------------------------------------------------------
 
-        "initially contain no versions" in {
+        "initially contain one version" in {
             runTest((scalatron: Scalatron, usersBaseDirPath: String, samplesBaseDirPath: String, pluginBaseDirPath: String) => {
                 val user = scalatron.createUser("ExampleUser", "", sourceFiles)
-                user.versions must beEmpty
+                user.versions.size must beEqualTo(1)
             })
         }
 
@@ -65,32 +65,26 @@ class ScalatronApiSpec extends mutable.Specification
             runTest((scalatron: Scalatron, usersBaseDirPath: String, samplesBaseDirPath: String, pluginBaseDirPath: String) => {
                 val user = scalatron.createUser("ExampleUser", "", sourceFiles)
 
-                val version0 = user.createVersion("testVersion0", sourceFiles)
-                assert(version0.id == 0)
+                val version0 = user.createVersion("testVersion0", Iterable(Scalatron.SourceFile("Bot.scala", "a")))
+                assert(version0.id != null)
                 assert(version0.label == "testVersion0")
                 assert(version0.user.name == "ExampleUser")
-                assert(new File(usersBaseDirPath + "/ExampleUser/versions").exists())
-                assert(new File(usersBaseDirPath + "/ExampleUser/versions/0").exists())
-                assert(new File(usersBaseDirPath + "/ExampleUser/versions/0/config.txt").exists())
-                assert(new File(usersBaseDirPath + "/ExampleUser/versions/0/Bot.scala").exists())
+                assert(new File(usersBaseDirPath + "/ExampleUser/src/.git").exists())
 
-                val version1 = user.createVersion("testVersion1", sourceFiles)
-                assert(version1.id == 1)
+                val version1 = user.createVersion("testVersion1", Iterable(Scalatron.SourceFile("Bot.scala", "b")))
+                assert(version1.id != version0.id)
                 assert(version1.label == "testVersion1")
                 assert(version1.user.name == "ExampleUser")
-                assert(new File(usersBaseDirPath + "/ExampleUser/versions/1").exists())
-                assert(new File(usersBaseDirPath + "/ExampleUser/versions/1/config.txt").exists())
-                assert(new File(usersBaseDirPath + "/ExampleUser/versions/1/Bot.scala").exists())
 
                 val versionList = user.versions
-                assert(versionList.size == 2)
-                assert(versionList.head.id == 0)
-                assert(versionList.head.label == "testVersion0")
-                assert(versionList.last.id == 1)
-                assert(versionList.last.label == "testVersion1")
+                assert(versionList.size == 3)
+                assert(versionList.head.id == version1.id)
+                assert(versionList.head.label == "testVersion1")
+                assert(versionList.tail.head.id == version0.id)
+                assert(versionList.tail.head.label == "testVersion0")
 
                 // retrieve version object
-                val version0retrieved = user.version(versionList.head.id).get
+                val version0retrieved = user.version(version0.id).get
                 assert(version0retrieved.id == version0.id)
                 assert(version0retrieved.label == version0.label)
                 assert(version0retrieved.date == version0.date)
