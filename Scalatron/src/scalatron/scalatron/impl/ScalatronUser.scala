@@ -193,8 +193,6 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
     //----------------------------------------------------------------------------------------------
 
     def versions: Iterable[ScalatronVersion] = {
-        // TODO: Charles, the versions used to be sorted by ID, with lowest ID first.
-        // TODO: The Scalatron.User.latestVersion call relies on this. What are we now promising about sorting order?
         git.log().call().asScala.map(ScalatronVersion(_, this))
     }
 
