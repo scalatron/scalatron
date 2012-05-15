@@ -10,6 +10,7 @@ import akka.actor.ActorSystem
 import java.io.{FileWriter, File}
 import scalatron.util.FileUtil
 import FileUtil.use
+import scalatron.scalatron.impl.GitServer
 
 
 /** The trait representing the main API entry point of the Scalatron server. */
@@ -145,7 +146,7 @@ object Scalatron {
       * scalatron.shutdown()
       * </pre>
       */
-    def apply(argMap: Map[String, String], verbose: Boolean = false)(implicit actorSystem: ActorSystem): Scalatron =
+    def apply(argMap: Map[String, String], verbose: Boolean = false)(implicit actorSystem: ActorSystem, gitServer: GitServer): Scalatron =
         scalatron.scalatron.impl.ScalatronImpl(argMap, verbose)
 
 

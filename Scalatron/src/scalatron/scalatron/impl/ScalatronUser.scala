@@ -26,13 +26,11 @@ import java.util.Date
 import scalatron.scalatron.api.Scalatron
 import scalatron.scalatron.api.Scalatron._
 import java.util.concurrent.TimeoutException
-import org.eclipse.jgit.lib.RepositoryCache.FileKey
-import org.eclipse.jgit.util.FS
 import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.lib.{ObjectId, RepositoryCache}
 import org.eclipse.jgit.dircache.DirCacheCheckout
 import org.eclipse.jgit.api.errors._
 import org.eclipse.jgit.errors._
+import org.eclipse.jgit.lib.{Repository, ObjectId, RepositoryCache}
 
 
 case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatron.User {
@@ -61,7 +59,7 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
     val publishedJarFilePath = userPluginDirectoryPath + "/" + JarFilename
     val backupJarFilePath = userPluginDirectoryPath + "/" + BackupJarFilename
 
-    val gitRepository = RepositoryCache.open(FileKey.exact(new File(gitBaseDirectoryPath), FS.DETECTED), false)
+    val gitRepository = scalatron.gitServer.get(this)
     val git = new Git(gitRepository)
 
     //----------------------------------------------------------------------------------------------

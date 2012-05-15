@@ -31,7 +31,7 @@ object ScalatronImpl
       * @param verbose if true, use verbose logging
       * @return
       */
-    def apply(argMap: Map[String, String], verbose: Boolean)(implicit actorSystem: ActorSystem): Scalatron = {
+    def apply(argMap: Map[String, String], verbose: Boolean)(implicit actorSystem: ActorSystem, gitServer: GitServer): Scalatron = {
         // find out which game variant the server should host, since, in theory, the game may be configurable some day
         val gameName = argMap.get("-game").getOrElse("BotWar")
         val game = gameName match {
@@ -88,6 +88,7 @@ object ScalatronImpl
             verbose
         )(
             actorSystem,
+            gitServer,
             executionContextForUntrustedCode
         )
     }
@@ -216,6 +217,7 @@ case class ScalatronImpl(
     verbose: Boolean
 )(
     val actorSystem: ActorSystem,                           // the Akka actor system to use for trusted code, e.g. for compilation
+    val gitServer: GitServer,                               // the Git server for caching user repositories
     val executionContextForUntrustedCode: ExecutionContext  // the ExecutionContext to use for untrusted code, e.g. for bot control functions
 ) extends Scalatron
 {

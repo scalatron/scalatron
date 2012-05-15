@@ -14,9 +14,9 @@ import org.eclipse.jgit.transport.{ReceiveCommand, PostReceiveHook, ReceivePack}
 import org.eclipse.jgit.transport.resolver.{RepositoryResolver, ReceivePackFactory}
 
 import scalatron.scalatron.api.Scalatron.User
-import scalatron.scalatron.impl.ScalatronUser
+import scalatron.scalatron.impl.GitServer
 
-case class GitServlet(context: WebContext) extends org.eclipse.jgit.http.server.GitServlet {
+case class GitServlet(context: WebContext, gitServer: GitServer) extends org.eclipse.jgit.http.server.GitServlet {
 
     import context.scalatron
 
@@ -47,7 +47,7 @@ case class GitServlet(context: WebContext) extends org.eclipse.jgit.http.server.
     class UserRepositoryResolver extends RepositoryResolver[HttpServletRequest] {
 
         override def open(req: HttpServletRequest, name: String) = {
-            getUser(req).map(_.asInstanceOf[ScalatronUser].gitRepository).getOrElse(throw new RepositoryNotFoundException(name))
+            getUser(req).flatMap(gitServer.get(_)).getOrElse(throw new RepositoryNotFoundException(name))
         }
     }
 

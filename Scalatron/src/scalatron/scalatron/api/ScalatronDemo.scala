@@ -7,6 +7,7 @@ import scalatron.scalatron.api.Scalatron.Constants._
 import java.io.{IOException, File}
 import akka.actor.ActorSystem
 import scalatron.util.FileUtil
+import scalatron.scalatron.impl.GitServer
 
 
 object ScalatronDemo
@@ -33,6 +34,9 @@ object ScalatronDemo
 
             // prepare the Akka actor system to be used by the various servers of the application
             implicit val actorSystem = ActorSystem("Scalatron")
+
+            // prepare the GitServer to be used to store version
+            implicit val gitServer = GitServer()
 
             // create a Scalatron server instance - this is the main API entry point
             val scalatron =
