@@ -23,9 +23,9 @@ the bot tournament by continuously simulating short rounds of the Scalatron BotW
 Players participate in the tournament by publishing their bots into the server.
 
 To publish a bot, a player has to provide the server with a `.jar` archive file that contains the
-bot's control function, which was implemented in Scala and then compiled. There are two approaches
-to doing this, which in the Scalatron documentation are referred to as the "serious" and "casual"
-paths, respectively.
+bot's control function, which was implemented in Scala and then compiled. There are three approaches
+to doing this, which in the Scalatron documentation are referred to as the "serious", "intermediate"
+and "casual" paths, respectively.
 
 
 ## The "Casual" Path
@@ -39,6 +39,18 @@ inside the game server and requires no setup by the user.
 
 A subsequent chapter of this document describe how to code and build your bot using the
 browser-based development environment that is provided by the Scalatron server.
+
+
+
+
+## The "Intermediate" Path
+
+The "intermediate" path is intended for programmers who wish to avoid having to setup
+everything for the "serious" path, but still wish to use their IDE locally.
+
+On this path, players leverage the power of the IDE to write their bots but then debug
+and publish from the web browser. Changes are synchronised with the server by using Git.
+
 
 
 
@@ -98,6 +110,53 @@ steps:
 4. Once you have something that works, click **Publish into Tournament** to build your bot and publish
    it into the tournament.
 5. Woohoo!
+
+
+
+
+
+# The Intermediate Path: Being a Git
+
+## Set up Scalatron server
+
+Ensure that the Scalatron server is up-and-running from the casual steps above.
+
+## Install Git
+
+Depending on your operating system ensure that [Git](http://git-scm.com/download) is installed.
+
+## Clone your Bot
+
+From the command line clone your personal bot locally, where 'USER' is your username.
+
+    git clone http://USER@HOST:8080/git/USER
+
+Or for people who don't want to keep typing their password:
+
+    git clone http://USER:PASSWORD@HOST:8080/git/USER
+
+## Set up a Development Environment
+
+See below, but ignore "Configure the .jar Artifact" as this is not required;
+the project can be a raw Scala project, with no extra dependencies.
+The root of the project should be the directory of your newly cloned repository.
+
+## Synchronising your changes
+
+From the command push your changes back to Scalatron:
+
+    git add .
+    git commit -m "Some change I just made"
+    git push
+
+This may also be possible from within your IDE, depending on the installed plugins.
+
+Refresh the browser and follow instructions above for building and deploying your bot.
+You may need to do this multiple times as you make changes wish to test the results.
+
+If you make changes in the browser and 'save' you can see those changes locally:
+
+    git pull
 
 
 
