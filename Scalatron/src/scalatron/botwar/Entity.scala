@@ -55,14 +55,22 @@ case class Bot(
     def respondTo(state: State) : (String,Iterable[Command]) = variety.respondTo(state, this)
 
     def isWall = variety eq Bot.Wall
+
     def isMaster = variety match {
         case player: Bot.Player => player.isMaster
         case _ => false
     }
+
     def isSlave = variety match {
         case player: Bot.Player => player.isSlave
         case _ => false
     }
+
+    /** Returns true if this bot is untrusted (plag-in-controlled) and false if this bot is trusted
+      * (computer-controlled). Use this to partition the bot collection into trusted/untrusted sub-collections.
+      * @return true if this bot is untrusted, false if trusted.
+      */
+    def isUntrusted = variety.isInstanceOf[Bot.Player]
 
     def isAt(candidatePos: XY) = {
         candidatePos.x >= pos.x &&
