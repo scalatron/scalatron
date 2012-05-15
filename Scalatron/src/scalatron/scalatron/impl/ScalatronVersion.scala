@@ -10,8 +10,5 @@ case class ScalatronVersion(commit: RevCommit, user: ScalatronUser) extends Scal
     def label = commit.getShortMessage
     def date = commit.getCommitterIdent.getWhen.getTime
 
-    def restore() {
-        // TODO: deal with multiple source files, not just one
-        user.git.checkout().addPath("Bot.scala").setStartPoint(commit.getId.name).call
-    }
+    def restore = user.restore(this)
 }

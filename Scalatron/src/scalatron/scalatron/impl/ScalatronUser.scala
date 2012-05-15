@@ -30,6 +30,7 @@ import org.eclipse.jgit.lib.RepositoryCache.FileKey
 import org.eclipse.jgit.util.FS
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.{ObjectId, RepositoryCache}
+import org.eclipse.jgit.dircache.DirCacheCheckout
 
 
 case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatron.User {
@@ -218,6 +219,23 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
         }
     }
 
+    /**
+     * Restores the working directory to a given version.
+     * This is roughly similar to running 'git checkout .', which isn't
+     * properly supported by the JGit high-level API.
+     * This was inspired by JGit's ResetCommand.checkoutIndex().
+     * We don't want to reset because that will change the branch as well.
+     */
+    def restore(version: ScalatronVersion) {
+        val dc = gitRepository.lockDirCache()
+        try {
+            val checkout = new DirCacheCheckout(gitRepository, dc, version.commit.getTree)
+            checkout.setFailOnConflict(false)
+            checkout.checkout
+        } finally {
+            dc.unlock()
+        }
+    }
 
 /*
     def updateSourcesAndCreateVersion(label: String, sourceFiles: SourceFileCollection): Option[ScalatronVersion] = {
