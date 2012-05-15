@@ -202,13 +202,19 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
 
 
     def createVersion(label: String): Option[ScalatronVersion] = {
-        // TODO: Charles, can you confirm that we are adding all source files in the directory?
+        // Add all new and modified files to Git
         git.add().addFilepattern(".").call
+        // Remove any deleted files from Git
+        git.add().addFilepattern(".").setUpdate(true).call
 
+        // Check to see if anything has changed
+        // Unlike Git, JGit will allow empty commits by default
         if(git.status().call().isClean) {
            None
         } else {
-          Some(ScalatronVersion(git.commit().setCommitter(name, name + "@scalatron.github.com").setMessage(label).call, this))
+          // Create Git commit from changes
+          val commit = git.commit().setCommitter(name, name + "@scalatron.github.com").setMessage(label).call
+          Some(ScalatronVersion(commit, this))
         }
     }
 
