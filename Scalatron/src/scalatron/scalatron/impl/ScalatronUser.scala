@@ -285,8 +285,10 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
                 copyFile(localJarFilePath, publishedJarFilePath)
             } catch {
                 case t: Throwable =>
-                    throw new IllegalStateException("failed to copy .jar file '" + localJarFilePath + "' to '" + publishedJarFile + "': " + t)
+                    throw new IllegalStateException("failed to copy .jar file '" + localJarFilePath + "' to '" + publishedJarFilePath + "': " + t)
             }
+        } else {
+            throw new IllegalStateException(".jar file intended for publication does not exist: " + localJarFilePath)
         }
     }
 
