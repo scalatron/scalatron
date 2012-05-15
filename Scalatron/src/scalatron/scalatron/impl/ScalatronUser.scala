@@ -31,6 +31,8 @@ import org.eclipse.jgit.util.FS
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.{ObjectId, RepositoryCache}
 import org.eclipse.jgit.dircache.DirCacheCheckout
+import org.eclipse.jgit.api.errors._
+import org.eclipse.jgit.errors._
 
 
 case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatron.User {
@@ -194,13 +196,27 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
     //----------------------------------------------------------------------------------------------
 
     def versions: Iterable[ScalatronVersion] = {
-        git.log().call().asScala.map(ScalatronVersion(_, this))
+        try {
+            git.log().call().asScala.map(ScalatronVersion(_, this))
+        } catch {
+            // Git isn't initialised - just ignore
+            case _: NoHeadException => Iterable()
+            case e: JGitInternalException => throw new IOError(e)
+        }
     }
 
 
-    def version(id: String): Option[Version] =
+    def version(id: String): Option[Version] = try {
+        // Get the
         git.log().add(ObjectId.fromString(id)).setMaxCount(1).call().asScala.map(ScalatronVersion(_, this)).headOption
-
+    } catch {
+        // Git isn't initialised - just ignore
+        case _: NoHeadException => None
+        // This matches previous behaviour
+        case _: MissingObjectException => None
+        case _: IncorrectObjectTypeException => None
+        case e: JGitInternalException => throw new IOError(e)
+    }
 
     def createVersion(label: String): Option[ScalatronVersion] = {
         // Add all new and modified files to Git
@@ -208,14 +224,28 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
         // Remove any deleted files from Git
         git.add().addFilepattern(".").setUpdate(true).call
 
-        // Check to see if anything has changed
-        // Unlike Git, JGit will allow empty commits by default
-        if(git.status().call().isClean) {
-           None
-        } else {
-          // Create Git commit from changes
-          val commit = git.commit().setCommitter(name, name + "@scalatron.github.com").setMessage(label).call
-          Some(ScalatronVersion(commit, this))
+        try {
+            // Check to see if anything has changed
+            // Unlike Git, JGit will allow empty commits by default
+            if(git.status().call().isClean) {
+               None
+            } else {
+                try {
+                    // Create Git commit from changes
+                    val commit = git.commit().setCommitter(name, name + "@scalatron.github.com").setMessage(label).call
+                    Some(ScalatronVersion(commit, this))
+                } catch {
+                    case e: NoHeadException => throw new IllegalStateException(e)
+                    // This should never happen as we are calling setMessage above
+                    case e: NoMessageException => throw new IllegalStateException(e)
+                    case e: UnmergedPathException => throw new IllegalStateException(e)
+                    case e: ConcurrentRefUpdateException => throw new IllegalStateException(e)
+                    case e: WrongRepositoryStateException => throw new IllegalStateException(e)
+                    case e: JGitInternalException => throw new IOError(e)
+                }
+            }
+        } catch {
+            case e: IOException => throw new IOError(e)
         }
     }
 
@@ -225,15 +255,23 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
      * properly supported by the JGit high-level API.
      * This was inspired by JGit's ResetCommand.checkoutIndex().
      * We don't want to reset because that will change the branch as well.
+     *
+     * @throws IOError if the repository is in a corrupt state.
      */
     def restore(version: ScalatronVersion) {
-        val dc = gitRepository.lockDirCache()
         try {
-            val checkout = new DirCacheCheckout(gitRepository, dc, version.commit.getTree)
-            checkout.setFailOnConflict(false)
-            checkout.checkout
-        } finally {
-            dc.unlock()
+            val dc = gitRepository.lockDirCache()
+            try {
+                val checkout = new DirCacheCheckout(gitRepository, dc, version.commit.getTree)
+                checkout.setFailOnConflict(false)
+                checkout.checkout
+            } finally {
+                dc.unlock()
+            }
+        } catch {
+            case e: NoWorkTreeException => throw new IOError(e)
+            case e: CorruptObjectException => throw new IOError(e)
+            case e: IOException => throw new IOError(e)
         }
     }
 
