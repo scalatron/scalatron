@@ -30,6 +30,7 @@ import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.dircache.DirCacheCheckout
 import org.eclipse.jgit.api.errors._
 import org.eclipse.jgit.errors._
+import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.lib.{Repository, ObjectId, RepositoryCache}
 
 
@@ -273,11 +274,24 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
         }
     }
 
-/*
-    def updateSourcesAndCreateVersion(label: String, sourceFiles: SourceFileCollection): Option[ScalatronVersion] = {
-        updateSourceFiles(sourceFiles)  // this overwrites the files currently present in the workspace
-
-        createVersion(label)
+    /**
+     * Returns the SourceFileCollection from Git for a given version.
+     */
+    def getSourceFiles(version: ScalatronVersion): SourceFileCollection = {
+        val walk = new TreeWalk(gitRepository)
+        // Walk the Git tree for _this_ version
+        walk.addTree(version.commit.getTree)
+        // Recurse subdirectories
+        walk.setRecursive(true)
+        val reader = walk.getObjectReader
+        val list = collection.mutable.ListBuffer[SourceFile]()
+        // Iterate over the TreeWalk for each file in the tree
+        while (walk.next()) {
+            // TODO Encoding?!?
+            val code = new String(reader.open(walk.getObjectId(0)).getCachedBytes)
+            list += SourceFile(walk.getPathString, code)
+        }
+        list
     }
 
 
