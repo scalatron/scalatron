@@ -248,31 +248,6 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
         }
     }
 
-    /**
-     * Restores the working directory to a given version.
-     * This is roughly similar to running 'git checkout .', which isn't
-     * properly supported by the JGit high-level API.
-     * This was inspired by JGit's ResetCommand.checkoutIndex().
-     * We don't want to reset because that will change the branch as well.
-     *
-     * @throws IOError if the repository is in a corrupt state.
-     */
-    def restore(version: ScalatronVersion) {
-        try {
-            val dc = gitRepository.lockDirCache()
-            try {
-                val checkout = new DirCacheCheckout(gitRepository, dc, version.commit.getTree)
-                checkout.setFailOnConflict(false)
-                checkout.checkout
-            } finally {
-                dc.unlock()
-            }
-        } catch {
-            case e: NoWorkTreeException => throw new IOError(e)
-            case e: CorruptObjectException => throw new IOError(e)
-            case e: IOException => throw new IOError(e)
-        }
-    }
 
     /**
      * Returns the SourceFileCollection from Git for a given version.

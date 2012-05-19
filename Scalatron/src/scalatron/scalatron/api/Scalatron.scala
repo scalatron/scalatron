@@ -321,7 +321,7 @@ object Scalatron {
         /** Creates a new version with the given label from the files currently present in the workspace (/src directory)
           * if any changes were made to them.
           * @param label an optional label to apply to the version (may be empty).
-          * @throws IllegalStateException if version (base) directory could not be created
+          * @throws IllegalStateException if something went wrong internally with the version control system
           * @throws IOError if source files cannot be written to disk, etc.
           * @return Some(version) if a version was created, None otherwise.
           * */
@@ -605,7 +605,9 @@ object Scalatron {
         /** Returns the user object of the user that owns this version. */
         def user: User
 
-        /** Reverts the contents of the source directory to this version. */
+        /** Restores the contents of the source directory to this version.
+          * @throws IOError if the repository is in a corrupt state.
+          */
         def restore()
     }
 
