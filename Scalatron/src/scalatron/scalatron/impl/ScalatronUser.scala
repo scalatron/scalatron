@@ -15,23 +15,22 @@ import akka.util.Timeout
 import akka.dispatch.Await
 
 
-import scalatron.util.FileUtil
-import FileUtil.deleteRecursively
-import FileUtil.copyFile
+import scalatron.util.FileUtil._
 import ConfigFile.loadConfigFile
 import ConfigFile.updateConfigFileMulti
 import ScalatronUser.buildSourceFilesIntoJar
 import scalatron.scalatron.api.Scalatron.Constants._
-import java.util.Date
 import scalatron.scalatron.api.Scalatron
 import scalatron.scalatron.api.Scalatron._
 import java.util.concurrent.TimeoutException
 import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.dircache.DirCacheCheckout
 import org.eclipse.jgit.api.errors._
 import org.eclipse.jgit.errors._
 import org.eclipse.jgit.treewalk.TreeWalk
-import org.eclipse.jgit.lib.{Repository, ObjectId, RepositoryCache}
+import org.eclipse.jgit.lib.ObjectId
+import org.eclipse.jgit.lib.RepositoryCache
+import org.eclipse.jgit.lib.RepositoryCache.FileKey
+import org.eclipse.jgit.util.FS
 
 
 case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatron.User {
@@ -41,15 +40,12 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
     // cached paths
     //----------------------------------------------------------------------------------------------
 
-    val userDirectoryPath = scalatron.usersBaseDirectoryPath + "/" + name
+    val userDirectoryPath = scalatron.computeUserDirectoryPath(name)
     val userConfigFilePath = userDirectoryPath + "/" + Scalatron.Constants.ConfigFilename
 
     val sourceDirectoryPath = userDirectoryPath + "/" + UsersSourceDirectoryName
     val sourceFilePath = sourceDirectoryPath + "/" + UsersSourceFileName
     val patchedSourceDirectoryPath = userDirectoryPath + "/" + UsersPatchedSourceDirectoryName
-
-    val gitDirectoryName = ".git"
-    val gitBaseDirectoryPath = sourceDirectoryPath + "/" + gitDirectoryName
 
     val outputDirectoryPath = userDirectoryPath + "/" + UsersOutputDirectoryName
 
@@ -60,11 +56,20 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
     val publishedJarFilePath = userPluginDirectoryPath + "/" + JarFilename
     val backupJarFilePath = userPluginDirectoryPath + "/" + BackupJarFilename
 
-    val gitRepository = scalatron.gitServer.get(this)
+    val gitBaseDirectoryPath = sourceDirectoryPath + "/" + gitDirectoryName
+
+    val gitRepository = RepositoryCache.open(FileKey.exact(new File(gitBaseDirectoryPath), FS.DETECTED), false)
     val git = new Git(gitRepository)
 
+
+    /** Releases the cached git repository instance. */
+    def release() {
+        gitRepository.close()
+    }
+
+
     //----------------------------------------------------------------------------------------------
-    // interface
+    // account management
     //----------------------------------------------------------------------------------------------
 
     def isAdministrator = ( name == AdminUserName )
@@ -77,6 +82,10 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
             // caller must handle IOError exceptions
             deleteRecursively(userDirectoryPath, scalatron.verbose)
             deleteRecursively(userPluginDirectoryPath, scalatron.verbose)
+
+            // remove from cache
+            release()
+            scalatron.userCache.remove(name)
         }
     }
 
@@ -269,7 +278,7 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
         list
     }
 
-
+/*
     def createBackupVersion(policy: VersionPolicy, label: String, updatedSourceFiles: SourceFileCollection) =
         policy match {
             case VersionPolicy.IfDifferent =>

@@ -7,7 +7,6 @@ import scalatron.Version
 import scalatron.webServer.WebServer
 import scalatron.botwar.BotWar
 import scalatron.scalatron.api.Scalatron
-import scalatron.scalatron.impl.GitServer
 import akka.actor._
 
 
@@ -41,17 +40,14 @@ object Main {
 
 
         // prepare the Akka actor system to be used by the various servers of the application
-        implicit val actorSystem = ActorSystem("Scalatron")
-
-        // prepare the GitServer to be used by users and the GitServlet
-        implicit val gitServer = GitServer()
+        val actorSystem = ActorSystem("Scalatron")
 
         // start up Scalatron background services (e.g. compile service, which will use the actor system)
-        val scalatron = Scalatron(argMap, verbose)
+        val scalatron = Scalatron(argMap, actorSystem, verbose)
         scalatron.start()
 
         // prepare (and start) the web server - eventually this should also use the Akka actorSystem (e.g., Spray?)
-        val webServer = WebServer(actorSystem, scalatron, gitServer, argMap, verbose)
+        val webServer = WebServer(actorSystem, scalatron, argMap, verbose)
         webServer.start()
 
         // pass control to the tournament game loop - runs either forever or for some rounds ("-rounds" cmdline arg)
@@ -65,9 +61,6 @@ object Main {
 
         // shut down the Akka actor system
         actorSystem.shutdown()
-
-        // shut down the Git server
-        gitServer.shutdown();
     }
 
 

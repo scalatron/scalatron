@@ -10,7 +10,6 @@ import akka.actor.ActorSystem
 import java.io.{FileWriter, File}
 import scalatron.util.FileUtil
 import FileUtil.use
-import scalatron.scalatron.impl.GitServer
 
 
 /** The trait representing the main API entry point of the Scalatron server. */
@@ -146,8 +145,8 @@ object Scalatron {
       * scalatron.shutdown()
       * </pre>
       */
-    def apply(argMap: Map[String, String], verbose: Boolean = false)(implicit actorSystem: ActorSystem, gitServer: GitServer): Scalatron =
-        scalatron.scalatron.impl.ScalatronImpl(argMap, verbose)
+    def apply(argMap: Map[String, String], actorSystem: ActorSystem, verbose: Boolean = false): Scalatron =
+        scalatron.scalatron.impl.ScalatronImpl(argMap, actorSystem, verbose)
 
 
     /** Specific exceptions thrown by Scalatron API. */
@@ -305,6 +304,11 @@ object Scalatron {
         //----------------------------------------------------------------------------------------------
         // version control & sample bots
         //----------------------------------------------------------------------------------------------
+
+        /** Returns the git repository associated with this user. You'll only need to use this if you want to
+          * manipulate the underlying git repository yourself, e.g. to provide web access. */
+        def gitRepository : org.eclipse.jgit.lib.Repository
+
 
         /** Returns a sorted collection of versions, sorted by age, with newest version first.
           * @throws IOError if version directory cannot be read from disk, etc.
@@ -705,6 +709,7 @@ object Scalatron {
         val SamplesDirectoryName = "samples" // e.g. in "/Scalatron/samples"
         val SamplesSourceDirectoryName = "src" // e.g. in "/Scalatron/samples/{sample}/src"
 
+        val gitDirectoryName = ".git"
 
         val JarFilename = "ScalatronBot.jar"
         val BackupJarFilename = "ScalatronBot.backup.jar"

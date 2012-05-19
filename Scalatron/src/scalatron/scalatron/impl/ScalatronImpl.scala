@@ -14,9 +14,7 @@ import java.util.Date
 import scalatron.scalatron.api.Scalatron.{SourceFileCollection, ScalatronException, SourceFile, User}
 import akka.dispatch.ExecutionContext
 import java.net.URLDecoder
-import akka.routing.{SmallestMailboxRouter, RoundRobinRouter}
-import scalatron.util.FileUtil
-import FileUtil.use
+import akka.routing.SmallestMailboxRouter
 
 
 object ScalatronImpl
@@ -31,7 +29,7 @@ object ScalatronImpl
       * @param verbose if true, use verbose logging
       * @return
       */
-    def apply(argMap: Map[String, String], verbose: Boolean)(implicit actorSystem: ActorSystem, gitServer: GitServer): Scalatron = {
+    def apply(argMap: Map[String, String], actorSystem: ActorSystem, verbose: Boolean): Scalatron = {
         // find out which game variant the server should host, since, in theory, the game may be configurable some day
         val gameName = argMap.get("-game").getOrElse("BotWar")
         val game = gameName match {
@@ -75,9 +73,10 @@ object ScalatronImpl
             verbose
         )
 
-
         // prepare (but do not start) the Scalatron API entry point
         ScalatronImpl(
+            actorSystem,
+            executionContextForUntrustedCode,
             game,
             scalatronInstallationDirectoryPath,
             usersBaseDirectoryPath,
@@ -86,10 +85,6 @@ object ScalatronImpl
             TournamentState.Empty,
             secureMode,
             verbose
-        )(
-            actorSystem,
-            gitServer,
-            executionContextForUntrustedCode
         )
     }
 
@@ -207,6 +202,8 @@ object ScalatronImpl
   * @param verbose if true, use verbose logging
   */
 case class ScalatronImpl(
+    actorSystem: ActorSystem,                           // the Akka actor system to use for trusted code, e.g. for compilation
+    executionContextForUntrustedCode: ExecutionContext, // the ExecutionContext to use for untrusted code, e.g. for bot control functions
     game: Game,
     installationDirectoryPath: String, // e.g. /Scalatron
     usersBaseDirectoryPath: String, // e.g. /Scalatron/users
@@ -215,13 +212,13 @@ case class ScalatronImpl(
     tournamentState: TournamentState, // receives and accumulates tournament round results
     secureMode: Boolean,
     verbose: Boolean
-)(
-    val actorSystem: ActorSystem,                           // the Akka actor system to use for trusted code, e.g. for compilation
-    val gitServer: GitServer,                               // the Git server for caching user repositories
-    val executionContextForUntrustedCode: ExecutionContext  // the ExecutionContext to use for untrusted code, e.g. for bot control functions
 ) extends Scalatron
 {
     var compileWorkerRouterOpt : Option[ActorRef] = None
+
+    val userCache = collection.mutable.Map.empty[String, ScalatronUser]
+
+    def computeUserDirectoryPath(name: String) = usersBaseDirectoryPath + "/" + name
 
 
     //----------------------------------------------------------------------------------------------
@@ -254,6 +251,10 @@ case class ScalatronImpl(
     def shutdown() {
         // stop accepting compile jobs
         compileWorkerRouterOpt = None
+
+        // release the cached user objects to make sure Git repos are released
+        userCache.values.foreach(_.release())
+        userCache.clear()
     }
 
 
@@ -336,7 +337,10 @@ case class ScalatronImpl(
                 if(usersDirectories.isEmpty) {
                     Iterable.empty
                 } else {
-                    usersDirectories.map(dir => ScalatronUser(dir.getName, this))
+                    usersDirectories.map(dir => {
+                        val userName = dir.getName
+                        userCache.getOrElseUpdate(userName, ScalatronUser(userName, this))
+                    })
                 }
             }
         } catch {
@@ -350,12 +354,9 @@ case class ScalatronImpl(
     def user(name: String) = {
         requireLegalUserName(name) // throws ScalatronException.IllegalUserName
 
-        // prepare user object; we'll use this to fetch the paths
-        val user = ScalatronUser(name, this)
-
-        val userDirectoryPath = user.userDirectoryPath
+        val userDirectoryPath = computeUserDirectoryPath(name)
         if(new File(userDirectoryPath).exists()) {
-            Some(user)
+            Some(userCache.getOrElseUpdate(name, ScalatronUser(name, this)))
         } else {
             None
         }
@@ -368,19 +369,20 @@ case class ScalatronImpl(
         // make sure that the 'users' directory exists
         ensureUserBaseDirectoryExists()
 
-        // prepare user object; we'll use this to fetch the paths
-        val user = ScalatronUser(name, this)
-
         // create the user base directory, if necessary
-        val userDirectoryPath = user.userDirectoryPath
+        val userDirectoryPath = computeUserDirectoryPath(name)
         val userDirectory = new File(userDirectoryPath)
         if(userDirectory.exists()) {
             System.err.println("refused to create already-existing user: '" + name + "'")
             throw ScalatronException.Exists(name)
-        } else {
-            userDirectory.mkdirs()
-            if(verbose) println("created user directory: " + userDirectoryPath)
         }
+
+        userDirectory.mkdirs()
+        if(verbose) println("created user directory: " + userDirectoryPath)
+
+        // the user should obviously not exist yet; however, if it does for some reason, we'll recycle the cached instance
+        assert(!userCache.contains(name))
+        val user = userCache.getOrElseUpdate(name, ScalatronUser(name, this))
 
         // create the user password config file; caller handles exceptions
         val userConfigFilePath = user.userConfigFilePath
@@ -399,25 +401,27 @@ case class ScalatronImpl(
             if(verbose) println("created user config file: " + userConfigFilePath)
         }
 
-        // create a /src directory if required
-        val sourceDirectoryPath = user.sourceDirectoryPath
-        val sourceDirectory = new File(sourceDirectoryPath)
-        if(!sourceDirectory.exists) {
-            if(!sourceDirectory.mkdirs()) {
-                System.err.println("error: failed to create user /src directory for '" + name + "'")
-                throw ScalatronException.CreationFailed(name + ": source directory", "could not create directory")
-            }
-            if(verbose) println("created user /src directory '" + sourceDirectoryPath + "'")
-        }
-
-        // create the initial source files in the workspace
-        user.updateSourceFiles(initialSourceFiles)
-        if(verbose) println("created initial source file for user '" + name)
-
         // create the initial version from the source files in the workspace
-        user.gitRepository.create()
-        user.createVersion("Auto-generated initial version")
-        if(verbose) println("created git repo and initial commit for user '" + name)
+        if(!user.isAdministrator) {
+            // create a /src directory if required
+            val sourceDirectoryPath = user.sourceDirectoryPath
+            val sourceDirectory = new File(sourceDirectoryPath)
+            if(!sourceDirectory.exists) {
+                if(!sourceDirectory.mkdirs()) {
+                    System.err.println("error: failed to create user /src directory for '" + name + "'")
+                    throw ScalatronException.CreationFailed(name + ": source directory", "could not create directory")
+                }
+                if(verbose) println("created user /src directory '" + sourceDirectoryPath + "'")
+            }
+
+            // create the initial source files in the workspace
+            user.updateSourceFiles(initialSourceFiles)
+            if(verbose) println("created initial source file for user '" + name)
+
+            user.gitRepository.create()
+            user.createVersion("Auto-generated initial version")
+            if(verbose) println("created git repo and initial commit for user '" + name)
+        }
 
         user
     }

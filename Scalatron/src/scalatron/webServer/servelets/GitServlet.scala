@@ -14,9 +14,8 @@ import org.eclipse.jgit.transport.{ReceiveCommand, PostReceiveHook, ReceivePack}
 import org.eclipse.jgit.transport.resolver.{RepositoryResolver, ReceivePackFactory}
 
 import scalatron.scalatron.api.Scalatron.User
-import scalatron.scalatron.impl.GitServer
 
-case class GitServlet(context: WebContext, gitServer: GitServer) extends org.eclipse.jgit.http.server.GitServlet {
+case class GitServlet(context: WebContext) extends org.eclipse.jgit.http.server.GitServlet {
 
     import context.scalatron
 
@@ -36,18 +35,18 @@ case class GitServlet(context: WebContext, gitServer: GitServer) extends org.ecl
         }
     }
 
-    def getUser(req: HttpServletRequest) = {
+    def getUser(req: HttpServletRequest) =
         Option(req.getHeader("authorization")) flatMap {
             authorization =>
                 val decoded = new String(DatatypeConverter.parseBase64Binary(authorization.split(" ")(1))).split(":", 2)
-                for (user <- scalatron.user(decoded(0)); if user.getPasswordOpt.exists(_ == decoded(1))) yield user
+                val userName = decoded(0)
+                val password = decoded(1)
+                for (user <- scalatron.user(userName); if user.getPasswordOpt.exists(_ == password)) yield user
         }
-    }
 
     class UserRepositoryResolver extends RepositoryResolver[HttpServletRequest] {
-
         override def open(req: HttpServletRequest, name: String) = {
-            getUser(req).flatMap(gitServer.get(_)).getOrElse(throw new RepositoryNotFoundException(name))
+            getUser(req).map(_.gitRepository).getOrElse(throw new RepositoryNotFoundException(name))
         }
     }
 

@@ -9,7 +9,6 @@ import scalatron.scalatron.api.Scalatron
 import com.sun.jersey.spi.container.servlet.ServletContainer
 import servelets.{AdminServlet, UserServlet, HomePageServlet, WebContext, GitServlet}
 import akka.actor.ActorSystem
-import scalatron.scalatron.impl.GitServer
 
 
 /** Entry point for the web server that serves the Scalatron RESTful API and the browser UI ("Scalatron IDE").
@@ -24,7 +23,7 @@ object WebServer {
         println("  -browser yes|no          open a browser showing Scalatron IDE (default: yes)")
     }
 
-    def apply(actorSystem: ActorSystem, scalatron: Scalatron, gitServer: GitServer, argMap: Map[String, String], verbose: Boolean) = {
+    def apply(actorSystem: ActorSystem, scalatron: Scalatron, argMap: Map[String, String], verbose: Boolean) = {
 
         val webServerPort = argMap.get("-port").map(_.toInt).getOrElse(8080)
         if (verbose) println("Browser UI will be served on port: " + webServerPort)
@@ -84,7 +83,7 @@ object WebServer {
         context.addServlet(holder(HomePageServlet(webCtx)), "/*")
         context.addServlet(holder(UserServlet(webCtx)), "/user/*")
         context.addServlet(holder(AdminServlet(webCtx)), "/admin/*")
-        context.addServlet(holder(GitServlet(webCtx, gitServer)), "/git/*")
+        context.addServlet(holder(GitServlet(webCtx)), "/git/*")
 
         val jerseyServlet: ServletContainer = new ServletContainer(new RestApplication(scalatron, verbose))
 
