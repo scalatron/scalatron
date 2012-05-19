@@ -70,8 +70,13 @@ API.init(function () {
                             Ext.get("editor").show();
                             Editor.init("editor");
 
-
                             setTimeout(function() {
+                                API.loadBotSource({
+                                    success: function(e) {
+                                        Editor.setContent(e.files[0].code)
+                                        EditorModel.contentModified = false
+                                    }
+                                });
                                 // re-validate the layout.
                                 Ext.getCmp("root").doLayout();
                             }, 10);
