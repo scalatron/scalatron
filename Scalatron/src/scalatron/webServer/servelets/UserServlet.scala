@@ -170,21 +170,11 @@ case class UserServlet(context: WebContext) extends BaseServlet {
                             return
                     }
 
-                // TODO: some day, handle the case where botSources contains multiple source files (tabs in Browser UI)
-                val botSourceCode =
-                    if(botSources.size == 1 && botSources.head.filename == UsersSourceFileName) {
-                        botSources.head.code
-                    } else {
-                        throw new IllegalArgumentException("cannot yet deal with multiple default source files")
-                    }
 
                 val result =
                 //loadRelTextFile("boteditor.html")
                     loadRelTextFile("webclient.html")
                     .replace("$BotName$", userName)
-                    .replace("$ErrorLog$", "") // TODO: obsolete
-                    .replace("$BotSourceCode$", botSourceCode)
-
 
                 serveString(result, request, response)
         }
