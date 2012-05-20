@@ -54,7 +54,7 @@ in the public domain. Feel free to use, copy, and improve them!
 
 ## Version History
 
-### Version 1.0.0.3 -- 2012-05-20
+### Version 1.0.1.0 -- 2012-05-20
 
 * Version control now uses Git. See "intermediate" path documentation in Scalatron Player Setup guide. Thanks Charles O'Farrell (@charleso)!
 * New Scalatron CLI command: `publish`, to publish an unpublished bot into the tournament loop.
