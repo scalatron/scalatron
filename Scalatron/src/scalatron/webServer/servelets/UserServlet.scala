@@ -6,7 +6,9 @@ import Scalatron.Constants._
 import javax.servlet.http.{Cookie, HttpServletResponse, HttpServletRequest}
 
 
-// user/<user-name>/task
+/** Servelet handling `user/<user-name>/task`.
+  * Note that this should really all be done via the REST API and Ajax on the client now.
+  */
 case class UserServlet(context: WebContext) extends BaseServlet {
     override def doPost(req: HttpServletRequest, resp: HttpServletResponse) {
         doGet(req, resp)
@@ -77,9 +79,6 @@ case class UserServlet(context: WebContext) extends BaseServlet {
 
             case "edit" =>
                 handleUserEdit(userName, request, response)
-
-            case "updateBot" =>
-                handleUserBotUpdate(userName, request, response)
 
             case _ =>
                 serveErrorPage("unknown user task: '" + task + "'", request, response)
@@ -172,77 +171,10 @@ case class UserServlet(context: WebContext) extends BaseServlet {
 
 
                 val result =
-                //loadRelTextFile("boteditor.html")
                     loadRelTextFile("webclient.html")
                     .replace("$BotName$", userName)
 
                 serveString(result, request, response)
-        }
-    }
-
-
-    // "/bots/name/updateBot" -> Ajax XML request by client
-    private def handleUserBotUpdate(userName: String, request: HttpServletRequest, response: HttpServletResponse) {
-        val botCode = request.getParameter("botCode")
-
-        // TODO: how do we prevent the user from clicking "Compile" lots of times and swamping the...
-        // TODO: ...compiler queue for a long time? Ideally: disable the "Compile" button in the browser until results were received.
-
-        // update the source code in the user's "/webuser/UserName/src" directory
-        val userOpt = context.scalatron.user(userName)
-        userOpt match {
-            case None =>
-                serveErrorPage("the user account for '" + userName + "' does not exist", "/admin/list", "return to administration main page", request, response)
-                System.err.println("error: the user account for '" + userName + "' does not exist")
-                return
-
-            case Some(user) =>
-                try {
-                    // TODO: some day, handle the case where botCode contains multiple source files (tabs in Browser UI)
-                    val sourceFile = SourceFile(UsersSourceFileName, botCode)
-                    val botSources = Iterable(sourceFile)
-                    user.updateSourceFiles(botSources)
-                } catch {
-                    case t: Throwable =>
-                        serveErrorPage("could not update source code for '" + userName + "'", request, response)
-                        System.err.println("error: failed to update source code for '" + userName + "': " + t)
-                        return
-                }
-
-                // compile the source code in the user's source directory into a .jar archive, e.g.
-                // from "/Scalatron/webuser/UserName/src/*" to "/Scalatron/webuser/UserName/bot/ScalatronBot.jar"
-                try {
-                    val buildResult = user.buildSources()
-
-                    // CBB: HTML formatting should happen on the client
-                    val errorHtml = "<pre>" +
-                        "compilation " + (if(buildResult.successful) "successful" else "failed") + "\n" +
-                        buildResult.errorCount + " errors, " + buildResult.warningCount + " warnings\n" +
-                        buildResult.messages.map(message =>
-                            "line " + message.lineAndColumn._1 + ", " +
-                                "col " + message.lineAndColumn._2 + ": " +
-                                (if(message.severity == 0) "warning" else "error") + ": " + // TODO: verify the severity codes :-(
-                                message.multiLineMessage).mkString("\n") +
-                        "</pre>"
-                    // val errorHtml = "<ul>" + errorLines.map(l => "<li>" + l + "</li>").mkString("\n") + "</ul>"
-                    serveString(errorHtml, request, response)
-                } catch {
-                    case t: Throwable =>
-                        serveErrorPage("could not update source code for '" + userName + "'", request, response)
-                        System.err.println("error: failed to update source code for '" + userName + "': " + t)
-                        return
-                }
-
-                // publish the compiled .jar file into the tournament directory, e.g.
-                // from "/Scalatron/webuser/UserName/bot/ScalatronBot.jar" to "/Scalatron/bots/UserName/ScalatronBot.jar"
-                try {
-                    user.publish()
-                } catch {
-                    case t: Throwable =>
-                        serveErrorPage("could not publish compiled plug-in for user '" + userName + "'", request, response)
-                        System.err.println("error: failed to publish compiled plug-in for user '" + userName + "': " + t)
-                        return
-                }
         }
     }
 }
