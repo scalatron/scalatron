@@ -418,7 +418,6 @@ case class ScalatronImpl(
             user.updateSourceFiles(initialSourceFiles)
             if(verbose) println("created initial source file for user '" + name)
 
-            user.gitRepository.create()
             user.createVersion("Auto-generated initial version")
             if(verbose) println("created git repo and initial commit for user '" + name)
         }

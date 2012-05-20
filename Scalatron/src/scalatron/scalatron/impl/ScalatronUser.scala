@@ -59,6 +59,10 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
     val gitBaseDirectoryPath = sourceDirectoryPath + "/" + gitDirectoryName
 
     val gitRepository = RepositoryCache.open(FileKey.exact(new File(gitBaseDirectoryPath), FS.DETECTED), false)
+    // Always ensure Git repository is initialised.
+    if (!gitRepository.getDirectory.exists()) {
+        gitRepository.create()
+    }
     val git = new Git(gitRepository)
 
 
