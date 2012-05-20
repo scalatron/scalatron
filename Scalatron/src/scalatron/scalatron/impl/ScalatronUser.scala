@@ -278,28 +278,6 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
         list
     }
 
-/*
-    def createBackupVersion(policy: VersionPolicy, label: String, updatedSourceFiles: SourceFileCollection) =
-        policy match {
-            case VersionPolicy.IfDifferent =>
-                if (git.status().call().isClean) {
-                    if(scalatron.verbose) println("VersionPolicy.IfDifferent, files are unchanged => not creating backup version")
-                    None
-                } else {
-                    if(scalatron.verbose) println("VersionPolicy.IfDifferent, files are different => creating backup version")
-                    Some(updateSourcesAndCreateVersion(label, sourceFiles))    // backup old files as a version
-                }
-            case VersionPolicy.Always =>
-                if(scalatron.verbose) println("VersionPolicy.Always => creating backup version")
-                Some(updateSourcesAndCreateVersion(label, sourceFiles))       // backup old files as a version
-
-            case VersionPolicy.Never =>
-                if(scalatron.verbose) println("VersionPolicy.Never => not creating backup version")
-                None // OK - nothing to back up
-        }
-*/
-
-
 
 
 
@@ -313,15 +291,20 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
         val backupJarFile = new File(backupJarFilePath)
         if( backupJarFile.exists ) {
             if( scalatron.verbose ) println("      deleting backup .jar file: " + backupJarFilePath)
-            if( !backupJarFile.delete() ) throw new IllegalStateException("failed to delete backup .jar file at: " + backupJarFilePath)
+            if( !backupJarFile.delete() ) {
+                System.err.println("failed to delete backup .jar file at: %s" format backupJarFilePath)
+                throw new IllegalStateException("failed to delete backup .jar file at: %s" format backupJarFilePath)
+            }
         }
 
         // then move away the current .jar file
         val publishedJarFile = new File(publishedJarFilePath)
         if( publishedJarFile.exists ) {
             if( scalatron.verbose ) println("      backing up current .jar file: " + publishedJarFilePath + " => " + backupJarFilePath)
-            if( !publishedJarFile.renameTo(backupJarFile) )
-                throw new IllegalStateException("failed to rename .jar file to backup: " + backupJarFilePath)
+            if( !publishedJarFile.renameTo(backupJarFile) ) {
+                System.err.println("failed to rename .jar file to backup: %s" format backupJarFilePath)
+                throw new IllegalStateException("failed to rename .jar file to backup: %s" format backupJarFilePath)
+            }
         }
 
 
@@ -333,7 +316,8 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
             val userPluginDirectory = new File(userPluginDirectoryPath)
             if( !userPluginDirectory.exists() ) {
                 if( !userPluginDirectory.mkdirs() ) {
-                    throw new IllegalStateException("failed to create user plug-in directory: " + userPluginDirectoryPath)
+                    System.err.println("failed to create user plug-in directory: %s" format userPluginDirectoryPath)
+                    throw new IllegalStateException("failed to create user plug-in directory: %s" format userPluginDirectoryPath)
                 }
                 if( scalatron.verbose ) println("created user plug-in directory for '" + name + "' at: " + userPluginDirectoryPath)
             }
@@ -341,10 +325,12 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
                 copyFile(localJarFilePath, publishedJarFilePath)
             } catch {
                 case t: Throwable =>
-                    throw new IllegalStateException("failed to copy .jar file '" + localJarFilePath + "' to '" + publishedJarFilePath + "': " + t)
+                    System.err.println("failed to copy .jar file '%s' to '%s': %s" format(localJarFilePath, publishedJarFilePath, t.toString))
+                    throw new IllegalStateException("failed to copy .jar file '%s' to '%s': %s" format(localJarFilePath, publishedJarFilePath, t.toString))
             }
         } else {
-            throw new IllegalStateException(".jar file intended for publication does not exist: " + localJarFilePath)
+            System.err.println(".jar file intended for publication does not exist: %s" format localJarFilePath)
+            throw new IllegalStateException(".jar file intended for publication does not exist: %s" format localJarFilePath)
         }
     }
 
