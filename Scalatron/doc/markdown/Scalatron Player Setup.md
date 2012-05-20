@@ -45,11 +45,13 @@ browser-based development environment that is provided by the Scalatron server.
 
 ## The "Intermediate" Path
 
-The "intermediate" path is intended for programmers who wish to avoid having to setup
-everything for the "serious" path, but still wish to use their IDE locally.
+The "intermediate" path is intended for programmers who wish to use their trusted editor or IDE on
+their local computer but want to minimize the setup overhead required for compiling and publishing
+(namely, installing Scala and using a network share for publication).
 
-On this path, players leverage the power of the IDE to write their bots but then debug
-and publish from the web browser. Changes are synchronised with the server by using Git.
+On this path, players use their editor or IDE of choice to write their bots, but then debug and
+publish from the web browser. Changes are synchronised with the server by using Git, a distributed
+version control system.
 
 
 
@@ -78,6 +80,9 @@ command line, many people prefer to use an Integrated Development Environment (I
 supports Scala, such as Eclipse or IntelliJ IDEA. Unfortunately, the setup process is pretty
 involved and may take up to 30 minutes. Ideally someone in your group should already familiar
 with the development environment you intend to use.
+
+
+
 
 
 
@@ -115,48 +120,170 @@ steps:
 
 
 
-# The Intermediate Path: Being a Git
+# The Intermediate Path: Using Your Editor Of Choice, Plus Git Version Control
 
-## Set up Scalatron server
+## Overview
 
-Ensure that the Scalatron server is up-and-running from the casual steps above.
+The intermediate path uses *Git*, a distributed version control system, to exchange locally edited
+files with the Scalatron server and to trigger automatic compilation and publication. The Scalatron server
+runs an embedded version of Git and maintains a collection of Git repositories, one per user, to hold the
+source code version histories.
+You can retrieve these sources files and upload new versions using a Git client installed on your local computer.
+Many popular development environments have built-in or installable support for Git, so these operations
+are likely to be available directly within your IDE.
 
-## Install Git
+In the "intermediate" path, editing and publication work roughly as follows:
 
-Depending on your operating system ensure that [Git](http://git-scm.com/download) is installed.
+1. Set up the Git version control system on your computer to interact with the Scalatron Git server
+2. Clone the code in the central Git repository managed by Scalatron to your local computer
+3. Edit the source code of your bots on your local machine, using your editor of choice
+4. When you want to test your code, push your changes back to the Scalatron server
+5. Use the browser-based Scalatron IDE (see the "casual" path description) to debug and publish your bot
+
+Each of these steps is described in more detail in the following sections.
+
+
+## Set Up The Scalatron Server
+
+The Scalatron server provides Git versioning services and a web server exposing the browser-based development environment.
+Install the Scalatron server and verify that it is up-and-running by following the instructions laid out for the
+"casual" path in the preceding chapter.
+
+
+## Install Git On Your Computer
+
+You will be exchanging source code files with the Scalatron server by using a version control system called *Git*.
+The Scalatron server runs an embedded version of Git. To interact with it, you will need a local Git client.
+If you do not already have Git installed, go to [http://git-scm.com/download](http://git-scm.com/download),
+download the Git version appropriate for your operating system and follow the installation instructions.
+
+
+## Find Out The Link To Your Central Git Repository
+
+Access to the central Git repositories managed by the Scalatron server is provided through the HTTP-based API of Git,
+which is exposed by Scalatron's embedded web server in the same way as Scalatron's own RESTful web API. To access
+it, you need to know the hostname or IP address of the Scalatron server; the port number at which the web server
+listens for requests; the resource name on the server under which the API is accessible; and your user name (and
+optionally your password).
+
+The structure of the URL is as follows:
+
+    http://{user}@{hostname}:{port}/git/{user}
+
+You can find out the hostname and port number in a variety of ways:
+
+* When Scalatron starts up, it prints the hostname and port number it thinks it is reachable on to the console
+* Scalatron automatically launches a browser to its welcome page at start up; the address displayed for that browser page contains the hostname and port number
+* If you are running Scalatron locally, the hostname `localhost` should work; the default port number used by Scalatron is `8080`
+
+The user name will be the name of the user account that you or an organizer created for you (see the associated
+steps in the instructions for the "casual" path).
+
+**Example**: if your hostname is `localhost`, your port number is `8080` and your user name is `Daniel`, the URL
+to access Git will be:
+
+    http://Daniel@localhost:8080/git/Daniel
+
+
 
 ## Clone your Bot
 
-From the command line clone your personal bot locally, where 'USER' is your username.
+To begin working on your source code, "clone" the central Git repository that Scalatron maintains for you to a
+directory on your local computer. This will transfer a copy of the files currently present in the central repository
+to local working directory so that you can edit them. Initially, this will be a single source file called `Bot.scala`
+containing a minimal bot implementation that Scalatron automatically generated for you.
 
-    git clone http://USER@HOST:8080/git/USER
+To clone your personal bot locally, invoke the "clone" command on your local Git client installation
+from the command line, using the URL you found out above:
+
+    git clone http://{user}@{hostname}:{port}/git/{user}
 
 Or for people who don't want to keep typing their password:
 
-    git clone http://USER:PASSWORD@HOST:8080/git/USER
+    git clone http://{user}:{password}@{hostname}:{port}/git/{user}
 
-## Set up a Development Environment
+**Example**: if your hostname is `localhost`, your port number is `8080` and your user name and password are
+`Daniel` and `abc123`, the command you would type would be:
 
-See below, but ignore "Configure the .jar Artifact" as this is not required;
-the project can be a raw Scala project, with no extra dependencies.
+    git clone http://Daniel:abc123@localhost:8080/git/Daniel
+
+
+
+## Set Up Your Development Environment
+
+You can use any development environment or editor you want, since the only interaction with Scalatron is via
+the Git client. For an example, check out the setup of IntelliJ IDEA described in the "serious" path setup below
+(note that you can ignore the chapter "Configure the .jar Artifact", as this is not required). The project can be a
+raw Scala project, with no extra dependencies.
+
 The root of the project should be the directory of your newly cloned repository.
 
-## Synchronising your changes
 
-From the command push your changes back to Scalatron:
+## Synchronising Your Changes
+
+After you've edited the source code of your bot, you'll want to upload it to the Scalatron server to build,
+test and publish it. To do that, you will again use your local Git client.
+
+From the command line, execute the following commands to push your changes back to Scalatron:
 
     git add .
     git commit -m "Some change I just made"
     git push
 
-This may also be possible from within your IDE, depending on the installed plugins.
+The `add` command scans your local directory for changes and notes and modifications you made.
+The `commit` command wraps all of the detected changes into a "commit", which is a labeled package of changes.
+The `push` command sends these changes to the server to update the remote repository. Note that this final step
+triggers a Scala compiler run on the server, which may initially take a bit of time.
 
-Refresh the browser and follow instructions above for building and deploying your bot.
-You may need to do this multiple times as you make changes wish to test the results.
+Performing these operations will often also be possible from within your IDE, depending on the installed plugins.
+Please refer to your IDE or editor documentation to find out how this works in your particular environment.
 
-If you make changes in the browser and 'save' you can see those changes locally:
+
+## Working With Your Bot
+
+Whenever you `push` your changes to the central Git repository managed by Scalatron, the Scalatron server will
+not only update the version history but will automatically build your bot for you, reporting back any compiler
+errors that may have occurred. When the Scala compiler starts up for the first time, it has to scan the entire
+Scala library, which may take a while. The `push` command waits for a response from the server, so it may appear
+to hang while the compiler works through your code. This should be slow only the first time, though.
+
+Once you pushed your bot code and Git reports back that the build was successful, you will have an *unpublished*
+bot version in your workspace on the server. You can now either start a private game using the unpublished bot (to
+test it out) or publish it into the tournament loop. Both tasks can be performed via the browser-based Scalatron IDE.
+
+### Testing Your Bot In A Private Game
+
+To test and debug your bot, you can launch it into a private game instance - a "sandbox" game - managed for you
+by the Scalatron server. To do that, refresh your browser to make it display the source version you just pushed.
+Then click **Run in Sandbox** to start a private game and display it in the browser-based debugger.
+You may need to do this multiple times as you make changes and wish to test the results.
+
+### Publishing Your Bot Into The Tournament Loop
+
+Once you are happy with your bot, you can follows the same steps as for testing (refresh the browser if you just
+pushed a new version) and then click **Publish Into Tournament**.
+
+
+### Using the Scalatron Command Line Interface
+
+Although describing the details is beyond the scope of this chapter, you can also use the Scalatron CLI (Command
+Line Interface) to work with the bot version you uploaded and built via Git. See the documentation for the
+Scalatron CLI for details.
+
+**Example**: to publish an unpublished bot version (such as one that was automatically built via `git push`),
+run the following command from the command line:
+
+    java -jar ScalatronCLI.jar -user Daniel -password abc123 -cmd publish
+
+
+
+## Accessing Changes Made in the Browser
+
+If you make changes in the browser and used **Save** to commit them into the version history, you can replicate
+those changes locally by using the Git command `pull`:
 
     git pull
+
 
 
 
