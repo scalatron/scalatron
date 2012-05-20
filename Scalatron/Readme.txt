@@ -54,17 +54,20 @@ in the public domain. Feel free to use, copy, and improve them!
 
 ## Version History
 
-### Version 1.0.0.3 -- 2012-05-15
+### Version 1.0.0.3 -- 2012-05-20
 
+* Version control now uses Git. See "intermediate" path documentation in Scalatron Player Setup guide. Thanks Charles O'Farrell (@charleso)!
+* New Scalatron CLI command: `publish`, to publish an unpublished bot into the tournament loop.
+* Fixed issue #30: browser UI now uses Scalatron REST API to load initial source file.
 * Now state property: `collision`, reports when a move failed due to a collision; Protocol doc has details. Thanks U.G. Dietrich!
-* Minor fix to how class paths are reported on Windows (eliminated leading slash from `/C:/Docs...`.
+* Minor fix to how class paths are reported on Windows (eliminated leading slash from `/C:/Docs...`).
 
 
 ### Version 1.0.0.2 -- 2012-05-10
 
 * there is now an experimental "secure mode" for Scalatron, which can be enabled with the command line argument
   "-secure yes". This has the following effects:
-   (a) Plug-ins run in a sandbox and can no longer access the file system, network, etc. on the server
+   (a) Plug-ins run in a sandbox and can no longer access the file system, network, etc. on the server.
        Note that plug-ins can also no longer access the file system for logging purposes.
    (b) Each plug-in can only have a fixed maximum number of slave entities in the game at any one time;
        the default value is 20, and can be adjusted with the argument "-maxslaves int"
