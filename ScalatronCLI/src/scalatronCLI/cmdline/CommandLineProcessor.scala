@@ -5,8 +5,6 @@
 package scalatronCLI.cmdline
 
 import scalatronRemote.api.ScalatronRemote
-import java.io.{FileWriter, File}
-import io.Source
 import scalatronRemote.Version
 import java.text.DateFormat
 import java.util.Date
@@ -69,6 +67,8 @@ object CommandLineProcessor {
             println("")
             println("   build                       builds the source files currently in the user's server workspace; as user only")
             println("")
+            println("   publish                     publishes the most recently built bot version into the tournament loop; as user only")
+            println("")
             println("   versions                    lists all versions available in the user workspace; as user only")
             println("")
             println("   createVersion               creates a new version in the user's server workspace; as user only")
@@ -94,6 +94,7 @@ object CommandLineProcessor {
             println(" java -jar ScalatronCLI.jar -user Frankie -password a -cmd sources -targetDir /tempsrc")
             println(" java -jar ScalatronCLI.jar -user Frankie -password a -cmd updateSources -sourceDir /tempsrc")
             println(" java -jar ScalatronCLI.jar -user Frankie -password a -cmd build")
+            println(" java -jar ScalatronCLI.jar -user Frankie -password a -cmd publish")
             println(" java -jar ScalatronCLI.jar -user Frankie -password a -cmd versions")
             println(" java -jar ScalatronCLI.jar -user Frankie -password a -cmd createVersion -sourceDir /tempsrc -label \"updated\"")
             println(" java -jar ScalatronCLI.jar -user Frankie -password a -cmd restoreVersion -targetDir /tempsrc -id a1ae813f274b4a33bc61535e0e0de5345bb08d42")
@@ -129,6 +130,7 @@ object CommandLineProcessor {
                         case "sources" => cmd_sources(connectionConfig, argMap)
                         case "updateSources" => cmd_updateSources(connectionConfig, argMap)
                         case "build" => cmd_buildSources(connectionConfig, argMap)
+                        case "publish" => cmd_publish(connectionConfig, argMap)
                         case "versions" => cmd_versions(connectionConfig, argMap)
                         case "createVersion" => cmd_createVersion(connectionConfig, argMap)
                         case "restoreVersion" => cmd_restoreVersion(connectionConfig, argMap)
@@ -411,6 +413,19 @@ object CommandLineProcessor {
                         System.exit(-1)
                     }
                 }
+            }
+        )
+    }
+
+
+    /** -command publish
+      */
+    def cmd_publish(connectionConfig: ConnectionConfig, argMap: Map[String, String]) {
+        doAsUser(
+            connectionConfig,
+            argMap,
+            (scalatron: ScalatronRemote, loggedonUser: ScalatronRemote.User, users: ScalatronRemote.UserList) => {
+                handleScalatronExceptionsFor { loggedonUser.publish() }
             }
         )
     }

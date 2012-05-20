@@ -81,6 +81,8 @@ where <command> may require addition parameters:
 
     build                       builds the source files currently in the user's server workspace; as user only
 
+    publish                     publishes the most recently built bot version into the tournament loop; as user only
+
     versions                    lists all versions available in the user workspace; as user only
 
     createVersion               creates a new version in the user's server workspace; as user only
@@ -113,6 +115,8 @@ where <command> may require addition parameters:
     java -jar ScalatronCLI.jar -user Frankie -password a -cmd updateSources -sourceDir /tempsrc
 
     java -jar ScalatronCLI.jar -user Frankie -password a -cmd build
+
+    java -jar ScalatronCLI.jar -user Frankie -password a -cmd publish
 
     java -jar ScalatronCLI.jar -user Frankie -password a -cmd versions
 
