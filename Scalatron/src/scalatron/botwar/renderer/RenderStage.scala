@@ -1,8 +1,8 @@
 package scalatron.botwar.renderer
 
-import scalatron.scalatron.impl.TournamentState
-import scalatron.botwar.{PermanentConfig, State}
-import java.awt.{Font, Color, Graphics2D}
+import scalatron.botwar.State
+import java.awt.{Color, Graphics2D}
+import scalatron.core.{PermanentConfig, TournamentState}
 
 
 case class RenderSourceAndTarget(

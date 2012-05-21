@@ -1,14 +1,16 @@
+package scalatron.core
+
 /** This material is intended as a community resource and is licensed under the
   * Creative Commons Attribution 3.0 Unported License. Feel free to use, modify and share it.
   */
-package scalatron.scalatron.impl
 
-import scalatron.scalatron.impl.TournamentRoundResult.AggregateResult
 import scalatron.botwar.Simulation
 import TournamentState.LeaderBoard
+import scalatron.core.TournamentRoundResult.AggregateResult
 
 
-object TournamentState {
+object TournamentState
+{
     val Empty = new TournamentState
 
     /** A Leaderboard is an array holding the winners across the most recent 1,5,20 and all rounds.
@@ -18,14 +20,15 @@ object TournamentState {
 }
 
 
-class TournamentState {
+class TournamentState
+{
     var roundsPlayed = 0
     var results = List.empty[TournamentRoundResult]
 
     /** we maintain a reference to the most recently computed tournament state.
       * This can be streamed to a display client to render the tournament remotely.
       */
-    private var mostRecentStateOpt : Option[Simulation.UntypedState] = None
+    private var mostRecentStateOpt: Option[Simulation.UntypedState] = None
     def updateMostRecentState(mostRecentState: Simulation.UntypedState) { mostRecentStateOpt = Some(mostRecentState) }
     def getMostRecentStateOpt = mostRecentStateOpt
 

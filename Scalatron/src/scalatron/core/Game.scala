@@ -1,19 +1,23 @@
-package scalatron.scalatron.impl
-
-import akka.dispatch.ExecutionContext
-import akka.actor.ActorSystem
-import scalatron.botwar.{Config, PermanentConfig}
-import scalatron.botwar.BotWarSimulation.SimState
-
 /** This material is intended as a community resource and is licensed under the
   * Creative Commons Attribution 3.0 Unported License. Feel free to use, modify and share it.
   */
-/** Base trait for game implementations that run within a Scalatron server (e.g. BotWar). */
-trait Game {
-    def name: String // e.g. "BotWar"
 
-    /** The parameters of this game that are relevant for loading plug-ins (e.g. game name). */
-    def pluginLoadSpec: PluginCollection.LoadSpec
+package scalatron.core
+
+import akka.dispatch.ExecutionContext
+import akka.actor.ActorSystem
+import scalatron.botwar.Config
+import scalatron.botwar.BotWarSimulation.SimState
+
+/** Base trait for game implementations that run within a Scalatron server (e.g. BotWar). */
+trait Game
+{
+    /** @return the name of this game; TODO: like player names, should be derived from plug-in name, e.g. "BotWar" */
+    def name: String
+
+    /** @return the package path to be used for constructing fully qualified class names for bot plug-ins,
+      *         e.g. "scalatron.botwar.botPlugin" */
+    def gameSpecificPackagePath: String
 
     /** Dump the game-specific command line configuration options via println. */
     def printArgList()
@@ -67,11 +71,11 @@ trait Game {
 
 
     def startHeadless(
-        plugins: Iterable[Plugin.External],
+        plugins: Iterable[Plugin.FromJarFile],
         permanentConfig: PermanentConfig,
         gameConfig: Config
     )(
         executionContextForUntrustedCode: ExecutionContext
-    ) : SimState
+    ): SimState
 
 }

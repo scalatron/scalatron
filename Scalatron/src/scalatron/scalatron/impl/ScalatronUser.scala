@@ -5,7 +5,7 @@ package scalatron.scalatron.impl
   */
 
 
-import scalatron.botwar.{Config, PermanentConfig}
+import scalatron.botwar.{Config}
 import java.io._
 import scala.collection.JavaConverters._
 
@@ -31,6 +31,7 @@ import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.RepositoryCache
 import org.eclipse.jgit.lib.RepositoryCache.FileKey
 import org.eclipse.jgit.util.FS
+import scalatron.core.{PermanentConfig, Plugin}
 
 
 case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatron.User {
@@ -50,11 +51,11 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
     val outputDirectoryPath = userDirectoryPath + "/" + UsersOutputDirectoryName
 
     val localJarDirectoryPath = userDirectoryPath + "/" + UsersBotDirectoryName
-    val localJarFilePath = localJarDirectoryPath + "/" + JarFilename
+    val localJarFilePath = localJarDirectoryPath + "/" + Plugin.JarFilename
 
     val userPluginDirectoryPath = scalatron.pluginBaseDirectoryPath + "/" + name
-    val publishedJarFilePath = userPluginDirectoryPath + "/" + JarFilename
-    val backupJarFilePath = userPluginDirectoryPath + "/" + BackupJarFilename
+    val publishedJarFilePath = userPluginDirectoryPath + "/" + Plugin.JarFilename
+    val backupJarFilePath = userPluginDirectoryPath + "/" + Plugin.BackupJarFilename
 
     val gitBaseDirectoryPath = sourceDirectoryPath + "/" + gitDirectoryName
 
@@ -143,7 +144,7 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
           * The plug-in loader knows about this hack, too, and tries to load a fully qualified class name based on
           * the user name first. Case is significant.
           */
-        val gameSpecificPackagePath = scalatron.game.pluginLoadSpec.gameSpecificPackagePath
+        val gameSpecificPackagePath = scalatron.game.gameSpecificPackagePath
         val packagePath = gameSpecificPackagePath + "." + name
         val packageStatementWithNewline = "package " + packagePath + "\n"
         val patchedSourceFiles = transientSourceFiles.map(sf => {
@@ -346,22 +347,21 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
     def createSandbox(argMap: Map[String, String]) = {
         // determine the location of the user's local bot
         val localJarFile = new File(localJarFilePath)
-        val plugins: Iterable[Plugin.External] =
+        val plugins: Iterable[Plugin.FromJarFile] =
             if( localJarFile.exists() ) {
                 // attempt to load the plug-in
-                val loadSpec = scalatron.game.pluginLoadSpec
                 val eitherFactoryOrException =
                     Plugin.loadFrom(
                         localJarFile,
                         name,
-                        loadSpec.gameSpecificPackagePath,
-                        loadSpec.factoryClassName,
+                        scalatron.game.gameSpecificPackagePath,
+                        Plugin.ControlFunctionFactoryClassName,
                         scalatron.verbose)
 
                 eitherFactoryOrException match {
                     case Left(controlFunctionFactory) =>
                         val fileTime = localJarFile.lastModified()
-                        val externalPlugin = Plugin.External(localJarDirectoryPath, localJarFilePath, fileTime, name, controlFunctionFactory)
+                        val externalPlugin = Plugin.FromJarFile(localJarDirectoryPath, localJarFilePath, fileTime, name, controlFunctionFactory)
                         println("plugin loaded for sandbox for user '" + name + "': " + externalPlugin)
                         Iterable(externalPlugin)
                     case Right(exception) =>

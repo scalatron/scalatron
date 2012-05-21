@@ -1,4 +1,4 @@
-package scalatron.scalatron.impl
+package scalatron.core
 
 /** This material is intended as a community resource and is licensed under the
   * Creative Commons Attribution 3.0 Unported License. Feel free to use, modify and share it.
@@ -7,12 +7,13 @@ package scalatron.scalatron.impl
 case class TournamentRoundResult(map: Map[String, Int])
 
 
-object TournamentRoundResult {
+object TournamentRoundResult
+{
     /** Merges two game result instances into a new, aggregated instance. */
     def merge(a: AggregateResult, b: TournamentRoundResult) = {
         /** Merges two result maps by adding up the scores for all matching player names. */
         def mergeMaps(mapA: Map[String, (Int, Int)], mapB: Map[String, Int]) =
-            ( mapA /: mapB )((sum, add) => {
+            (mapA /: mapB)((sum, add) => {
                 val name = add._1
                 val additionalScore = add._2
                 val existingTotalScoreAndCount = sum.get(name).getOrElse((0, 0))
@@ -25,32 +26,9 @@ object TournamentRoundResult {
     }
 
 
-    /*
-        // TODO: this code contains a bug: the round counter needs to be kept FOR EACH PLAYER!
-
-        /** Merges two result maps by adding up the scores for all matching player names. */
-        private def mergeMaps(mapA: Map[String, Int], mapB: Map[String, Int]) =
-            ( mapA /: mapB )((sum, add) => {
-                val name = add._1
-                val additionalScore = add._2
-                val existingScore = sum.get(name).getOrElse(0)
-                sum.updated(name, existingScore + additionalScore)
-            })
-
-        case class AggregateResult(map: Map[String, Int], runCount: Int)
-
-        object AggregateResult {
-            val Zero = AggregateResult(Map.empty[String, Int], 0)
-
-            /** Merges two game result instances into a new, aggregated instance. */
-            def merge(a: AggregateResult, b: AggregateResult) =
-                AggregateResult(mergeMaps(a.map, b.map), a.runCount + b.runCount)
-        }
-    */
-
-
     /** Map: from name to (totalScore,roundsParticipated). */
-    case class AggregateResult(map: Map[String, (Int, Int)], totalRounds: Int) {
+    case class AggregateResult(map: Map[String, (Int, Int)], totalRounds: Int)
+    {
         /** Returns a map containing the name and average score of each player. */
         def average: Map[String, Int] = map.map(entry => (entry._1, entry._2._1 / entry._2._2))
 
@@ -63,14 +41,15 @@ object TournamentRoundResult {
     }
 
 
-    object AggregateResult {
+    object AggregateResult
+    {
         val Zero = AggregateResult(Map.empty[String, (Int, Int)], 0)
 
         /** Merges two game result instances into a new, aggregated instance. */
         def merge(a: AggregateResult, b: AggregateResult) = {
             /** Merges two result maps by adding up the scores for all matching player names. */
             def mergeMaps(mapA: Map[String, (Int, Int)], mapB: Map[String, (Int, Int)]) =
-                ( mapA /: mapB )((sum, add) => {
+                (mapA /: mapB)((sum, add) => {
                     val name = add._1
                     val additionalScoreAndCount = add._2
                     val existingTotalScoreAndCount = sum.get(name).getOrElse((0, 0))

@@ -5,7 +5,7 @@ package scalatron.botwar
 
 import scala.util.Random
 import scalatron.botwar.Decoration.{Bonus, Explosion, Text, Bonk, Annihilation}
-import scalatron.scalatron.impl.TournamentRoundResult
+import scalatron.core.TournamentRoundResult
 
 
 case object AugmentedDynamics extends ((State,Random,Iterable[(Entity.Id,Iterable[Command])]) => Either[State,TournamentRoundResult])
