@@ -4,12 +4,12 @@
 package scalatron.botwar
 
 import scala.util.Random
+import scalatron.scalatron.impl.TournamentRoundResult
 import akka.util.duration._
 import akka.dispatch._
 import java.util.concurrent.TimeoutException
 import akka.actor.ActorSystem
 import akka.util.Duration
-import scalatron.core.TournamentRoundResult
 
 
 /** Game dynamics. Function that, when applied to a game state, returns either a successor

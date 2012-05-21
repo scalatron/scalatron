@@ -4,8 +4,8 @@
 package scalatron.botwar
 
 import State.Time
+import scalatron.scalatron.impl.Plugin
 import akka.dispatch.ExecutionContext
-import scalatron.core.Plugin
 
 
 /** Game state storing the current (game) time, the board parameters, the actual board (i.e.

@@ -8,6 +8,7 @@ import java.awt.Color
 
 import RenderUtil.makeTransparent
 import scalatron.botwar._
+import scalatron.scalatron.impl.TournamentState
 
 object GameStateRenderer {
     def drawGameState(state: State, drawBotHorizon: Boolean)(implicit ctx: RenderContext) {

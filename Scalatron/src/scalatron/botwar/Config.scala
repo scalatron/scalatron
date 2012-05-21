@@ -3,7 +3,7 @@
   */
 package scalatron.botwar
 
-import scalatron.core.{PermanentConfig, Plugin}
+import scalatron.scalatron.impl.Plugin
 
 
 /** Configuration container for a specific game rounds. Incorporates the permanent configuration
@@ -17,7 +17,7 @@ case class Config(
 
 
 object Config {
-    def create(permanentConfig: PermanentConfig, roundIndex: Int, plugins: Iterable[Plugin.FromJarFile], argMap: Map[String,String]) = {
+    def create(permanentConfig: PermanentConfig, roundIndex: Int, plugins: Iterable[Plugin.External], argMap: Map[String,String]) = {
         val pluginCount = plugins.size
 
         // compute the default arena size

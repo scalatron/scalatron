@@ -6,7 +6,7 @@ package scalatron.botwar.renderer
 
 
 import java.awt.{Font, Color}
-import scalatron.core.TournamentState
+import scalatron.scalatron.impl.TournamentState
 
 
 object LeaderboardPanelRenderer

@@ -5,11 +5,12 @@ package scalatron.botwar
 
 import State.Time
 import scala.util.Random
+import scalatron.scalatron.impl.Plugin
 import BoardParams.Perimeter
 import akka.dispatch.{Await, Future, ExecutionContext}
+import akka.util.Duration
 import akka.util.duration._
 import java.util.concurrent.TimeoutException
-import scalatron.core.Plugin
 
 
 /** Contains the temporally variable aspects of the game state.
@@ -179,12 +180,17 @@ object Board
                 val controlFunction = plugin.controlFunctionFactory.apply()
 
                 // invoke Welcome()
-                controlFunction(
-                    Protocol.ServerOpcode.Welcome + "(" +
-                        "name=" + plugin.name + "," +
-                        "apocalypse=" + stepsPerRound + "," +
-                        "round=" + roundIndex +
-                        ")")
+                plugin match {
+                    case external: Plugin.External =>
+                        controlFunction(
+                            Protocol.ServerOpcode.Welcome + "(" +
+                                "name=" + external.name + "," +
+                                "path=" + external.dirPath + "," +
+                                "apocalypse=" + stepsPerRound + "," +
+                                "round=" + roundIndex +
+                                ")")
+                    case internal: Plugin.Internal => // OK
+                }
 
                 Some((plugin, controlFunction))
             } catch {

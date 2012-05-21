@@ -4,7 +4,7 @@
 package scalatron.botwar
 
 import scala.util.Random
-import scalatron.core.{Plugin, TournamentRoundResult}
+import scalatron.scalatron.impl.{Plugin, TournamentRoundResult}
 import akka.dispatch.ExecutionContext
 import akka.actor.ActorSystem
 
@@ -27,7 +27,7 @@ object BotWarSimulation
 
 
     case class Factory(config: Config) extends Simulation.Factory[SimState,TournamentRoundResult] {
-        def createInitialState(randomSeed: Int, plugins: Iterable[Plugin.FromJarFile])(executionContextForUntrustedCode: ExecutionContext) = {
+        def createInitialState(randomSeed: Int, plugins: Iterable[Plugin.External])(executionContextForUntrustedCode: ExecutionContext) = {
             val state = State.createInitial(config, randomSeed, plugins)(executionContextForUntrustedCode)
             SimState(state)
         }
