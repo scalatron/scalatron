@@ -54,6 +54,11 @@ in the public domain. Feel free to use, copy, and improve them!
 
 ## Version History
 
+### Version 1.0.1.1 -- 2012-05-21
+
+* Minor fix to facilitate migration of existing user accounts (created with 1.0.0.2 or earlier) to git-based versioning.
+
+
 ### Version 1.0.1.0 -- 2012-05-20
 
 * Version control now uses Git. See "intermediate" path documentation in Scalatron Player Setup guide. Thanks Charles O'Farrell (@charleso)!
