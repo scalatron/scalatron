@@ -1,8 +1,8 @@
 package scalatron.webServer.servelets
 
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
-import scalatron.core.Scalatron
 import scalatron.core.Scalatron.Constants._
+import scalatron.scalatron.impl.SourceFileCollection
 
 
 case class AdminServlet(context: WebContext) extends BaseServlet {
@@ -119,7 +119,7 @@ case class AdminServlet(context: WebContext) extends BaseServlet {
 
         // create the user password config file
         try {
-            context.scalatron.createUser(userName, password1, Scalatron.SourceFileCollection.initial(userName))
+            context.scalatron.createUser(userName, password1, SourceFileCollection.initial(userName))
         } catch {
             case t: Throwable =>
                 serveErrorPage("unable to write user configuration file for '" + userName + "'", "/admin/list", "return to administration main page", request, response)

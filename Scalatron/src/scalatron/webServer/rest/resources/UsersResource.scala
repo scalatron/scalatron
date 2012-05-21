@@ -6,6 +6,7 @@ import scalatron.core.Scalatron
 import scalatron.core.Scalatron.ScalatronException
 import org.eclipse.jetty.http.HttpStatus
 import java.io.IOError
+import scalatron.scalatron.impl.SourceFileCollection
 
 
 @Produces(Array(MediaType.APPLICATION_JSON))
@@ -44,7 +45,7 @@ class UsersResource extends Resource {
             Response.status(CustomStatusType(HttpStatus.UNAUTHORIZED_401, "must be logged on as '" + Scalatron.Constants.AdminUserName + "'")).build()
         } else {
             try {
-                val user = scalatron.createUser(param.getName, param.getPassword, Scalatron.SourceFileCollection.initial(param.getName))
+                val user = scalatron.createUser(param.getName, param.getPassword, SourceFileCollection.initial(param.getName))
 
                 /*
                {

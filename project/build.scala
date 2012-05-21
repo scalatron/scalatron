@@ -29,6 +29,26 @@ object build extends Build {
         scalaSource in Test <<= baseDirectory / "test"
     )
 
+    lazy val core = Project("ScalatronCore", file("ScalatronCore"),
+        settings = standardSettings ++ Seq(
+            libraryDependencies ++= Seq(
+                "com.typesafe.akka" % "akka-actor" % "2.0"
+            )
+        ) ++ Seq (
+            jarName in assembly := "ScalatronCore.jar" // , logLevel in assembly := Level.Debug
+        )
+    )
+
+    lazy val botwar = Project("BotWar", file("BotWar"),
+        settings = standardSettings ++ Seq(
+            libraryDependencies ++= Seq(
+                "com.typesafe.akka" % "akka-actor" % "2.0"
+            )
+        ) ++ Seq (
+            jarName in assembly := "BotWar.jar" // , logLevel in assembly := Level.Debug
+        )
+    ) dependsOn( core )
+
     lazy val main = Project("Scalatron", file("Scalatron"),
         settings = standardSettings ++ Seq(
             libraryDependencies ++= Seq(
@@ -50,7 +70,7 @@ object build extends Build {
         ) ++ Seq (
             jarName in assembly := "Scalatron.jar" // , logLevel in assembly := Level.Debug
         )
-    )
+    ) dependsOn( core )
 
     lazy val cli = Project("ScalatronCLI", file("ScalatronCLI"),
         settings = standardSettings ++ Seq(
@@ -152,6 +172,13 @@ object build extends Build {
             IO.zip(allDistFiles, destFile)
         }
         zip (distDir, file("./" + zipFileName), "Scalatron/")
-    } dependsOn (assembly in main, assembly in cli, assembly in markdown, packageBin in Compile in referenceBot, packageBin in Compile in tagTeamBot)
+    } dependsOn (
+        assembly in core,
+        assembly in botwar,
+        assembly in main,
+        assembly in cli,
+        assembly in markdown,
+        packageBin in Compile in referenceBot,
+        packageBin in Compile in tagTeamBot)
 
 }

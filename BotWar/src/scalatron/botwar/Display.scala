@@ -6,7 +6,6 @@ package scalatron.botwar
 import java.awt.geom.AffineTransform
 import java.awt.{Toolkit, Frame, Graphics2D}
 import scalatron.botwar.Display.RenderTarget
-import scalatron.Version
 
 
 object Display {

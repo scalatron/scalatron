@@ -117,7 +117,7 @@ object Plugin
             factoryClassName
         )
 
-        loadFactoryClassFromJar(
+        loadControlFunctionFactoryFromJar(
             pluginFile,
             classNamesWithPackagePathsToTry,
             verbose
@@ -132,7 +132,7 @@ object Plugin
       * @param verbose if true, prints what it is doing to the console
       * @return the class that was loaded, or the last encountered exception
       */
-    private def loadFactoryClassFromJar(
+    def loadControlFunctionFactoryFromJar(
         jarFile: File,
         classNamesWithPackagePathsToTry: Iterable[String],
         verbose: Boolean): Either[() => (String => String), Throwable] =
@@ -178,6 +178,49 @@ object Plugin
         lastError match {
             case Some(t) => Right(t)
             case None => Right(new IllegalStateException("none of the factory class candidates found in '%s': %s".format(pluginFilePath, classNamesWithPackagePathsToTry.mkString(", "))))
+        }
+    }
+
+
+
+    /** Creates a URLClassLoader for a given file and attempts to load a class via the loader using a sequence of
+      * class names, one after the other. All exceptions that are detected are mapped to Right(Throwable).
+      * @param jarFile a File object representing the plug-in (.jar) file
+      * @param classNameWithPackagePath a collection of class names (including package path) to try to load
+      * @param verbose if true, prints what it is doing to the console
+      * @return (factoryClass,factoryMethod), or the last encountered exception
+      */
+    def loadFactoryFunctionFromJar(
+        jarFile: File,
+        classNameWithPackagePath: String,
+        verbose: Boolean): Either[(Class[_],java.lang.reflect.Method), Throwable] =
+    {
+        /** TODO: think about sandboxing plug-ins to prevent them from accessing sensitive stuff. See
+          * http://stackoverflow.com/questions/3947558/java-security-sandboxing-plugins-loaded-via-urlclassloader
+          */
+        val classLoader =
+            try {
+                new URLClassLoader(Array(jarFile.toURI.toURL), this.getClass.getClassLoader)
+            } catch {
+                case t: Throwable => return Right(t)
+            }
+
+        val pluginFilePath = jarFile.getAbsolutePath
+        val methodName = "create"
+
+        try {
+            if(verbose) println("info: will try to load class '%s' from plug-in '%s'...".format(classNameWithPackagePath, pluginFilePath))
+            val factoryClass = Class.forName(classNameWithPackagePath, true, classLoader)
+
+            if(verbose) println("info: class '%s' loaded, will try to find method '%s'...".format(classNameWithPackagePath, methodName))
+            val factoryMethod = factoryClass.getMethod(methodName)
+
+            if(verbose) println("info: method '%s' found, will try to instantiate factory...".format(methodName))
+            Left((factoryClass,factoryMethod))
+        } catch {
+            case t: Throwable =>
+                if(verbose) println("info: failed to load class '%s' from plug-in '%s'...: %s".format(classNameWithPackagePath, pluginFilePath, t.toString))
+                Right(t)
         }
     }
 

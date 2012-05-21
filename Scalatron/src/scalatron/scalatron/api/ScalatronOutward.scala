@@ -2,7 +2,6 @@ package scalatron.scalatron.api
 
 import akka.actor.ActorSystem
 import scalatron.core.{PermanentConfig, Scalatron}
-import scalatron.botwar.BotWar
 
 
 /** This is the "outward" API that Scalatron exposes towards the main function and the web server.
@@ -50,8 +49,7 @@ object ScalatronOutward {
         "headless yes|no" -> "run without visual output (default: no)",
         "verbose yes|no " -> "print verbose output (default: no)"
     ) ++
-        PermanentConfig.cmdArgList ++
-        BotWar.cmdArgList
+        PermanentConfig.cmdArgList // TODO: ++ BotWar.cmdArgList
 
     // undocumented for the moment:
     // println("  -game <name>             the game variant to host (default: BotWar)")

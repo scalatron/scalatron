@@ -31,15 +31,27 @@ object ScalatronImpl
       * @return
       */
     def apply(argMap: Map[String, String], actorSystem: ActorSystem, verbose: Boolean): ScalatronImpl = {
-        // find out which game variant the server should host
-        val game = {
-            // val gameName = argMap.get("-game").getOrElse("BotWar")
-            val gameFactory = new scalatron.botwar.BotWarFactory    // will be replaced by plug-in loader
-            gameFactory.create()
-        }
-
         // try to locate a base directory for the installation, e.g. '/Scalatron'
         val scalatronInstallationDirectoryPath = detectInstallationDirectory(verbose)
+
+
+        // find out which game variant the server should host
+        val binDirectoryPath = scalatronInstallationDirectoryPath + "/" + "bin"
+        val game = {
+            val gameName = argMap.get("-game").getOrElse("BotWar")
+            val gamePluginJarFilePath = binDirectoryPath + "/" + gameName + ".jar"
+            val gamePluginJarFile = new File(gamePluginJarFilePath)
+            val factoryClassNameWithPackagePath = "scalatron.botwar.GameFactory"
+            Plugin.loadFactoryFunctionFromJar(gamePluginJarFile, factoryClassNameWithPackagePath, verbose) match {
+                case Right(throwable) =>
+                    System.exit(-1)
+                    throw throwable     // TODO: TEMP
+                case Left((factoryClass,factoryMethod)) =>
+                    val factory = factoryClass.newInstance()
+                    factoryMethod.invoke(factory).asInstanceOf[Game]
+                    // gameFactory.create()
+            }
+        }
 
 
         // extract the web user base directory from the command line ("/users")

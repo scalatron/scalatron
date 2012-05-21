@@ -5,11 +5,11 @@ import core.{Response, MediaType}
 import scalatron.core.Scalatron.SandboxState
 import collection.JavaConversions
 import collection.JavaConversions.JMapWrapper
-import scalatron.botwar.CommandParser
 import scalatron.webServer.rest.UserSession
 import UserSession.SandboxAttributeKey
 import org.eclipse.jetty.http.HttpStatus
 import scalatron.core.Scalatron
+import scalatron.webServer.rest.resources.SandboxesResource.CommandParser
 
 
 @Produces(Array(MediaType.APPLICATION_JSON))
@@ -154,10 +154,34 @@ class SandboxesResource extends ResourceWithUser {
                 Response.ok(new SandboxResult(mappedEntities)).build();
         }
     }
-
 }
 
 object SandboxesResource {
+    /** Utility methods for parsing strings containing a single command of the format
+      *  "Command(key=value,key=value,...)"
+      *  Note: this is a duplicate of the CommandParser in BotWar - maybe eliminate this some day.
+      */
+    object CommandParser {
+        /** "Command(..)" => ("Command", Map( ("key" -> "value"), ("key" -> "value"), ..}) */
+        def splitCommandIntoOpcodeAndParameters(command: String): (String, Map[String, String]) = {
+            val segments = command.split('(')
+            if( segments.length != 2 )
+                throw new IllegalStateException("invalid command: \"" + command + "\"")
+            val opcode = segments(0)
+            val params = segments(1).dropRight(1).split(',')
+            val keyValuePairs = params.map(splitParameterIntoKeyValue).toMap
+            (opcode, keyValuePairs)
+        }
+
+        /** "key=value" => ("key","value") */
+        def splitParameterIntoKeyValue(param: String): (String, String) = {
+            val segments = param.split('=')
+            (segments(0), if( segments.length >= 2 ) segments(1) else "")
+        }
+    }
+
+
+
     private def createSandboxResult(userName: String, state: Scalatron.SandboxState) : SandboxesResource.SandboxCreationResult = {
         val sandboxId = state.sandbox.id
         val sandboxTime = state.time
