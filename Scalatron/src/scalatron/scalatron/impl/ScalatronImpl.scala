@@ -5,7 +5,6 @@ package scalatron.scalatron.impl
 
 import java.io._
 import akka.actor._
-import scalatron.botwar.BotWar
 import scalatron.scalatron.api.Scalatron.Constants._
 import scalatron.scalatron.api.Scalatron
 import scalatron.Version
@@ -33,7 +32,7 @@ object ScalatronImpl
         // find out which game variant the server should host, since, in theory, the game may be configurable some day
         val gameName = argMap.get("-game").getOrElse("BotWar")
         val game = gameName match {
-            case "BotWar" => BotWar
+            case "BotWar" => scalatron.botwar.BotWar
             case _ => throw new IllegalArgumentException("unknown game name: " + gameName)
         }
 

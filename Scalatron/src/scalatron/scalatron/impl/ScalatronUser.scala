@@ -5,7 +5,7 @@ package scalatron.scalatron.impl
   */
 
 
-import scalatron.botwar.{Config, PermanentConfig, BotWar}
+import scalatron.botwar.{Config, PermanentConfig}
 import java.io._
 import scala.collection.JavaConverters._
 
@@ -378,13 +378,13 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
         // TODO: ..or from some repository, such as /tutorial/bots
 
         // determine the permanent configuration for the game - in particular, that it should run forever
-        val permanentConfig = PermanentConfig(secureMode = scalatron.secureMode, stepsPerRound = Int.MaxValue, internalPlugins = Iterable.empty)
+        val permanentConfig = PermanentConfig(secureMode = scalatron.secureMode, stepsPerRound = Int.MaxValue)
 
         // determine the per-round configuration for the game
         val roundIndex = 0
         val gameConfig = Config.create(permanentConfig, roundIndex, plugins, argMap)
 
-        val initialSimState = BotWar.startHeadless(plugins, permanentConfig, gameConfig)(scalatron.executionContextForUntrustedCode)
+        val initialSimState = scalatron.game.startHeadless(plugins, permanentConfig, gameConfig)(scalatron.executionContextForUntrustedCode)
         val sandboxId = nextSandboxId
         nextSandboxId += 1
         ScalatronSandbox(sandboxId, this, initialSimState)

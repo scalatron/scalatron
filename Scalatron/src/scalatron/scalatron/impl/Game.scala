@@ -2,6 +2,8 @@ package scalatron.scalatron.impl
 
 import akka.dispatch.ExecutionContext
 import akka.actor.ActorSystem
+import scalatron.botwar.{Config, PermanentConfig}
+import scalatron.botwar.BotWarSimulation.SimState
 
 /** This material is intended as a community resource and is licensed under the
   * Creative Commons Attribution 3.0 Unported License. Feel free to use, modify and share it.
@@ -62,5 +64,14 @@ trait Game {
         actorSystem: ActorSystem,
         executionContextForUntrustedCode: ExecutionContext
     )
+
+
+    def startHeadless(
+        plugins: Iterable[Plugin.External],
+        permanentConfig: PermanentConfig,
+        gameConfig: Config
+    )(
+        executionContextForUntrustedCode: ExecutionContext
+    ) : SimState
 
 }

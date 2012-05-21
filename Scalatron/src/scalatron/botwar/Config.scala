@@ -18,10 +18,7 @@ case class Config(
 
 object Config {
     def create(permanentConfig: PermanentConfig, roundIndex: Int, plugins: Iterable[Plugin.External], argMap: Map[String,String]) = {
-        // cell count on the game board dependents on the number of plug-ins that are loaded
-        val internalPluginCount = permanentConfig.internalPlugins.size
-        val externalPluginCount = plugins.size
-        val pluginCount = internalPluginCount + externalPluginCount
+        val pluginCount = plugins.size
 
         // compute the default arena size
         val defaultArenaSize = {

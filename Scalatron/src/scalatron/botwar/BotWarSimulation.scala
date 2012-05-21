@@ -28,10 +28,7 @@ object BotWarSimulation
 
     case class Factory(config: Config) extends Simulation.Factory[SimState,TournamentRoundResult] {
         def createInitialState(randomSeed: Int, plugins: Iterable[Plugin.External])(executionContextForUntrustedCode: ExecutionContext) = {
-            // inject internally implemented players into the plug-in list
-            val combinedPlugins = config.permanent.internalPlugins ++ plugins
-
-            val state = State.createInitial(config, randomSeed, combinedPlugins)(executionContextForUntrustedCode)
+            val state = State.createInitial(config, randomSeed, plugins)(executionContextForUntrustedCode)
             SimState(state)
         }
     }
