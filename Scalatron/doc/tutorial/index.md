@@ -38,8 +38,7 @@ Scalatron BotWar, a competitive multi-player programming game in which coders pi
 
 * [Example Bot #1: The Reference Bot](/tutorial/tutorial_80_example_01.html)
 * [Example Bot #2: The Tag Team](/tutorial/tutorial_80_example_02.html)
-* [Example Bot #3: The Debug File Logger](/tutorial/tutorial_80_example_03.html)
-* [Example Bot #4: The Debug Status Logger](/tutorial/tutorial_80_example_04.html)
+* [Example Bot #3: The Debug Status Logger](/tutorial/tutorial_80_example_03.html)
 
 ## Cheat Sheets
 

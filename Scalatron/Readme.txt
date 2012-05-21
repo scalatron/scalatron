@@ -54,6 +54,11 @@ in the public domain. Feel free to use, copy, and improve them!
 
 ## Version History
 
+### Version 1.0.1.2 -- 2012-05-21
+
+* Protocol change: `Welcome` opcode no longer provides parameter `path`.
+
+
 ### Version 1.0.1.1 -- 2012-05-21
 
 * Minor fix to facilitate migration of existing user accounts (created with 1.0.0.2 or earlier) to git-based versioning.

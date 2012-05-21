@@ -246,7 +246,7 @@ These are the opcodes valid for commands sent by the server to a plug-in's contr
 Only one opcode will be present per control function invocation.
 
 
-### Welcome(name=String,path=string,apocalypse=int,round=int)
+### Welcome(name=String,apocalypse=int,round=int)
 
 "Welcome" is the first command sent by the server to a plug-in before any other invocations of
 the control function.
@@ -255,16 +255,6 @@ Parameters:
 
 * `name`:   the player name associated with the plug-in. The player name is set based on the
             name of the directory containing the plug-in.
-* `path`:   the path of the directory from which the server loaded the plug-in (which the plug-in
-            would otherwise have no way of knowing about, aside from a hard-coded string).
-            Contains no terminating slash. The plug-in can store this path and create log-files
-            in it, ideally incorporating the
-            round index provided in the `round` parameter and optionally the `time` (step index)
-            and entity `name` passed with each later `React` command.
-            **Note**: copious logging will
-            slow down gameplay, so be reasonable and restrict logging to specific rounds
-            and steps. For suggestions, refer to the *Debugging* section in the
-            *Scalatron Tutorial*.
 * `apocalypse`:  the number of steps that will be performed in the upcoming game round. This
             allows bots to plan ahead and to e.g. schedule the recall of harvesting drones.
             Keep in mind, however, that the control function of master bots is only invoked
