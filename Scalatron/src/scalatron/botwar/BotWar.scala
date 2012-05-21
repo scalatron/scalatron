@@ -6,10 +6,9 @@ package scalatron.botwar
 import renderer.Renderer
 import scalatron.botwar.BotWarSimulation.SimState
 import java.awt.event.{WindowEvent, WindowAdapter, KeyEvent, KeyListener}
-import scalatron.scalatron.api.Scalatron
-import scalatron.scalatron.impl.{TournamentRoundResult, TournamentState, Plugin, PluginCollection, Game}
 import akka.dispatch.ExecutionContext
 import akka.actor.ActorSystem
+import scalatron.core._
 
 
 /** BotWar: an implementation of the Scalatron Game trait.
@@ -18,12 +17,7 @@ case object BotWar extends Game
 {
     val name = Constants.GameName
 
-    val pluginLoadSpec =
-        PluginCollection.LoadSpec(
-            Scalatron.Constants.JarFilename,          // "ScalatronBot.jar"
-            "scalatron.botwar.botPlugin",
-            "ControlFunctionFactory")
-
+    def gameSpecificPackagePath = "scalatron.botwar.botPlugin"
 
     def runVisually(
         pluginPath: String,
@@ -95,7 +89,7 @@ case object BotWar extends Game
         }
 
 
-        var pluginCollection = PluginCollection(pluginPath, pluginLoadSpec, verbose)
+        var pluginCollection = PluginCollection(pluginPath, gameSpecificPackagePath, verbose)
 
         // now perform game runs ad infinitum
         var roundIndex = 0
@@ -166,7 +160,7 @@ case object BotWar extends Game
             tournamentState.addResult(tournamentRoundResult)
         }
 
-        var pluginCollection = PluginCollection(pluginPath, pluginLoadSpec, verbose)
+        var pluginCollection = PluginCollection(pluginPath, gameSpecificPackagePath, verbose)
 
         // now perform game runs ad infinitum
         var roundIndex = 0
@@ -208,7 +202,7 @@ case object BotWar extends Game
       * @return the initial simulation state
       */
     def startHeadless(
-        plugins: Iterable[Plugin.External],
+        plugins: Iterable[Plugin.FromJarFile],
         secureMode: Boolean,
         argMap: Map[String,String]
     )(
@@ -240,7 +234,7 @@ case object BotWar extends Game
       * @return the initial simulation state
       */
     def startHeadless(
-        plugins: Iterable[Plugin.External],
+        plugins: Iterable[Plugin.FromJarFile],
         permanentConfig: PermanentConfig,
         gameConfig: Config
     )(

@@ -14,6 +14,7 @@ import scalatron.scalatron.api.Scalatron.{SourceFileCollection, ScalatronExcepti
 import akka.dispatch.ExecutionContext
 import java.net.URLDecoder
 import akka.routing.SmallestMailboxRouter
+import scalatron.core.{TournamentState, Game}
 
 
 object ScalatronImpl

@@ -6,7 +6,7 @@ package scalatron.botwar
 import State.Time
 import util.Random
 import java.lang.IllegalStateException
-import scalatron.scalatron.impl.Plugin
+import scalatron.core.Plugin
 
 
 /** A game entity. An entity can be a collidable Bot (player, slave, beast, plant, wall) or

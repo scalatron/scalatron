@@ -710,9 +710,6 @@ object Scalatron {
         val SamplesSourceDirectoryName = "src" // e.g. in "/Scalatron/samples/{sample}/src"
 
         val gitDirectoryName = ".git"
-
-        val JarFilename = "ScalatronBot.jar"
-        val BackupJarFilename = "ScalatronBot.backup.jar"
     }
 
 

@@ -3,10 +3,10 @@
   */
 package scalatron.botwar
 
-import scalatron.scalatron.impl.Plugin
 import akka.util.Duration
 import akka.dispatch.{ExecutionContext, Future, Await}
 import akka.actor.ActorSystem
+import scalatron.core.Plugin
 
 
 /** Traits for generic simulations, of which a game like BotWar is an example.
@@ -32,7 +32,7 @@ object Simulation
       * @tparam R type of the result returned by the simulator (arbitrary)
       */
     trait Factory[S <: State[S, R], R] {
-        def createInitialState(randomSeed: Int, plugins: Iterable[Plugin.External])(executionContextForUntrustedCode: ExecutionContext) : S
+        def createInitialState(randomSeed: Int, plugins: Iterable[Plugin.FromJarFile])(executionContextForUntrustedCode: ExecutionContext) : S
     }
 
     /** Simulation.Runner: a generic runner for simulations that uses .step() to iteratively
@@ -52,7 +52,7 @@ object Simulation
           * @return an optional simulation result (if the simulation was not prematurely aborted)
           */
         def apply(
-            plugins: Iterable[Plugin.External],
+            plugins: Iterable[Plugin.FromJarFile],
             randomSeed: Int
         )(
             actorSystem: ActorSystem,
