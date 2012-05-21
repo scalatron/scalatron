@@ -14,7 +14,7 @@ import akka.util.Timeout
 import akka.dispatch.Await
 
 
-import scalatron.util.FileUtil._
+import scalatron.scalatron.impl.FileUtil._
 import ConfigFile.loadConfigFile
 import ConfigFile.updateConfigFileMulti
 import ScalatronUser.buildSourceFilesIntoJar

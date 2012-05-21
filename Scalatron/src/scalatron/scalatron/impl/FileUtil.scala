@@ -1,4 +1,4 @@
-package scalatron.util
+package scalatron.scalatron.impl
 
 import scala.io.Source
 import java.io.{FileInputStream, FileOutputStream, File}

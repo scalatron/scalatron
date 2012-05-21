@@ -6,7 +6,7 @@ package scalatron.core
 
 import scalatron.core.Scalatron.{Sample, User, SourceFileCollection}
 import java.io.{FileWriter, File}
-import scalatron.util.FileUtil
+import scalatron.scalatron.impl.FileUtil
 import FileUtil.use
 
 

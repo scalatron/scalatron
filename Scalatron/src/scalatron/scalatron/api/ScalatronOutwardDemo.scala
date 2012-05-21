@@ -6,7 +6,8 @@ package scalatron.scalatron.api
 import scalatron.core.Scalatron.Constants._
 import java.io.{IOException, File}
 import akka.actor.ActorSystem
-import scalatron.util.FileUtil
+import scalatron.scalatron.impl.FileUtil
+import scalatron.scalatron.impl.FileUtil
 import scalatron.core.Scalatron
 
 

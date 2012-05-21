@@ -2,7 +2,6 @@ package scalatron.scalatron.impl
 
 import java.io.{File, FileWriter}
 import scala.io.Source
-import scalatron.util.FileUtil
 import FileUtil.use
 
 

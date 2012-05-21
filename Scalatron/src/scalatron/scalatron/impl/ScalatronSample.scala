@@ -1,6 +1,5 @@
 package scalatron.scalatron.impl
 
-import scalatron.util.FileUtil
 import FileUtil.deleteRecursively
 import scalatron.core.Scalatron
 import Scalatron.SourceFile

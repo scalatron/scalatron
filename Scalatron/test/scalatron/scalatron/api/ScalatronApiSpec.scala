@@ -7,7 +7,8 @@ import scalatron.core.Scalatron.Constants._
 import scalatron.core.Scalatron
 import ScalatronApiTest._
 import org.specs2.execute.Result
-import scalatron.util.FileUtil
+import scalatron.scalatron.impl.FileUtil
+import scalatron.scalatron.impl.FileUtil
 
 class ScalatronApiSpec extends mutable.Specification
 {
