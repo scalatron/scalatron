@@ -70,12 +70,11 @@ trait Game
     )
 
 
-    def startHeadless(
-        plugins: Iterable[Plugin.FromJarFile],
-        permanentConfig: PermanentConfig,
-        gameConfig: Config
-    )(
-        executionContextForUntrustedCode: ExecutionContext
-    ): SimState
-
+    /** Starts a headless, private game instances and returns the associated initial simulation state.
+      * @param plugins the plug-ins to load into the game
+      * @param roundConfig the configuration for this game round (includes the permanent configuration by reference)
+      * @param executionContextForUntrustedCode execution context for untrusted code (e.g. for bot control functions)
+      * @return an initial simulation state.
+      */
+    def startHeadless(plugins: Iterable[Plugin.FromJarFile], roundConfig: RoundConfig)(executionContextForUntrustedCode: ExecutionContext): SimState
 }

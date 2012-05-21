@@ -3,13 +3,13 @@
   */
 package scalatron.botwar
 
-import State.Time
+import scalatron.core.{Simulation, Plugin}
+import Simulation.Time
 import scala.util.Random
 import BoardParams.Perimeter
 import akka.dispatch.{Await, Future, ExecutionContext}
 import akka.util.duration._
 import java.util.concurrent.TimeoutException
-import scalatron.core.Plugin
 
 
 /** Contains the temporally variable aspects of the game state.

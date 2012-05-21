@@ -5,7 +5,6 @@ package scalatron.scalatron.impl
   */
 
 
-import scalatron.botwar.{Config}
 import java.io._
 import scala.collection.JavaConverters._
 
@@ -31,7 +30,7 @@ import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.RepositoryCache
 import org.eclipse.jgit.lib.RepositoryCache.FileKey
 import org.eclipse.jgit.util.FS
-import scalatron.core.{PermanentConfig, Plugin}
+import scalatron.core.{RoundConfig, PermanentConfig, Plugin}
 
 
 case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatron.User {
@@ -382,9 +381,9 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
 
         // determine the per-round configuration for the game
         val roundIndex = 0
-        val gameConfig = Config.create(permanentConfig, roundIndex, plugins, argMap)
+        val roundConfig = RoundConfig(permanentConfig, argMap, roundIndex)
 
-        val initialSimState = scalatron.game.startHeadless(plugins, permanentConfig, gameConfig)(scalatron.executionContextForUntrustedCode)
+        val initialSimState = scalatron.game.startHeadless(plugins, roundConfig)(scalatron.executionContextForUntrustedCode)
         val sandboxId = nextSandboxId
         nextSandboxId += 1
         ScalatronSandbox(sandboxId, this, initialSimState)

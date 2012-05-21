@@ -235,11 +235,12 @@ case object BotWar extends Game
       */
     def startHeadless(
         plugins: Iterable[Plugin.FromJarFile],
-        permanentConfig: PermanentConfig,
-        gameConfig: Config
+        roundConfig: RoundConfig
     )(
         executionContextForUntrustedCode: ExecutionContext
     ) : SimState = {
+        val gameConfig = Config.create(roundConfig.permanent, roundConfig.roundIndex, plugins, roundConfig.argMap)
+
         // update the game configuration based on the plug-ins that are loaded
         val factory = BotWarSimulation.Factory(gameConfig)
 

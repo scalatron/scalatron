@@ -5,13 +5,13 @@ package scalatron.scalatron.impl
   */
 
 
-import scalatron.botwar.BotWarSimulation
 import scalatron.scalatron.api.Scalatron
 import scalatron.scalatron.api.Scalatron.SandboxState
+import scalatron.core.Simulation
 
 
-case class ScalatronSandboxState(sandbox: ScalatronSandbox, simState: BotWarSimulation.SimState) extends Scalatron.SandboxState {
-    def time = simState.gameState.time.toInt      // CBB: warn on truncation from Long to Int
+case class ScalatronSandboxState(sandbox: ScalatronSandbox, simState: Simulation.UntypedState) extends Scalatron.SandboxState {
+    def time = simState.time.toInt      // CBB: warn on truncation from Long to Int
 
     def step(count: Int): SandboxState = {
         val actorSystem = sandbox.user.scalatron.actorSystem
@@ -30,10 +30,5 @@ case class ScalatronSandboxState(sandbox: ScalatronSandbox, simState: BotWarSimu
         copy(simState = updatedState)
     }
 
-    def entities = {
-        val gameState = simState.gameState
-        val board = gameState.board
-        val entities = board.entitiesOfPlayer(sandbox.user.name)
-        entities.map(e => ScalatronSandboxEntity(e, this))
-    }
+    def entities = simState.entitiesOfPlayer(sandbox.user.name).map(e => ScalatronSandboxEntity(e, this))
 }

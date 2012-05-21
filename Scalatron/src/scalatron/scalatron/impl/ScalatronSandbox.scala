@@ -5,10 +5,10 @@ package scalatron.scalatron.impl
   */
 
 
-import scalatron.botwar.BotWarSimulation
 import scalatron.scalatron.api.Scalatron
+import scalatron.core.Simulation
 
 
-case class ScalatronSandbox(id: Int, user: ScalatronUser, initialSimState: BotWarSimulation.SimState) extends Scalatron.Sandbox {
+case class ScalatronSandbox(id: Int, user: ScalatronUser, initialSimState: Simulation.UntypedState) extends Scalatron.Sandbox {
     def initialState = ScalatronSandboxState(this, initialSimState)
 }

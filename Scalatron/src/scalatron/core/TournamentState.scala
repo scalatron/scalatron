@@ -4,7 +4,6 @@ package scalatron.core
   * Creative Commons Attribution 3.0 Unported License. Feel free to use, modify and share it.
   */
 
-import scalatron.botwar.Simulation
 import TournamentState.LeaderBoard
 import scalatron.core.TournamentRoundResult.AggregateResult
 

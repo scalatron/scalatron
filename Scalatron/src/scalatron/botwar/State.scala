@@ -3,9 +3,9 @@
   */
 package scalatron.botwar
 
-import State.Time
+import scalatron.core.{Simulation, Plugin}
+import Simulation.Time
 import akka.dispatch.ExecutionContext
-import scalatron.core.Plugin
 
 
 /** Game state storing the current (game) time, the board parameters, the actual board (i.e.
@@ -29,14 +29,6 @@ case class State(
 
 object State
 {
-    type Time = Long
-
-    object Time {
-        val MaxValue = Long.MaxValue
-        val SomtimeInThePast = -1
-    }
-
-
     def createInitial(config: Config, randomSeed: Int, combinedPlugins: Iterable[Plugin] )(executionContextForUntrustedCode: ExecutionContext) = {
         val time = 0L
         val board =
