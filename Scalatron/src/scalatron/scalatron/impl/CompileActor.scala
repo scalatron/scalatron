@@ -7,7 +7,7 @@ package scalatron.scalatron.impl
 
 import scala.tools.nsc.{Global, Settings}
 import tools.nsc.reporters.StoreReporter
-import scalatron.scalatron.api.Scalatron
+import scalatron.core.Scalatron
 import scala.tools.nsc.util.{BatchSourceFile, Position}
 import akka.actor.Actor
 

@@ -1,8 +1,8 @@
 package scalatron.webServer.servelets
 
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
-import scalatron.scalatron.api.Scalatron
-import scalatron.scalatron.api.Scalatron.Constants._
+import scalatron.core.Scalatron
+import scalatron.core.Scalatron.Constants._
 
 
 case class AdminServlet(context: WebContext) extends BaseServlet {

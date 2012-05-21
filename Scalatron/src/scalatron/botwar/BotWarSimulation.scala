@@ -6,7 +6,7 @@ package scalatron.botwar
 import scala.util.Random
 import akka.dispatch.ExecutionContext
 import akka.actor.ActorSystem
-import scalatron.core.{Simulation, Plugin}
+import scalatron.core.{EntityController, Simulation}
 
 
 /** Implementations of generic Simulation traits for the BotWar game. */
@@ -50,8 +50,8 @@ object BotWarSimulation
 
 
     case class Factory(config: Config) extends Simulation.Factory[SimState] {
-        def createInitialState(randomSeed: Int, plugins: Iterable[Plugin.FromJarFile])(executionContextForUntrustedCode: ExecutionContext) = {
-            val state = State.createInitial(config, randomSeed, plugins)(executionContextForUntrustedCode)
+        def createInitialState(randomSeed: Int, entityControllers: Iterable[EntityController], executionContextForUntrustedCode: ExecutionContext) = {
+            val state = State.createInitial(config, randomSeed, entityControllers, executionContextForUntrustedCode)
             SimState(state)
         }
     }

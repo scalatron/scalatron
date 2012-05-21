@@ -3,7 +3,7 @@
   */
 package scalatron.botwar
 
-import scalatron.core.{Simulation, Plugin}
+import scalatron.core.{Simulation, EntityController}
 import Simulation.Time
 import util.Random
 import java.lang.IllegalStateException
@@ -100,8 +100,7 @@ object Bot {
 
 
     case class Player(
-        controlFunction: (String => String),
-        plugin: Plugin,
+        entityController: EntityController,
         generation: Int,
         masterId: Entity.Id,                // for slaves: ID of master that owns them; for masters: their own ID
         rankAndQuartile: (Int,Int),         // for masters: index of the player in the most recent ranking, and the resulting quartile
@@ -185,7 +184,7 @@ object Bot {
                 if(isMaster) computeBotInputForMaster(bot, state)
                 else computeBotInputForSlave(bot, state)
 
-            val controlFunctionResponse = controlFunction(controlFunctionInput)
+            val controlFunctionResponse = entityController.respond(controlFunctionInput)
             (controlFunctionInput, Command.fromControlFunctionResponse(controlFunctionResponse))
         }
     }
@@ -208,7 +207,7 @@ object Bot {
                             // target is a master
                             sourceBot.variety match {
                                 case sourcePlayer: Bot.Player =>    // source is a player (master or slave)
-                                    val siblings = sourcePlayer.plugin == targetPlayer.plugin
+                                    val siblings = sourcePlayer.entityController == targetPlayer.entityController
                                     if(sourcePlayer.isMaster) {
                                         // source is a master, target is a master
                                         if(siblings) 'M' else 'm'
@@ -222,7 +221,7 @@ object Bot {
                             // target is a slave
                             sourceBot.variety match {
                                 case sourcePlayer: Bot.Player =>    // source is a player (master or slave)
-                                    val siblings = sourcePlayer.plugin == targetPlayer.plugin
+                                    val siblings = sourcePlayer.entityController == targetPlayer.entityController
                                     if(sourcePlayer.isMaster) {
                                         // source is a master, target is a slave
                                         if(siblings) 'S' else 's'

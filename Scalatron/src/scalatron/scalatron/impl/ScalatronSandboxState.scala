@@ -5,8 +5,8 @@ package scalatron.scalatron.impl
   */
 
 
-import scalatron.scalatron.api.Scalatron
-import scalatron.scalatron.api.Scalatron.SandboxState
+import scalatron.core.Scalatron
+import scalatron.core.Scalatron.SandboxState
 import scalatron.core.Simulation
 
 

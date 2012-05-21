@@ -2,8 +2,8 @@ package scalatron.webServer.rest.resources
 
 import javax.ws.rs._
 import core.{Response, MediaType}
-import scalatron.scalatron.api.Scalatron
-import scalatron.scalatron.api.Scalatron.ScalatronException
+import scalatron.core.Scalatron
+import scalatron.core.Scalatron.ScalatronException
 import org.eclipse.jetty.http.HttpStatus
 import java.io.IOError
 

@@ -6,7 +6,7 @@ package scalatron.botwar.renderer
 
 
 import java.awt.{Font, Color}
-import scalatron.core.TournamentState
+import scalatron.core.Scalatron.LeaderBoard
 
 
 object LeaderboardPanelRenderer
@@ -22,7 +22,7 @@ object LeaderboardPanelRenderer
     val panelOuterMargin = 2
     val panelInnerMargin = 4
 
-    def draw(leaderBoard: TournamentState.LeaderBoard)(implicit ctx: RenderContext) {
+    def draw(leaderBoard: LeaderBoard)(implicit ctx: RenderContext) {
         val panelOuterTop = ctx.canvasSizeY - panelHeight
         val panelOuterLeft = ctx.fieldSizeX + panelOuterMargin
         ctx.drawBeveledRect(panelOuterLeft, panelOuterTop, ctx.rightPanelWidth - 2 * panelOuterMargin, panelHeight, BgColorTriple)

@@ -7,7 +7,6 @@ import renderer.Renderer
 import scalatron.botwar.BotWarSimulation.SimState
 import java.awt.event.{WindowEvent, WindowAdapter, KeyEvent, KeyListener}
 import akka.dispatch.ExecutionContext
-import akka.actor.ActorSystem
 import scalatron.core._
 
 
@@ -15,31 +14,20 @@ import scalatron.core._
   * Main.main() feeds this instance to Scalatron.run(). */
 case object BotWar extends Game
 {
-    val name = Constants.GameName
-
     def gameSpecificPackagePath = "scalatron.botwar.botPlugin"
 
-    def runVisually(
-        pluginPath: String,
-        argMap: Map[String,String],
-        rounds: Int,
-        tournamentState: TournamentState,   // receives tournament round results
-        secureMode: Boolean,
-        verbose: Boolean
-    )(
-        actorSystem: ActorSystem,
-        executionContextForUntrustedCode: ExecutionContext
-    )
-    {
+    def runVisually(rounds: Int, scalatron: ScalatronInward) {
+        val argMap = scalatron.argMap
+
         // determine the permanent configuration for the game
-        val permanentConfig = PermanentConfig.fromArgMap(secureMode, argMap)
+        val permanentConfig = PermanentConfig.fromArgMap(scalatron.secureMode, argMap)
 
         // pop up the display window, taking command line args into account
         val display = Display.create(argMap)
         display.show()
 
         // create a renderer; we'll use it to paint the display
-        val renderer = Renderer(permanentConfig, tournamentState)
+        val renderer = Renderer(permanentConfig, scalatron)
 
         // add a keyboard listener to allow the user to configure the app while it runs
         val keyListener = new KeyListener {
@@ -67,9 +55,9 @@ case object BotWar extends Game
 
         // the simulation runner will invoke this callback, which we use to update the display
         val stepCallback = (state: SimState) => {
-            tournamentState.updateMostRecentState(state)
+            scalatron.postStepCallback(state)
 
-            val executionContextForTrustedCode = actorSystem.dispatcher
+            val executionContextForTrustedCode = scalatron.actorSystem.dispatcher
             renderer.draw(display.renderTarget, state.gameState)(executionContextForTrustedCode)
 
             // enforce maxFPS (max frames per second) by putting this thread to sleep if appropriate
@@ -82,24 +70,15 @@ case object BotWar extends Game
             !appShouldExit && !renderer.interactivelyAdjustableSettings.abortThisRound
         }
 
-        // the simulation runner will invoke this callback, which we use to update the display
-        val resultCallback = (state: SimState, tournamentRoundResult: TournamentRoundResult) => {
-            tournamentState.updateMostRecentState(state)
-            tournamentState.addResult(tournamentRoundResult)
-        }
-
-
-        var pluginCollection = PluginCollection(pluginPath, gameSpecificPackagePath, verbose)
 
         // now perform game runs ad infinitum
         var roundIndex = 0
         while(!appShouldExit && roundIndex < rounds) {
             // load plugins, either from scratch or incrementally (changed plug-ins only)
-            pluginCollection = pluginCollection.incrementalRescan // or: fullRescan
-            val plugins = pluginCollection.plugins
+            val entityControllers = scalatron.freshEntityControllers
 
             // update the game configuration based on the plug-ins that are loaded
-            val gameConfig = Config.create(permanentConfig, roundIndex, plugins, argMap)
+            val gameConfig = Config.create(permanentConfig, roundIndex, entityControllers, argMap)
             val factory = BotWarSimulation.Factory(gameConfig)
 
             // prepare a random seed for this game round. Options:
@@ -108,8 +87,8 @@ case object BotWar extends Game
             val randomSeed = System.currentTimeMillis.intValue  // or: round
 
             // run game
-            val runner = Simulation.Runner(factory, stepCallback, resultCallback)
-            runner(plugins, randomSeed)(actorSystem, executionContextForUntrustedCode)
+            val runner = Simulation.Runner(factory, stepCallback, scalatron.postRoundCallback)
+            runner(entityControllers, randomSeed)(scalatron.actorSystem, scalatron.executionContextForUntrustedCode)
 
             roundIndex += 1
 
@@ -121,19 +100,14 @@ case object BotWar extends Game
 
 
     def runHeadless(
-        pluginPath: String,
-        argMap: Map[String,String],
         rounds: Int,
-        tournamentState: TournamentState,   // receives tournament round results
-        secureMode: Boolean,
-        verbose: Boolean
-    )(
-        actorSystem: ActorSystem,
-        executionContextForUntrustedCode: ExecutionContext
+        scalatron: ScalatronInward
     )
     {
+        val argMap = scalatron.argMap
+
         // determine the permanent configuration for the game
-        val permanentConfig = PermanentConfig.fromArgMap(secureMode, argMap)
+        val permanentConfig = PermanentConfig.fromArgMap(scalatron.secureMode, argMap)
 
         // determine the maximum frames/second (to throttle CPU usage or sim loop; min: 1 fps)
         val maxFPS = argMap.get("-maxfps").map(_.toInt).getOrElse(50).max(1)
@@ -142,7 +116,7 @@ case object BotWar extends Game
 
         // the simulation runner will invoke this callback, which we use to update the display
         val stepCallback = (state: SimState) => {
-            tournamentState.updateMostRecentState(state)
+            scalatron.postStepCallback(state)
 
             // enforce maxFPS (max frames per second) by putting this thread to sleep if appropriate
             val currentTime = System.currentTimeMillis
@@ -154,25 +128,16 @@ case object BotWar extends Game
             true
         }
 
-        // the simulation runner will invoke this callback, which we use to update the tournament state
-        val resultCallback = (state: SimState, tournamentRoundResult: TournamentRoundResult) => {
-            tournamentState.updateMostRecentState(state)
-            tournamentState.addResult(tournamentRoundResult)
-        }
-
-        var pluginCollection = PluginCollection(pluginPath, gameSpecificPackagePath, verbose)
-
         // now perform game runs ad infinitum
         var roundIndex = 0
         while(roundIndex < rounds) {
             val startTime = System.currentTimeMillis()
 
             // load plugins, either from scratch or incrementally (changed plug-ins only)
-            pluginCollection = pluginCollection.incrementalRescan // or: fullRescan
-            val plugins = pluginCollection.plugins
+            val entityControllers = scalatron.freshEntityControllers
 
             // update the game configuration based on the plug-ins that are loaded
-            val gameConfig = Config.create(permanentConfig, roundIndex, plugins, argMap)
+            val gameConfig = Config.create(permanentConfig, roundIndex, entityControllers, argMap)
             val factory = BotWarSimulation.Factory(gameConfig)
 
             // prepare a random seed for this game round. Options:
@@ -181,8 +146,8 @@ case object BotWar extends Game
             val randomSeed = System.currentTimeMillis.intValue  // or: round
 
             // run game
-            val runner = Simulation.Runner(factory, stepCallback, resultCallback)
-            runner(plugins, randomSeed)(actorSystem, executionContextForUntrustedCode)
+            val runner = Simulation.Runner(factory, stepCallback, scalatron.postRoundCallback)
+            runner(entityControllers, randomSeed)(scalatron.actorSystem, scalatron.executionContextForUntrustedCode)
 
             roundIndex += 1
 
@@ -196,13 +161,13 @@ case object BotWar extends Game
 
 
     /** Starts a headless game simulation using the given plug-in collection.
-      * @param plugins the collection of plug-ins to use as control function factories.
+      * @param entityControllers the collection of plug-ins to use as control function factories.
       * @param secureMode if true, certain bot processing restrictions apply
       * @param argMap the command line arguments
       * @return the initial simulation state
       */
     def startHeadless(
-        plugins: Iterable[Plugin.FromJarFile],
+        entityControllers: Iterable[EntityController],
         secureMode: Boolean,
         argMap: Map[String,String]
     )(
@@ -214,7 +179,7 @@ case object BotWar extends Game
         val roundIndex = 0
 
         // determine the per-round configuration for the game
-        val gameConfig : Config = Config.create(permanentConfig, roundIndex, plugins, argMap)
+        val gameConfig : Config = Config.create(permanentConfig, roundIndex, entityControllers, argMap)
 
         // update the game configuration based on the plug-ins that are loaded
 
@@ -225,21 +190,20 @@ case object BotWar extends Game
         // (b) deterministically incremented (beneficial for testing purposes)
         val randomSeed = System.currentTimeMillis.intValue  // or: round
 
-        factory.createInitialState(randomSeed, plugins)(executionContextForUntrustedCode)
+        factory.createInitialState(randomSeed, entityControllers, executionContextForUntrustedCode)
     }
 
 
     /** Starts a headless game simulation using the given plug-in collection.
-      * @param plugins the collection of plug-ins to use as control function factories.
+      * @param entityControllers the collection of plug-ins to use as control function factories.
       * @return the initial simulation state
       */
     def startHeadless(
-        plugins: Iterable[Plugin.FromJarFile],
-        roundConfig: RoundConfig
-    )(
+        entityControllers: Iterable[EntityController],
+        roundConfig: RoundConfig,
         executionContextForUntrustedCode: ExecutionContext
     ) : SimState = {
-        val gameConfig = Config.create(roundConfig.permanent, roundConfig.roundIndex, plugins, roundConfig.argMap)
+        val gameConfig = Config.create(roundConfig.permanent, roundConfig.roundIndex, entityControllers, roundConfig.argMap)
 
         // update the game configuration based on the plug-ins that are loaded
         val factory = BotWarSimulation.Factory(gameConfig)
@@ -249,19 +213,14 @@ case object BotWar extends Game
         // (b) deterministically incremented (beneficial for testing purposes)
         val randomSeed = System.currentTimeMillis.intValue  // or: round
 
-        factory.createInitialState(randomSeed, plugins)(executionContextForUntrustedCode)
+        factory.createInitialState(randomSeed, entityControllers, executionContextForUntrustedCode)
     }
 
 
     /** Dump the game-specific command line configuration options via println.
       *  "... -x 100 -y 100 -steps 1000" */
-    def printArgList() {
-        Config.printArgList()
-        PermanentConfig.printArgList()
-        Display.printArgList()
-        Renderer.printKeyboardCommands()
-
-        println("  -maxfps <int>            maximum steps/second (to reduce CPU load; default: 50)")
-    }
+    def cmdArgList =
+        Iterable("maxfps <int>" -> "maximum steps/second (to reduce CPU load; default: 50)") ++
+            Config.cmdArgList ++ Display.cmdArgList
 }
 

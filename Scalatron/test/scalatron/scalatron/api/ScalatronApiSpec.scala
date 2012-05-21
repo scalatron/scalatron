@@ -3,7 +3,8 @@ package scalatron.scalatron.api
 import org.specs2._
 import java.io.{IOException, File}
 import akka.actor.ActorSystem
-import scalatron.scalatron.api.Scalatron.Constants._
+import scalatron.core.Scalatron.Constants._
+import scalatron.core.Scalatron
 import ScalatronApiTest._
 import org.specs2.execute.Result
 import scalatron.util.FileUtil
@@ -341,7 +342,7 @@ object ScalatronApiTest
 
             // create a Scalatron server instance - this is the main API entry point
             val scalatron =
-                Scalatron(
+                ScalatronOutward(
                     Map(
                         ( "-users" -> usersBaseDirPath ),
                         ( "-samples" -> samplesBaseDirPath ),

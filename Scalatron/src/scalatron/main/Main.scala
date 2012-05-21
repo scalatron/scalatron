@@ -5,9 +5,8 @@ package scalatron.main
 
 import scalatron.Version
 import scalatron.webServer.WebServer
-import scalatron.botwar.BotWar
-import scalatron.scalatron.api.Scalatron
 import akka.actor._
+import scalatron.scalatron.api.ScalatronOutward
 
 
 /** The entry point for the game server application. Selects as specific game (BotWar)
@@ -28,7 +27,11 @@ object Main {
         } else
         if(args.find(_ == "-help").isDefined) {
             // print list of available command line parameters to the console
-            printArgList()
+            println("java -jar Scalatron.jar [-key value] [-key value] [...]")
+            println("  with the following parameter key/value pairs:")
+
+            val completeArgList = cmdArgList ++ ScalatronOutward.cmdArgList ++ WebServer.cmdArgList
+            completeArgList.foreach(p => println("   -%-22s  %s" format(p._1, p._2)))
             System.exit(0)
         }
 
@@ -43,7 +46,7 @@ object Main {
         val actorSystem = ActorSystem("Scalatron")
 
         // start up Scalatron background services (e.g. compile service, which will use the actor system)
-        val scalatron = Scalatron(argMap, actorSystem, verbose)
+        val scalatron = ScalatronOutward(argMap, actorSystem, verbose)
         scalatron.start()
 
         // prepare (and start) the web server - eventually this should also use the Akka actorSystem (e.g., Spray?)
@@ -63,22 +66,14 @@ object Main {
         actorSystem.shutdown()
     }
 
-
-    private def printArgList() {
-        println("java -jar Scalatron.jar [-key value] [-key value] [...]")
-        println("  with the following parameter key/value pairs:")
-        println("  -help                    display these help options")
-        println("  -plugins <dir>           plug-in base directory (default: ../bots)")
-        println("  -samples <dir>           directory containing example bots (default: ../samples)")
-        println("  -rounds <int>            run this many tournament rounds, then exit (default: unlimited)")
-        println("  -headless yes|no         run without visual output (default: no)")
-        println("  -verbose yes|no          print verbose output (default: no)")
-        WebServer.printArgList()
-        BotWar.printArgList()
-
-        // undocumented for the moment:
-        // println("  -game <name>             the game variant to host (default: BotWar)")
-    }
+    val cmdArgList = Iterable(
+        "help" -> "display these help options",
+        "plugins <dir>" -> "plug-in base directory (default: ../bots)",
+        "samples <dir>" -> "directory containing example bots (default: ../samples)",
+        "rounds <int>" -> "run this many tournament rounds, then exit (default: unlimited)",
+        "headless yes|no" -> "run without visual output (default: no)",
+        "verbose yes|no " -> "print verbose output (default: no)"
+    )
 }
 
 

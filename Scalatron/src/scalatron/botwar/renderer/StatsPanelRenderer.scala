@@ -5,7 +5,7 @@ package scalatron.botwar.renderer
 
 import java.awt.{Font, Color}
 import scalatron.botwar.State
-import scalatron.core.{PermanentConfig, TournamentState}
+import scalatron.core.{ScalatronInward, PermanentConfig}
 
 
 object StatsPanelRenderer
@@ -15,7 +15,7 @@ object StatsPanelRenderer
     val BgColorTriple = ColorTriple(new Color(105, 105, 105), new Color(123, 120, 120), new Color(145, 145, 145))
     val frameTimeQueue = scala.collection.mutable.Queue.empty[Long]
 
-    def draw(state: State, tournamentState: TournamentState, permanentConfig: PermanentConfig, interactivelyAdjustableSettings: InteractivelyAdjustableSettings)(implicit ctx: RenderContext) {
+    def draw(state: State, scalatron: ScalatronInward, permanentConfig: PermanentConfig, interactivelyAdjustableSettings: InteractivelyAdjustableSettings)(implicit ctx: RenderContext) {
         ctx.setColor(BgColorTriple.plain)
         ctx.fillRect(0, ctx.fieldSizeY + 1, ctx.fieldSizeX + 1, ctx.bottomPanelHeight)
 
@@ -35,7 +35,7 @@ object StatsPanelRenderer
         val avgFrameTime = frameTimeQueue.sum / frameTimeQueue.size
 
         ctx.drawString(
-            "round " + ( tournamentState.roundsPlayed + 1 ) + ": " + state.time + " steps (of " + permanentConfig.stepsPerRound + "), " +
+            "round " + ( scalatron.tournamentRoundsPlayed + 1 ) + ": " + state.time + " steps (of " + permanentConfig.stepsPerRound + "), " +
             ( gameTime / 1000.0 ).formatted("%.1f") + "s, " + avgFrameTime + "ms/step", 10, y)
 
         ctx.drawString(board.botCount + " bots, " + board.decorations.size + " decorations", 280, y)

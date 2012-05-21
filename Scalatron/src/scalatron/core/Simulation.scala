@@ -88,7 +88,7 @@ object Simulation
       */
     trait Factory[S <: State[S]]
     {
-        def createInitialState(randomSeed: Int, plugins: Iterable[Plugin.FromJarFile])(executionContextForUntrustedCode: ExecutionContext): S
+        def createInitialState(randomSeed: Int, entityControllers: Iterable[EntityController], executionContextForUntrustedCode: ExecutionContext): S
     }
 
     /** Simulation.Runner: a generic runner for simulations that uses .step() to iteratively
@@ -100,21 +100,21 @@ object Simulation
         stepCallback: S => Boolean, // callback invoked at end of every simulation step; if it returns false, the sim terminates without result
         resultCallback: (S,TournamentRoundResult) => Unit) //  callback invoked after the end of very last simulation step
     {
-        /** @param plugins the collection of external plug-ins to bring into the simulation
+        /** @param entityControllers the collection of entity controllers loaded from external plug-ins that we should bring into the simulation
           * @param randomSeed the random seed to use for initializing the simulation
           * @param actorSystem execution context whose threads are trusted (e.g. actor system)
           * @param executionContextForUntrustedCode execution context whose threads are untrusted (sandboxed by the security manager)
           * @return an optional simulation result (if the simulation was not prematurely aborted)
           */
         def apply(
-            plugins: Iterable[Plugin.FromJarFile],
+            entityControllers: Iterable[EntityController],
             randomSeed: Int
         )(
             actorSystem: ActorSystem,
             executionContextForUntrustedCode: ExecutionContext
         ): Option[TournamentRoundResult] =
         {
-            var currentState = factory.createInitialState(randomSeed, plugins)(executionContextForUntrustedCode) // state at entry of loop turn
+            var currentState = factory.createInitialState(randomSeed, entityControllers, executionContextForUntrustedCode) // state at entry of loop turn
         var priorStateOpt: Option[S] = None // result of state.step() at exit of prior loop turn
         var finalResult: Option[TournamentRoundResult] = None
 

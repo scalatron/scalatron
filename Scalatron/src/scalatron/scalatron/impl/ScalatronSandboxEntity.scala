@@ -5,7 +5,7 @@ package scalatron.scalatron.impl
   */
 
 
-import scalatron.scalatron.api.Scalatron
+import scalatron.core.Scalatron
 import scalatron.core.Simulation
 
 

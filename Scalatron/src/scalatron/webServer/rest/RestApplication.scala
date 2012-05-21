@@ -4,7 +4,7 @@ import org.codehaus.jackson.jaxrs.JacksonJsonProvider
 import java.lang.reflect.Type
 import java.io.OutputStream
 import resources._
-import scalatron.scalatron.api.Scalatron
+import scalatron.core.Scalatron
 import javax.ws.rs.Produces
 import java.lang.Class
 import javax.ws.rs.core.{Response, MultivaluedMap, MediaType}

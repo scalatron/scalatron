@@ -6,7 +6,7 @@ import java.util.concurrent.TimeoutException
 import javax.ws.rs.core.{Response, MediaType}
 import org.eclipse.jetty.http.HttpStatus
 import java.io.IOError
-import scalatron.scalatron.api.Scalatron
+import scalatron.core.Scalatron
 
 
 @Produces(Array(MediaType.APPLICATION_JSON))

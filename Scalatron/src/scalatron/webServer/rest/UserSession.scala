@@ -4,7 +4,7 @@ import javax.servlet.http.HttpSession
 import javax.ws.rs.core.Response.ResponseBuilder
 import javax.ws.rs.core.{NewCookie, Response}
 import UserSession.UserAttributeKey
-import scalatron.scalatron.api.Scalatron
+import scalatron.core.Scalatron
 
 
 /** Scala wrapper for Java HttpSession. */

@@ -9,7 +9,7 @@ import scalatron.botwar._
 import akka.util.Duration
 import java.awt.Color
 import akka.dispatch.{ExecutionContext, Await, Future}
-import scalatron.core.{PermanentConfig, TournamentState}
+import scalatron.core.{ScalatronInward, PermanentConfig}
 
 
 object Renderer {
@@ -34,7 +34,7 @@ object Renderer {
 
     def playerColorB(hash: Int) = PrimaryColorTripleTable(( hash >>> 8 ) % PrimaryColorTripleTable.length)
 
-    def printKeyboardCommands() {
+    /*def printKeyboardCommands()*/ {
         println("Keyboard commands available in the display window:")
         println(" '1'   -- no delay between simulation steps")
         println(" '2'   -- delay = 50ms")
@@ -48,15 +48,14 @@ object Renderer {
         println(" 'r'   -- abort round, rescan for updated plug-ins and start next round")
         println(" '+/-' -- step through players")
     }
-
 }
 
 
 /** The renderer is responsible for rendering the state of a game into a graphics context.
   * @param permanentConfig the permanent game configuration
-  * @param tournamentState the current state of the tournament - contains e.g. leaderboard
+  * @param scalatron reference to the Scalatron API facing towards this game plug-in the (for access to current state of the tournament - contains e.g. leaderboard)
   */
-case class Renderer(permanentConfig: PermanentConfig, tournamentState: TournamentState) {
+case class Renderer(permanentConfig: PermanentConfig, scalatron: ScalatronInward) {
     val interactivelyAdjustableSettings = new InteractivelyAdjustableSettings
 
     def keyPressed(c: Char) {
@@ -111,7 +110,7 @@ case class Renderer(permanentConfig: PermanentConfig, tournamentState: Tournamen
                 contextToRecycle
             }
 
-        val sourceAndTarget = RenderSourceAndTarget(state, tournamentState, interactivelyAdjustableSettings, permanentConfig, renderContext, renderTarget.frameGraphics)
+        val sourceAndTarget = RenderSourceAndTarget(state, scalatron, interactivelyAdjustableSettings, permanentConfig, renderContext, renderTarget.frameGraphics)
         val newRenderJob = RenderJob(RenderStage.ClearBackground, sourceAndTarget)
         val renderJobs = newRenderJob :: pendingRenderJobs
 

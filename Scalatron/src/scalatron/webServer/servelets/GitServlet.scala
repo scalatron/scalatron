@@ -13,7 +13,7 @@ import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.transport.{ReceiveCommand, PostReceiveHook, ReceivePack}
 import org.eclipse.jgit.transport.resolver.{RepositoryResolver, ReceivePackFactory}
 
-import scalatron.scalatron.api.Scalatron.User
+import scalatron.core.Scalatron.User
 
 case class GitServlet(context: WebContext) extends org.eclipse.jgit.http.server.GitServlet {
 

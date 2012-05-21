@@ -5,16 +5,17 @@ package scalatron.scalatron.impl
 
 import java.io._
 import akka.actor._
-import scalatron.scalatron.api.Scalatron.Constants._
-import scalatron.scalatron.api.Scalatron
+import scalatron.core.Scalatron.Constants._
 import scalatron.Version
 import java.text.DateFormat
 import java.util.Date
-import scalatron.scalatron.api.Scalatron.{SourceFileCollection, ScalatronException, SourceFile, User}
-import akka.dispatch.ExecutionContext
+import scalatron.core.Scalatron.{SourceFileCollection, ScalatronException, SourceFile, User}
 import java.net.URLDecoder
 import akka.routing.SmallestMailboxRouter
-import scalatron.core.{TournamentState, Game}
+import scalatron.scalatron.api.ScalatronOutward
+import scalatron.core.Simulation.UntypedState
+import scalatron.core._
+import akka.dispatch.ExecutionContext
 
 
 object ScalatronImpl
@@ -29,12 +30,12 @@ object ScalatronImpl
       * @param verbose if true, use verbose logging
       * @return
       */
-    def apply(argMap: Map[String, String], actorSystem: ActorSystem, verbose: Boolean): Scalatron = {
-        // find out which game variant the server should host, since, in theory, the game may be configurable some day
-        val gameName = argMap.get("-game").getOrElse("BotWar")
-        val game = gameName match {
-            case "BotWar" => scalatron.botwar.BotWar
-            case _ => throw new IllegalArgumentException("unknown game name: " + gameName)
+    def apply(argMap: Map[String, String], actorSystem: ActorSystem, verbose: Boolean): ScalatronImpl = {
+        // find out which game variant the server should host
+        val game = {
+            // val gameName = argMap.get("-game").getOrElse("BotWar")
+            val gameFactory = new scalatron.botwar.BotWarFactory    // will be replaced by plug-in loader
+            gameFactory.create()
         }
 
         // try to locate a base directory for the installation, e.g. '/Scalatron'
@@ -75,6 +76,7 @@ object ScalatronImpl
 
         // prepare (but do not start) the Scalatron API entry point
         ScalatronImpl(
+            argMap,
             actorSystem,
             executionContextForUntrustedCode,
             game,
@@ -202,6 +204,7 @@ object ScalatronImpl
   * @param verbose if true, use verbose logging
   */
 case class ScalatronImpl(
+    argMap: Map[String, String],
     actorSystem: ActorSystem,                           // the Akka actor system to use for trusted code, e.g. for compilation
     executionContextForUntrustedCode: ExecutionContext, // the ExecutionContext to use for untrusted code, e.g. for bot control functions
     game: Game,
@@ -212,7 +215,7 @@ case class ScalatronImpl(
     tournamentState: TournamentState, // receives and accumulates tournament round results
     secureMode: Boolean,
     verbose: Boolean
-) extends Scalatron
+) extends ScalatronOutward with ScalatronInward
 {
     var compileWorkerRouterOpt : Option[ActorRef] = None
 
@@ -222,12 +225,29 @@ case class ScalatronImpl(
 
 
     //----------------------------------------------------------------------------------------------
+    // ScalatronInward
+    //----------------------------------------------------------------------------------------------
+
+    var pluginCollection = PluginCollection(pluginBaseDirectoryPath, game.gameSpecificPackagePath, verbose)
+
+    def freshEntityControllers = {
+        pluginCollection = pluginCollection.incrementalRescan // or: fullRescan
+        EntityControllerImpl.fromPlugins(pluginCollection.plugins)(executionContextForUntrustedCode)
+    }
+
+    def postStepCallback(mostRecentState: UntypedState) { tournamentState.updateMostRecentState(mostRecentState) }
+
+    def postRoundCallback(finalState: Simulation.UntypedState, result: TournamentRoundResult) {
+        tournamentState.updateMostRecentState(finalState)
+        tournamentState.addResult(result)
+    }
+
+
+    //----------------------------------------------------------------------------------------------
     // start/run/stop
     //----------------------------------------------------------------------------------------------
 
-    def version = Version.VersionString
-
-    def start(argMap: Map[String, String]) {
+    def start() {
         val compileWorkerCount = 3
         val routees = Vector.tabulate[ActorRef](compileWorkerCount)(n => actorSystem.actorOf(Props(new CompileActor(verbose))))
 
@@ -242,9 +262,9 @@ case class ScalatronImpl(
         val rounds = argMap.get("-rounds").map(_.toInt).getOrElse(Int.MaxValue)
         val headless = (argMap.get("-headless").getOrElse("no") == "yes")
         if(headless) {
-            game.runHeadless(pluginBaseDirectoryPath, argMap, rounds, tournamentState, secureMode, verbose)(actorSystem, executionContextForUntrustedCode)
+            game.runHeadless(rounds, this)
         } else {
-            game.runVisually(pluginBaseDirectoryPath, argMap, rounds, tournamentState, secureMode, verbose)(actorSystem, executionContextForUntrustedCode)
+            game.runVisually(rounds, this)
         }
     }
 
@@ -256,6 +276,15 @@ case class ScalatronImpl(
         userCache.values.foreach(_.release())
         userCache.clear()
     }
+
+
+
+    //----------------------------------------------------------------------------------------------
+    // configuration information
+    //----------------------------------------------------------------------------------------------
+
+    def version = Version.VersionString
+
 
 
     //----------------------------------------------------------------------------------------------

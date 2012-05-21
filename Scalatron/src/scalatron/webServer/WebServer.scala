@@ -5,7 +5,7 @@ import java.net.{UnknownHostException, InetAddress}
 import org.eclipse.jetty.servlet.{ServletContextHandler, ServletHolder}
 import javax.servlet.http.HttpServlet
 import rest.RestApplication
-import scalatron.scalatron.api.Scalatron
+import scalatron.core.Scalatron
 import com.sun.jersey.spi.container.servlet.ServletContainer
 import servelets.{AdminServlet, UserServlet, HomePageServlet, WebContext, GitServlet}
 import akka.actor.ActorSystem
@@ -16,12 +16,12 @@ import akka.actor.ActorSystem
   * at some point. That's why apply() receives a reference to the Akka actor system, which is not currently used.
   */
 object WebServer {
-    def printArgList() {
-        println("  -webui <dir>             directory containing browser UI (default: ../webui)")
-        println("  -users <dir>             directory containing browser UI workspaces (default: ../users)")
-        println("  -port <int>              port to serve browser UI at (default: 8080)")
-        println("  -browser yes|no          open a browser showing Scalatron IDE (default: yes)")
-    }
+    def cmdArgList = Iterable(
+        "webui <dir>" -> "directory containing browser UI (default: ../webui)",
+        "users <dir>" -> "directory containing browser UI workspaces (default: ../users)",
+        "port <int>" -> "port to serve browser UI at (default: 8080)",
+        "browser yes|no" -> "open a browser showing Scalatron IDE (default: yes)"
+    )
 
     def apply(actorSystem: ActorSystem, scalatron: Scalatron, argMap: Map[String, String], verbose: Boolean) = {
 

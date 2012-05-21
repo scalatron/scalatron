@@ -1,6 +1,6 @@
 package scalatron.webServer.rest.resources
 
-import scalatron.scalatron.api.Scalatron
+import scalatron.core.Scalatron
 import javax.ws.rs.ext.ContextResolver
 import javax.servlet.http.HttpServletRequest
 import javax.ws.rs.core.{UriInfo, Context}

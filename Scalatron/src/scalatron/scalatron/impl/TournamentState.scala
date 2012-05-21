@@ -1,21 +1,17 @@
-package scalatron.core
+package scalatron.scalatron.impl
 
 /** This material is intended as a community resource and is licensed under the
   * Creative Commons Attribution 3.0 Unported License. Feel free to use, modify and share it.
   */
 
-import TournamentState.LeaderBoard
+import scalatron.core.Scalatron.LeaderBoard
 import scalatron.core.TournamentRoundResult.AggregateResult
+import scalatron.core.{Simulation, TournamentRoundResult}
 
 
 object TournamentState
 {
     val Empty = new TournamentState
-
-    /** A Leaderboard is an array holding the winners across the most recent 1,5,20 and all rounds.
-      * The Array contains tuples: (rounds, Array[(name,score)] */
-    type LeaderBoard = Array[(Int, Array[(String, Int)])]
-
 }
 
 

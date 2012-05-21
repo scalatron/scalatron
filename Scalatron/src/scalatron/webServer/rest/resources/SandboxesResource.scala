@@ -2,14 +2,14 @@ package scalatron.webServer.rest.resources
 
 import javax.ws.rs._
 import core.{Response, MediaType}
-import scalatron.scalatron.api.Scalatron.SandboxState
+import scalatron.core.Scalatron.SandboxState
 import collection.JavaConversions
 import collection.JavaConversions.JMapWrapper
 import scalatron.botwar.CommandParser
 import scalatron.webServer.rest.UserSession
 import UserSession.SandboxAttributeKey
 import org.eclipse.jetty.http.HttpStatus
-import scalatron.scalatron.api.Scalatron
+import scalatron.core.Scalatron
 
 
 @Produces(Array(MediaType.APPLICATION_JSON))

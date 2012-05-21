@@ -2,7 +2,7 @@ package scalatron.scalatron.impl
 
 import scalatron.util.FileUtil
 import FileUtil.deleteRecursively
-import scalatron.scalatron.api.Scalatron
+import scalatron.core.Scalatron
 import Scalatron.SourceFile
 import Scalatron.SourceFileCollection
 

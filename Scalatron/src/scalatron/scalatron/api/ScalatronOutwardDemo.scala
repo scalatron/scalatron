@@ -3,13 +3,14 @@
   */
 package scalatron.scalatron.api
 
-import scalatron.scalatron.api.Scalatron.Constants._
+import scalatron.core.Scalatron.Constants._
 import java.io.{IOException, File}
 import akka.actor.ActorSystem
 import scalatron.util.FileUtil
+import scalatron.core.Scalatron
 
 
-object ScalatronDemo
+object ScalatronOutwardDemo
 {
     def demo(args: Array[String]) {
         //------------------------------------------------------------------------------------------
@@ -36,7 +37,7 @@ object ScalatronDemo
 
             // create a Scalatron server instance - this is the main API entry point
             val scalatron =
-                Scalatron(
+                ScalatronOutward(
                     Map(
                         ( "-users" -> usersBaseDirPath ),
                         ( "-samples" -> samplesBaseDirPath ),

@@ -3,8 +3,8 @@
   */
 package scalatron.botwar
 
-import scalatron.core.{Simulation, Plugin}
-import Simulation.Time
+import scalatron.core.EntityController
+import scalatron.core.Simulation.Time
 import akka.dispatch.ExecutionContext
 
 
@@ -29,7 +29,7 @@ case class State(
 
 object State
 {
-    def createInitial(config: Config, randomSeed: Int, combinedPlugins: Iterable[Plugin] )(executionContextForUntrustedCode: ExecutionContext) = {
+    def createInitial(config: Config, randomSeed: Int, entityControllers: Iterable[EntityController], executionContextForUntrustedCode: ExecutionContext) = {
         val time = 0L
         val board =
             Board.createInitial(
@@ -38,7 +38,7 @@ object State
                 config.permanent.stepsPerRound,
                 config.roundIndex,
                 randomSeed,
-                combinedPlugins
+                entityControllers
             )(
                 executionContextForUntrustedCode
             )

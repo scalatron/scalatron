@@ -20,7 +20,9 @@ case object AugmentedDynamics extends ((State,Random,Iterable[(Entity.Id,Iterabl
             // inform the plug-ins that the game is over
             masterBots.foreach(bot => try {
                 bot.variety match {
-                    case player: Bot.Player => player.controlFunction(Protocol.ServerOpcode.Goodbye + "(energy=" + bot.energy + ")")
+                    case player: Bot.Player =>
+                        // TODO: isolate this into the untrusted execution context
+                        player.entityController.respond(Protocol.ServerOpcode.Goodbye + "(energy=" + bot.energy + ")")
                     case _ => throw new IllegalStateException("expected master bot")
                 }
             } catch {
@@ -240,7 +242,7 @@ case object AugmentedDynamics extends ((State,Random,Iterable[(Entity.Id,Iterabl
                                 .updated(Protocol.PropertyName.Debug, logMessage + "\n" + disable.text)
                             val updatedVariety =
                                 thisPlayer.copy(
-                                controlFunction = (in: String) => "Log(text=" + logMessage + ")", // make sure it's never called again (but note that sibling minibots/bots use their own ref)
+                                entityController = thisPlayer.entityController.withReplacedControlFunction( (in: String) => "Log(text=" + logMessage + ")"), // make sure it's never called again (but note that sibling minibots/bots use their own ref)
                                 stateMap = updatedStateMap)
                             val updatedThisBot = thisBot.updateVariety(updatedVariety)
                             updatedBoard = updatedBoard.updateBot(updatedThisBot)
@@ -397,7 +399,7 @@ case object AugmentedDynamics extends ((State,Random,Iterable[(Entity.Id,Iterabl
                                 bonk()
                             } else {
                                 // master on slave
-                                if(movingPlayer.plugin == steppedOnPlayer.plugin) {
+                                if(movingPlayer.entityController == steppedOnPlayer.entityController) {
                                     // master on own slave -- re-absorb
                                     updatedBoard = updatedBoard.removeBot(steppedOnBot.id)
                                     val energyDelta = steppedOnBot.energy
@@ -415,7 +417,7 @@ case object AugmentedDynamics extends ((State,Random,Iterable[(Entity.Id,Iterabl
                         } else {
                             if(steppedOnPlayer.isMaster) {
                                 // slave on master -- always disappears
-                                if(movingPlayer.plugin == steppedOnPlayer.plugin) {
+                                if(movingPlayer.entityController == steppedOnPlayer.entityController) {
                                     // slave on own master -- gets re-absorbed
                                     updatedBoard = updatedBoard.removeBot(movingBot.id)
                                     val energyDelta = movingBot.energy

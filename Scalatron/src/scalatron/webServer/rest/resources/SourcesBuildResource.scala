@@ -1,7 +1,7 @@
 package scalatron.webServer.rest.resources
 
 import java.util.concurrent.TimeoutException
-import scalatron.scalatron.api.Scalatron
+import scalatron.core.Scalatron
 import javax.ws.rs._
 import core.{Response, MediaType}
 import org.eclipse.jetty.http.HttpStatus

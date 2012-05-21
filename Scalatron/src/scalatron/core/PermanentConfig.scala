@@ -18,7 +18,5 @@ object PermanentConfig
     }
 
     /** Dump the display-specific command line configuration options via println. */
-    def printArgList() {
-        println("  -steps <int>             steps per game cycle (default: 5000)")
-    }
+    def cmdArgList = Iterable("steps <int>" -> "steps per game cycle (default: 5000)")
 }

@@ -1,9 +1,9 @@
 package scalatron.scalatron.impl
 
-import scalatron.scalatron.api.Scalatron
+import scalatron.core.Scalatron
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.treewalk.TreeWalk
-import scalatron.scalatron.api.Scalatron.{SourceFile, SourceFileCollection, User}
+import scalatron.core.Scalatron.{SourceFile, SourceFileCollection, User}
 import org.eclipse.jgit.dircache.DirCacheCheckout
 import org.eclipse.jgit.errors.{CorruptObjectException, NoWorkTreeException}
 import java.io.{IOException, IOError}

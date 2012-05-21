@@ -3,7 +3,7 @@
   */
 package scalatron.botwar
 
-import scalatron.core.{Simulation, Plugin}
+import scalatron.core.{Simulation, EntityController}
 import Simulation.Time
 import scala.util.Random
 import BoardParams.Perimeter
@@ -88,10 +88,10 @@ case class Board(
     def addBot(pos: XY, extent: XY, creationTime: Time, energy: Int, variety: Bot.Variety) : Board =
         copy(nextId = nextId + 1, bots = bots.updated(nextId, Bot(nextId, pos, extent, creationTime, Time.SomtimeInThePast, energy, variety)))
 
-    def addBotThatIsMaster(pos: XY, creationTime: Time, controlFunction: (String => String), plugin: Plugin) : Board =
+    def addBotThatIsMaster(pos: XY, creationTime: Time, entityController: EntityController) : Board =
         copy(nextId = nextId + 1, bots = bots.updated(nextId,
             Bot(nextId, pos, XY.One, creationTime, Time.SomtimeInThePast, Constants.Energy.Initial,
-                Bot.Player(controlFunction, plugin, Bot.MasterGeneration, nextId, (0,2), 0L, "", Iterable.empty, Map(Protocol.PropertyName.Name -> plugin.name))
+                Bot.Player(entityController, Bot.MasterGeneration, nextId, (0,2), 0L, "", Iterable.empty, Map(Protocol.PropertyName.Name -> entityController.name))
         )))
 
     def sprinkle(count: Int, rnd: Random, creationTime: Time, boardSize: XY, variety: Bot.Variety) =
@@ -156,7 +156,8 @@ object Board
         time: Time,
         stepsPerRound: Int,
         roundIndex: Int,
-        randomSeed: Int, combinedPlugins: Iterable[Plugin]
+        randomSeed: Int,
+        entityControllers: Iterable[EntityController]
     )(
         implicit executionContextForUntrustedCode: ExecutionContext
     )
@@ -169,47 +170,37 @@ object Board
         updatedBoard = spawnPerimeterWalls(boardParams.perimeter, updatedBoard, time, boardSize)
         updatedBoard = spawnRandomWalls(rnd, updatedBoard, time, boardSize, boardParams.wallCount)
 
-
-
-        // generate players' control functions -- use Akka to work this out
+        // initialize the entity controllers' control functions -- use Akka to work this out
         // isolate the control function factory invocation via the untrusted thread pool
-        val future = Future.traverse(combinedPlugins)(plugin => Future {
-            // initialize plugins
+        val future = Future.traverse(entityControllers)(entityController => Future {
             try {
-                val controlFunction = plugin.controlFunctionFactory.apply()
-
                 // invoke Welcome()
-                controlFunction(
+                entityController.respond(
                     Protocol.ServerOpcode.Welcome + "(" +
-                        "name=" + plugin.name + "," +
+                        "name=" + entityController.name + "," +
                         "apocalypse=" + stepsPerRound + "," +
                         "round=" + roundIndex +
                         ")")
-
-                Some((plugin, controlFunction))
             } catch {
                 case t: Throwable =>
-                    System.err.println("error: exception while instantiating control function of plugin '" + plugin.name + "': " + t)
+                    System.err.println("error: exception while instantiating control function of plugin '" + entityController.name + "': " + t)
                     None
             }
         })
 
         // Note: an overall timeout across all bots is a temporary solution - we want timeouts PER BOT
-        val pluginsAndControlFunctions =
-            try {
-                val result = Await.result(future, 2000 millis)      // generous timeout - note that this is over ALL plug-ins
-                result.flatten     // remove failed instantiations
-            } catch {
-                case t: TimeoutException =>
-                    System.err.println("warning: timeout while instantiating control function of one of the plugins")
-                    Iterable.empty          // temporary - disables ALL bots, which is not the intention
-            }
-
+        try {
+            Await.result(future, 2000 millis)      // generous timeout - note that this is over ALL plug-ins
+        } catch {
+            case t: TimeoutException =>
+                System.err.println("warning: timeout while instantiating control function of one of the plugins")
+                Iterable.empty          // temporary - disables ALL bots, which is not the intention
+        }
 
         // spawn players
-        pluginsAndControlFunctions.foreach( pluginAndControlFunction => {
+        entityControllers.foreach( entityController => {
             val position = updatedBoard.emptyRandomPos(rnd, boardSize)
-            updatedBoard = updatedBoard.addBotThatIsMaster(position, time, pluginAndControlFunction._2, pluginAndControlFunction._1)
+            updatedBoard = updatedBoard.addBotThatIsMaster(position, time, entityController)
         } )
 
         updatedBoard

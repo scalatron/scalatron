@@ -18,9 +18,8 @@ import scalatron.util.FileUtil._
 import ConfigFile.loadConfigFile
 import ConfigFile.updateConfigFileMulti
 import ScalatronUser.buildSourceFilesIntoJar
-import scalatron.scalatron.api.Scalatron.Constants._
-import scalatron.scalatron.api.Scalatron
-import scalatron.scalatron.api.Scalatron._
+import scalatron.core.Scalatron.Constants._
+import scalatron.core.Scalatron._
 import java.util.concurrent.TimeoutException
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors._
@@ -30,7 +29,7 @@ import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.RepositoryCache
 import org.eclipse.jgit.lib.RepositoryCache.FileKey
 import org.eclipse.jgit.util.FS
-import scalatron.core.{RoundConfig, PermanentConfig, Plugin}
+import scalatron.core._
 
 
 case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatron.User {
@@ -346,7 +345,7 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
     def createSandbox(argMap: Map[String, String]) = {
         // determine the location of the user's local bot
         val localJarFile = new File(localJarFilePath)
-        val plugins: Iterable[Plugin.FromJarFile] =
+        val plugins: Iterable[Plugin] =
             if( localJarFile.exists() ) {
                 // attempt to load the plug-in
                 val eitherFactoryOrException =
@@ -376,6 +375,8 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
         // TODO: allow the user to merge in other plug-ins, either from the tournament /bots directory,..
         // TODO: ..or from some repository, such as /tutorial/bots
 
+        val entityControllers = EntityControllerImpl.fromPlugins(plugins)(scalatron.executionContextForUntrustedCode)
+
         // determine the permanent configuration for the game - in particular, that it should run forever
         val permanentConfig = PermanentConfig(secureMode = scalatron.secureMode, stepsPerRound = Int.MaxValue)
 
@@ -383,7 +384,7 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
         val roundIndex = 0
         val roundConfig = RoundConfig(permanentConfig, argMap, roundIndex)
 
-        val initialSimState = scalatron.game.startHeadless(plugins, roundConfig)(scalatron.executionContextForUntrustedCode)
+        val initialSimState = scalatron.game.startHeadless(entityControllers, roundConfig, scalatron.executionContextForUntrustedCode)
         val sandboxId = nextSandboxId
         nextSandboxId += 1
         ScalatronSandbox(sandboxId, this, initialSimState)

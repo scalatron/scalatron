@@ -2,12 +2,12 @@ package scalatron.botwar.renderer
 
 import scalatron.botwar.State
 import java.awt.{Color, Graphics2D}
-import scalatron.core.{PermanentConfig, TournamentState}
+import scalatron.core.{ScalatronInward, PermanentConfig}
 
 
 case class RenderSourceAndTarget(
     state: State,
-    tournamentState: TournamentState,
+    scalatron: ScalatronInward,
     interactivelyAdjustableSettings: InteractivelyAdjustableSettings,
     permanentConfig: PermanentConfig,
     renderContext: RenderContext,
@@ -80,14 +80,14 @@ object RenderStage {
 
             StatsPanelRenderer.draw(
                 sourceAndTarget.state,
-                sourceAndTarget.tournamentState,
+                sourceAndTarget.scalatron,
                 sourceAndTarget.permanentConfig,
                 sourceAndTarget.interactivelyAdjustableSettings )
 
 
             ScorePanelRenderer.draw(sourceAndTarget.state, sourceAndTarget.interactivelyAdjustableSettings)
 
-            LeaderboardPanelRenderer.draw(sourceAndTarget.tournamentState.leaderBoard)
+            LeaderboardPanelRenderer.draw(sourceAndTarget.scalatron.tournamentLeaderboard)
 
             Left(RenderJob(BlitToScreen, sourceAndTarget))
         }

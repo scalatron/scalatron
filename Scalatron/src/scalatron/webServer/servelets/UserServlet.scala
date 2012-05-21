@@ -1,7 +1,7 @@
 package scalatron.webServer.servelets
 
-import scalatron.scalatron.api.Scalatron
-import scalatron.scalatron.api.Scalatron.SourceFile
+import scalatron.core.Scalatron
+import scalatron.core.Scalatron.SourceFile
 import Scalatron.Constants._
 import javax.servlet.http.{Cookie, HttpServletResponse, HttpServletRequest}
 

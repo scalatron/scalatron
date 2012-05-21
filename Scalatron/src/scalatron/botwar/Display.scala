@@ -45,10 +45,10 @@ object Display {
     }
 
     /** Dump the display-specific command line configuration options via println. */
-    def printArgList() {
-        println("  -frameX <int>|max        window width (pixels; default: 640)")
-        println("  -frameY <int>|max        window height (pixels; default: 500)")
-    }
+    def cmdArgList = Iterable(
+        "frameX <int>|max" -> "window width (pixels; default: 640)",
+        "frameY <int>|max" -> "window height (pixels; default: 500)"
+    )
 
     case class RenderTarget(frameGraphics: Graphics2D, canvasSizeX: Int, canvasSizeY: Int)
 }

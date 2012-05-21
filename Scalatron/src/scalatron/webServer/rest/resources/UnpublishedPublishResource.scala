@@ -2,7 +2,7 @@ package scalatron.webServer.rest.resources
 
 import javax.ws.rs.{PUT, Path, Consumes, Produces}
 import javax.ws.rs.core.{Response, MediaType}
-import scalatron.scalatron.api.Scalatron
+import scalatron.core.Scalatron
 import org.eclipse.jetty.http.HttpStatus
 import java.io.IOError
 

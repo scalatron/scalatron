@@ -1,6 +1,6 @@
 package scalatron.webServer.servelets
 
-import scalatron.scalatron.api.Scalatron
+import scalatron.core.Scalatron
 
 
 case class WebContext(

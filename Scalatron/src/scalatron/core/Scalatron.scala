@@ -1,53 +1,47 @@
+package scalatron.core
+
 /** This material is intended as a community resource and is licensed under the
   * Creative Commons Attribution 3.0 Unported License. Feel free to use, modify and share it.
   */
 
-package scalatron.scalatron.api
-
-
-import scalatron.scalatron.api.Scalatron.{Sample, User, SourceFileCollection}
-import akka.actor.ActorSystem
+import scalatron.core.Scalatron.{Sample, User, SourceFileCollection}
 import java.io.{FileWriter, File}
 import scalatron.util.FileUtil
 import FileUtil.use
 
 
-/** The trait representing the main API entry point of the Scalatron server. */
+/** This is the "outward" API that Scalatron exposes towards the main function and the web server.
+  * It represents the main API entry point of the Scalatron server. It is distinct from the "inward"
+  * API that Scalatron exposes towards the game plug-ins it loads.
+  */
 trait Scalatron
 {
     //----------------------------------------------------------------------------------------------
-    // version, start/run/stop
+    // configuration information
     //----------------------------------------------------------------------------------------------
 
     /** Returns the version of the Scalatron server exposing this API, e.g. "1.0.0.2". */
-    def version : String
+    def version: String
 
     /** Returns whether the Scalatron server is running in secure mode. In secure mode, bot plug-in
       * code is subject to a range of restrictions: access to sensitive resources (network, file system)
       * is denied; control function processing time is restricted; number of entities a plug-in can
-      * have at any one time is restricted. */
-    def secureMode : Boolean
+      * have at any one time is restricted.
+      * @return true if Scalatron is running in "secure" mode and bot plug-ins should be isolated and constrained. */
+    def secureMode: Boolean
+
+    /** @return true if Scalatron is running in "verbose" mode and debug information may be logged to the console. */
+    def verbose: Boolean
+
+    /** @return map containing command line arguments passed to the Scalatron server at startup. */
+    def argMap: Map[String, String]
 
     /** Returns the path of the directory where Scalatron is installed.
       * Note: this path is passed into the API as a parameter; it is determined by detecting the
       * path where the Scalatron.jar file resides. You can use this path to construct dependent
       * file system locations (whic the server does for /samples, /bots, /users, /webui, etc.) */
-    def installationDirectoryPath : String
+    def installationDirectoryPath: String
 
-    /** Starts any background threads required by the Scalatron server (e.g., the compile server). */
-    def start(argMap: Map[String, String] = Map.empty)
-
-    /** Passes control of the current thread to a loop that simulates tournament rounds in a
-      * Scalatron game server, either until user exits (e.g. by closing the main window) or
-      * until the given number of rounds has been played.
-      * Note that the run may be headless if the user so requests it in the given argument
-      * map ("-headless" -> "yes").
-      * @param argMap the command line argument map to use to configure the tournament run
-      */
-    def run(argMap: Map[String, String] = Map.empty)
-
-    /** Shuts down any background threads created in start(). */
-    def shutdown()
 
 
     //----------------------------------------------------------------------------------------------
@@ -59,7 +53,7 @@ trait Scalatron
       * The method has side effects:
       * - The user base directory ("/Scalatron/users") is created if it does not exist.
       * - The Administrator account directory ("/Scalatron/users/Administrator") and
-      *   configuration file are created if they do not exist.
+      * configuration file are created if they do not exist.
       * @throws IOError if failed to create user base directory or Administrator directory or config file
       */
     def users(): Iterable[User]
@@ -84,9 +78,9 @@ trait Scalatron
     /** Checks if the given string would represent a valid user name by examining the characters
       * in the string. A variety of characters are not allowed primarily for the following reasons:
       * (a) the user names are used as components of path names on disk;
-      *     this poses a security problem if we allow names that include substrings like "../"
+      * this poses a security problem if we allow names that include substrings like "../"
       * (b) the user names are used as components of package names in Scala source files;
-      *     we need to obey Scala's rules. This rules out space, dash, leading numbers, etc.
+      * we need to obey Scala's rules. This rules out space, dash, leading numbers, etc.
       */
     def isUserNameValid(name: String): Boolean
 
@@ -130,28 +124,24 @@ trait Scalatron
     /** Returns the leader board of the tournament, which holds the winners, sorted by score,
       * across the most recent 1,5,20 and all rounds. The returned array contains four entries,
       * each a tuple: (rounds, Array[(name,score)]). */
-    def tournamentLeaderboard: Array[(Int, Array[(String, Int)])]
+    def tournamentLeaderboard: Scalatron.LeaderBoard
 }
 
 
-object Scalatron {
-    /** Creates an instance of a Scalatron server and returns a reference to the Scalatron API.
-      * Usage:
-      * <pre>
-      * val scalatron = Scalatron(Map( "-users" -> webUserBaseDirPath, "-plugins" -> pluginBaseDirPath))
-      * scalatron.start()
-      * scalatron.listUsers()       // or whatever you need
-      * scalatron.run()             // run tournament rounds, blocking
-      * scalatron.shutdown()
-      * </pre>
-      */
-    def apply(argMap: Map[String, String], actorSystem: ActorSystem, verbose: Boolean = false): Scalatron =
-        scalatron.scalatron.impl.ScalatronImpl(argMap, actorSystem, verbose)
+object Scalatron
+{
+    /** A Leaderboard is an array holding the winners across the most recent 1,5,20 and all rounds.
+      * The Array contains tuples: (rounds, Array[(name,score)] */
+    type LeaderBoard = Array[(Int, Array[(String, Int)])]
+
 
 
     /** Specific exceptions thrown by Scalatron API. */
     class ScalatronException(msg: String) extends RuntimeException(msg)
-    object ScalatronException {
+
+    object ScalatronException
+    {
+
         /** ScalatronException.IllegalUserName: user name contained illegal characters. */
         case class IllegalUserName(userName: String, violation: String) extends ScalatronException("illegal user name '" + userName + "': " + violation)
 
@@ -163,13 +153,15 @@ object Scalatron {
 
         /** ScalatronException.Forbidden: if an operation is forbidden, such as deleting the Administrator account. */
         case class Forbidden(reason: String) extends ScalatronException(reason)
+
     }
 
 
     /** Scalatron.User: trait that provides an interface for interaction with web user accounts of
       * the Scalatron server. Essentially just a wrapper for a user name and a reference to the
       * main Scalatron trait instance. */
-    trait User {
+    trait User
+    {
         //----------------------------------------------------------------------------------------------
         // account management
         //----------------------------------------------------------------------------------------------
@@ -188,7 +180,6 @@ object Scalatron {
         def delete()
 
 
-
         // get/set configuration attributes
 
         /** Updates the configuration attribute map of the user.
@@ -199,7 +190,7 @@ object Scalatron {
           * Caution: ensure proper credentials for remote users when updating the 'password' value this way.
           * @throws IOError on failure to read or write the user's configuration file.
           */
-        def updateAttributes(map: Map[String,String])
+        def updateAttributes(map: Map[String, String])
 
         /** Returns the configuration attribute value associated with the given key.
           * Returns None if the attempt to find a configuration file or to find the key fails.
@@ -207,7 +198,7 @@ object Scalatron {
           * map for this user or None if no such map exists.
           * Caution: do not return the 'password' value through a remote connection.
           * Does not throw any exceptions (IO errors are mapped to None). */
-        def getAttributeOpt(key: String) : Option[String] =
+        def getAttributeOpt(key: String): Option[String] =
             getAttributeMapOpt match {
                 case None => None
                 case Some(attibuteMap) => attibuteMap.get(key)
@@ -216,7 +207,7 @@ object Scalatron {
         /** Returns the configuration attribute map for this user or None if no such map exists.
           * Caution: do not return the 'password' value through a remote connection.
           * Does not throw any exceptions (IO errors are mapped to None). */
-        def getAttributeMapOpt: Option[Map[String,String]]
+        def getAttributeMapOpt: Option[Map[String, String]]
 
 
         // get/set password
@@ -234,7 +225,6 @@ object Scalatron {
         def setPassword(password: String) { updateAttributes(Map(Scalatron.Constants.PasswordKey -> password)) }
 
 
-
         //----------------------------------------------------------------------------------------------
         // source code & build management
         //----------------------------------------------------------------------------------------------
@@ -243,7 +233,7 @@ object Scalatron {
           * @throws IllegalStateException if the source directory does not exist.
           * @throws IOError if the source files could not be read.
           */
-        def sourceFiles : SourceFileCollection
+        def sourceFiles: SourceFileCollection
 
         /** Updates the source code of the given user to the given source files.
           * The updated source file(s) are written to e.g. "/Scalatron/users/{user}/src/".
@@ -252,7 +242,7 @@ object Scalatron {
           * This is intended for use by the web ui when a user saves her work to the server
           * before instructing it to build them.
           * @throws IOError if the source files could not be written.
-          * */
+          **/
         def updateSourceFiles(sourceFiles: SourceFileCollection)
 
         /** Builds a local (unpublished) .jar bot plug-in from the given (in-memory) source files.
@@ -261,12 +251,12 @@ object Scalatron {
           * - patches up the package statements to make the fully-qualified class names user-specific
           * - compiles those source files into a temporary output directory (e.g. "/Scalatron/users/{user}/out")
           * - if successful, zips the resulting .class files into a .jar archive in the user's bot
-          *   directory (e.g. as "/Scalatron/users/{user}/bot/ScalatronBot.jar")
+          * directory (e.g. as "/Scalatron/users/{user}/bot/ScalatronBot.jar")
           * - deletes the temporary output directory
           *
           * @return a build result container, which specifies whether the build (compilation and
-          * .jar zipping) was successful, how many errors and warnings were seen, and the list of
-          * compiler messages (which include line and column number information).
+          *         .jar zipping) was successful, how many errors and warnings were seen, and the list of
+          *         compiler messages (which include line and column number information).
           * @throws IllegalStateException if compilation service is unavailable, sources don't exist etc.
           * @throws IOError if source files cannot be read from disk, etc.
           */
@@ -278,15 +268,15 @@ object Scalatron {
           * Internals:
           * - patches up the package statements to make the fully-qualified class names user-specific
           * - enumerates the source files in the source directory of the current user (all files
-          *   residing in e.g. "/Scalatron/users/{user}/src")
+          * residing in e.g. "/Scalatron/users/{user}/src")
           * - compiles those source files into a temporary output directory (e.g. "/Scalatron/users/{user}/out")
           * - if successful, zips the resulting .class files into a .jar archive in the user's bot
-          *   directory (e.g. as "/Scalatron/users/{user}/bot/ScalatronBot.jar")
+          * directory (e.g. as "/Scalatron/users/{user}/bot/ScalatronBot.jar")
           * - deletes the temporary output directory
           *
           * @return a build result container, which specifies whether the build (compilation and
-          * .jar zipping) was successful, how many errors and warnings were seen, and the list of
-          * compiler messages (which include line and column number information).
+          *         .jar zipping) was successful, how many errors and warnings were seen, and the list of
+          *         compiler messages (which include line and column number information).
           * @throws IllegalStateException if compilation service is unavailable, sources don't exist etc.
           * @throws IOError if source files cannot be read from disk, etc.
           */
@@ -298,7 +288,7 @@ object Scalatron {
           * This is intended for use by the web ui or custom tools using the web API when a
           * user wants to upload an already-built bot plug-in. Stream the plug-in .jar file to
           * this location, then publish into the tournament or start a private game. */
-        def unpublishedBotPluginPath : String
+        def unpublishedBotPluginPath: String
 
 
         //----------------------------------------------------------------------------------------------
@@ -307,7 +297,7 @@ object Scalatron {
 
         /** Returns the git repository associated with this user. You'll only need to use this if you want to
           * manipulate the underlying git repository yourself, e.g. to provide web access. */
-        def gitRepository : org.eclipse.jgit.lib.Repository
+        def gitRepository: org.eclipse.jgit.lib.Repository
 
 
         /** Returns a sorted collection of versions, sorted by age, with newest version first.
@@ -328,43 +318,42 @@ object Scalatron {
           * @throws IllegalStateException if something went wrong internally with the version control system
           * @throws IOError if source files cannot be written to disk, etc.
           * @return Some(version) if a version was created, None otherwise.
-          * */
+          **/
         def createVersion(label: String): Option[Version]
 
-/*
-        /** Creates a new version with the given label if any changes were made. Creating a version overwrites the
-          * source files that are currently in the user's working directory, then generates a new version from them.
-          * @param label an optional label to apply to the version (may be empty).
-          * @param sourceFiles the source files that will be stored in the version.
-          * @throws IllegalStateException if version (base) directory could not be created
-          * @throws IOError if source files cannot be written to disk, etc.
-          * */
-        @deprecated("use udateSources() and createVersion() separately")
-        def updateSourcesAndCreateVersion(label: String, sourceFiles: SourceFileCollection): Option[Version]
+        /*
+                /** Creates a new version with the given label if any changes were made. Creating a version overwrites the
+                  * source files that are currently in the user's working directory, then generates a new version from them.
+                  * @param label an optional label to apply to the version (may be empty).
+                  * @param sourceFiles the source files that will be stored in the version.
+                  * @throws IllegalStateException if version (base) directory could not be created
+                  * @throws IOError if source files cannot be written to disk, etc.
+                  * */
+                @deprecated("use udateSources() and createVersion() separately")
+                def updateSourcesAndCreateVersion(label: String, sourceFiles: SourceFileCollection): Option[Version]
 
-        /** Creates a new version by storing a backup copy of the source files currently present in the source
-          * code directory of the user if the given version creation policy requires it. This method is intended as
-          * a convenience call you can perform before overwriting the source code in the user's workspace with
-          * new, updated source files.
-          * The function implements the following logic:
-          * - if policy == Always, a backup version is created, no matter what
-          * - if policy == Never, no backup version is created, no matter what
-          * - if policy == IfDifferent, a backup version is created if and only if:
-          *     (a) the current version is different from the incoming, updated version AND
-          *     (b) the current version is different from the latest version in the history, or the history is empty
-          * @param policy the version creation policy: IfDifferent, Always, Never.
-          * @param label an optional label to apply to the version IF it is created (may be empty).
-          * @param b the incoming, updated source files that will be used to determine whether the files on disk are
-          *                    different in the policy "IfDifferent". Note that theses are NOT the files that
-          *                    will be stored in the version!
-          * @return an optional Version object, valid if a version was actually created.
-          * @throws IllegalStateException if version (base) directory could not be created or source directory could not be read.
-          * @throws IOError if source files cannot be written to disk, etc.
-          * */
-        @deprecated("obsolete; use udateSources() and createVersion() separately")
-        def createBackupVersion(policy: VersionPolicy, label: String, b: SourceFileCollection): Option[Version]
-*/
-
+                /** Creates a new version by storing a backup copy of the source files currently present in the source
+                  * code directory of the user if the given version creation policy requires it. This method is intended as
+                  * a convenience call you can perform before overwriting the source code in the user's workspace with
+                  * new, updated source files.
+                  * The function implements the following logic:
+                  * - if policy == Always, a backup version is created, no matter what
+                  * - if policy == Never, no backup version is created, no matter what
+                  * - if policy == IfDifferent, a backup version is created if and only if:
+                  *     (a) the current version is different from the incoming, updated version AND
+                  *     (b) the current version is different from the latest version in the history, or the history is empty
+                  * @param policy the version creation policy: IfDifferent, Always, Never.
+                  * @param label an optional label to apply to the version IF it is created (may be empty).
+                  * @param b the incoming, updated source files that will be used to determine whether the files on disk are
+                  *                    different in the policy "IfDifferent". Note that theses are NOT the files that
+                  *                    will be stored in the version!
+                  * @return an optional Version object, valid if a version was actually created.
+                  * @throws IllegalStateException if version (base) directory could not be created or source directory could not be read.
+                  * @throws IOError if source files cannot be written to disk, etc.
+                  * */
+                @deprecated("obsolete; use udateSources() and createVersion() separately")
+                def createBackupVersion(policy: VersionPolicy, label: String, b: SourceFileCollection): Option[Version]
+        */
 
 
         //----------------------------------------------------------------------------------------------
@@ -400,7 +389,6 @@ object Scalatron {
     }
 
 
-
     /** Scalatron.SourceFile: trait that provides an interface for dealing with source code
       * files handed through the API.
       * CBB: do we need to specify some particular kind of encoding?
@@ -408,7 +396,8 @@ object Scalatron {
       *                 The extension is arbitrary, but will usually be ".scala".
       * @param code the source code text associated with this source file.
       */
-    case class SourceFile(filename: String, code: String) {
+    case class SourceFile(filename: String, code: String)
+    {
         require(!filename.startsWith("/")) // minimize security issues
         require(!filename.contains("..")) // minimize security issues
     }
@@ -439,8 +428,8 @@ object Scalatron {
             ))
 
 
-        def areEqual(as: SourceFileCollection, bs: SourceFileCollection, verbose: Boolean) : Boolean =
-            (as.size == bs.size) &&   // same number of files?
+        def areEqual(as: SourceFileCollection, bs: SourceFileCollection, verbose: Boolean): Boolean =
+            (as.size == bs.size) && // same number of files?
                 as.forall(a => {
                     bs.find(_.filename == a.filename) match {
                         case None =>
@@ -493,10 +482,9 @@ object Scalatron {
                 System.err.println("warning: directory expected to contain source files does not exist: %s".format(directoryPath))
                 Iterable.empty
             }
-            else
-            {
+            else {
                 val sourceFiles = directory.listFiles()
-                if( sourceFiles == null || sourceFiles.isEmpty ) {
+                if(sourceFiles == null || sourceFiles.isEmpty) {
                     // no source files there!
                     Iterable.empty
                 } else {
@@ -525,27 +513,31 @@ object Scalatron {
         def writeTo(directoryPath: String, sourceFileCollection: SourceFileCollection, verbose: Boolean = false) {
             sourceFileCollection.foreach(sf => {
                 val path = directoryPath + "/" + sf.filename
-                use(new FileWriter(path)) { _.append(sf.code) }
+                use(new FileWriter(path)) {_.append(sf.code)}
                 if(verbose) println("wrote source file: " + path)
             })
         }
     }
 
 
-
-
-
-
     /** Policy used for optional version generation (e.g. when uploading new source files) that dictates whether
       * and under which circumstances a backup version should be generated.
       */
     sealed trait VersionPolicy
-    object VersionPolicy {
-        case object IfDifferent extends VersionPolicy   // create version if new and old files differ
-        case object Never extends VersionPolicy         // don't create a version, even if new and old files differ
-        case object Always extends VersionPolicy        // always create a version, even if new and old files do not differ
-    }
 
+    object VersionPolicy
+    {
+
+        case object IfDifferent extends VersionPolicy
+
+        // create version if new and old files differ
+        case object Never extends VersionPolicy
+
+        // don't create a version, even if new and old files differ
+        case object Always extends VersionPolicy
+
+        // always create a version, even if new and old files do not differ
+    }
 
 
     /** A container for build results that can be reported back to a user. Contains a flag
@@ -558,15 +550,18 @@ object Scalatron {
         errorCount: Int,
         warningCount: Int,
         messages: Iterable[BuildResult.BuildMessage])
-    object BuildResult {
+
+    object BuildResult
+    {
+
         /** A single build message, such as an error or a warning.
-         * @param sourceFile the source file in which the error occurred. The path is relative
-         *                   to the user's /src directory, e.g. /Scalatron/users/{user}/
-         * @param lineAndColumn the line and column numbers where the error occurred
-         * @param multiLineMessage a (potentially) multi-line message explaining the error
-         * @param severity the severity, 2 = error, 1 = warning, 0 = info
-         */
-        case class BuildMessage(sourceFile: String, lineAndColumn: (Int,Int), multiLineMessage: String, severity: Int)
+          * @param sourceFile the source file in which the error occurred. The path is relative
+          *                   to the user's /src directory, e.g. /Scalatron/users/{user}/
+          * @param lineAndColumn the line and column numbers where the error occurred
+          * @param multiLineMessage a (potentially) multi-line message explaining the error
+          * @param severity the severity, 2 = error, 1 = warning, 0 = info
+          */
+        case class BuildMessage(sourceFile: String, lineAndColumn: (Int, Int), multiLineMessage: String, severity: Int)
 
         val Severity_Error = 2
         val Severity_Warning = 1
@@ -575,7 +570,8 @@ object Scalatron {
 
     /** Scalatron.Sample: interface for dealing with source code samples.
       */
-    trait Sample {
+    trait Sample
+    {
         /** Returns the name of this sample, e.g. "Tutorial Bot 01".
           * The name derives from the name of the associated directory in the /sample base
           * directory on disk, e.g. "/Scalatron/samples/Tutorial Bot 01". */
@@ -595,7 +591,8 @@ object Scalatron {
 
     /** Scalatron.Version: interface for dealing with source code versions of a user.
       */
-    trait Version {
+    trait Version
+    {
         /** Returns the user-unique version ID of this version. */
         def id: String
 
@@ -622,7 +619,8 @@ object Scalatron {
       * Caution: at the moment, certain plug-ins used by the simulation may not be stateless, in which case
       * fetching multiple successor states from the same simulation state will lead to unpredictable results.
       */
-    trait Sandbox {
+    trait Sandbox
+    {
         /** Returns the user object with which this sandbox is associated. */
         def user: User
 
@@ -636,12 +634,12 @@ object Scalatron {
     }
 
 
-
     /** Scalatron.SandboxState encapsulates a particular state in time of a user's private, sandboxed simulation.
       * Caution: at the moment, certain plug-ins used by the simulation may not be stateless, in which case
       * fetching multiple successor states from the same simulation state will lead to unpredictable results.
       */
-    trait SandboxState {
+    trait SandboxState
+    {
         /** Returns the sandbox instance with which this state is associated. */
         def sandbox: Sandbox
 
@@ -660,7 +658,8 @@ object Scalatron {
     }
 
 
-    trait SandboxEntity {
+    trait SandboxEntity
+    {
         /** Returns the unique ID of this entity. */
         def id: Int
 
@@ -688,7 +687,8 @@ object Scalatron {
     }
 
 
-    object Constants {
+    object Constants
+    {
         /** Name of the configuration file that resides in each web user's directory, containing
           * password, editor theme, etc.  */
         val ConfigFilename = "config.txt"
@@ -698,15 +698,24 @@ object Scalatron {
         val AdminUserName = "Administrator"
         val AdminDefaultPassword = "" // empty password -- allow for login / can be changed later
 
-        val TournamentBotsDirectoryName = "bots" // e.g. in "/Scalatron/bots"
-        val UsersDirectoryName = "users" // e.g. in "/Scalatron/users"
-        val UsersOutputDirectoryName = "out" // e.g. in "/Scalatron/users/{user}/out"
-        val UsersBotDirectoryName = "bot" // e.g. in "/Scalatron/users/{user}/bot"
-        val UsersSourceDirectoryName = "src" // e.g. in "/Scalatron/users/{user}/src"
-        val UsersPatchedSourceDirectoryName = "patched" // e.g. in "/Scalatron/users/{user}/patched"
-        val UsersVersionsDirectoryName = "versions" // e.g. in "/Scalatron/users/{user}/versions"
-        val UsersSourceFileName = "Bot.scala" // e.g. in "/Scalatron/users/{user}/src/Bot.scala"
-        val SamplesDirectoryName = "samples" // e.g. in "/Scalatron/samples"
+        val TournamentBotsDirectoryName = "bots"
+        // e.g. in "/Scalatron/bots"
+        val UsersDirectoryName = "users"
+        // e.g. in "/Scalatron/users"
+        val UsersOutputDirectoryName = "out"
+        // e.g. in "/Scalatron/users/{user}/out"
+        val UsersBotDirectoryName = "bot"
+        // e.g. in "/Scalatron/users/{user}/bot"
+        val UsersSourceDirectoryName = "src"
+        // e.g. in "/Scalatron/users/{user}/src"
+        val UsersPatchedSourceDirectoryName = "patched"
+        // e.g. in "/Scalatron/users/{user}/patched"
+        val UsersVersionsDirectoryName = "versions"
+        // e.g. in "/Scalatron/users/{user}/versions"
+        val UsersSourceFileName = "Bot.scala"
+        // e.g. in "/Scalatron/users/{user}/src/Bot.scala"
+        val SamplesDirectoryName = "samples"
+        // e.g. in "/Scalatron/samples"
         val SamplesSourceDirectoryName = "src" // e.g. in "/Scalatron/samples/{sample}/src"
 
         val gitDirectoryName = ".git"
