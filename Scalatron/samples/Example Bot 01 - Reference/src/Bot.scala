@@ -18,7 +18,7 @@ object ControlFunction
 {
     def forMaster(bot: Bot) {
         // demo: log the view of the master bot into the debug output (if running in the browser sandbox)
-        bot.log(bot.view.cells.grouped(31).mkString("\n"))
+        // bot.log(bot.view.cells.grouped(31).mkString("\n"))
 
         val (directionValue, nearestEnemyMaster, nearestEnemySlave) = analyzeViewAsMaster(bot.view)
 
