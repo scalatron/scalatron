@@ -65,7 +65,7 @@ The game to be loaded can be specified on the command line with the parameter `-
 to `BotWar`. The server will look for a `.jar` file with this name in the `/bin` directory below the main
 installation directory. For `BotWar`, for example, it would look for a file called `Scalatron/bin/BotWar.jar`.
 
-Within this `.jar` file, the Scalatron then attempts to locate a class with the fully qualified class name
+Within this `.jar` file, Scalatron then attempts to locate a class with the fully qualified class name
 `scalatron.GameFactory`. When such a class is found, Scalatron next looks for a method on that class called
 `create`, taking no parameters and returning an instance of a class implementing the trait `scalatron.core.Game`.
 
@@ -83,23 +83,25 @@ following methods on your `Game` implementation:
   def runVisually(rounds: Int, scalatron: scalatron.core.ScalatronInward)
   def runHeadless(rounds: Int, scalatron: scalatron.core.ScalatronInward)
 
-The parameters are `rounds`, which specifies the number of tournament rounds (games) you should run before
-returning, and `scalatron', which is a reference to a `trait ScalatronInward`, the API Scalatron exposes toward
-game plug-ins (as opposed to `ScalatronOutward`, which is what it exposes to external users, such as the main
-function and the web server).
+The parameters are:
+
+* `rounds`, which specifies the number of tournament rounds (games) you should run before returning, and
+* `scalatron', which is a reference to a `trait ScalatronInward`, the API Scalatron exposes toward
+   game plug-ins (as opposed to `ScalatronOutward`, which is what it exposes to external users, such as the main
+   function and the web server).
 
 
 ## Implementation Details
 
 Once control passes to `runVisually()` or `runHeadless()`, it's up to you what happens next. For details,
-you can refer either to the example implementation [ScalatronDemoGame](https://github.com/scalatron/scalatron-demo-game)
-or to the implementation of [BotWar](https://github.com/scalatron/scalatron/tree/master/BotWar/src/scalatron).
+you can refer either to the simple example implementation in [ScalatronDemoGame](https://github.com/scalatron/scalatron-demo-game)
+or to the full and rather more complex implementation of [BotWar](https://github.com/scalatron/scalatron/tree/master/BotWar/src/scalatron).
 
-But roughly speaking, your plug-in should be doing the following things:
+Roughly speaking, your plug-in should be doing the following things:
 
 * run an outer loop, iterating over game rounds
 * at the start of each round, ask Scalatron for a collection of control functions representing the bots
-* run an inner loop, iterating over the simulations steps within a game; with each step:
+* run an inner loop, iterating over the simulations steps within a game; within each step:
 * update the graphical display, drawing the entities in the game and each player's score
 * compute what your entities can see and ask their control functions for appropriate responses
 * decode the responses (presumably commands) and update the game state and scores as appropriate
@@ -109,7 +111,7 @@ But roughly speaking, your plug-in should be doing the following things:
 ## Loose Ends
 
 There are a few more aspects you could pay attention to, even though they are not required for a minimal
-implementation (and may still change as the whole concept gets refined). These include:
+implementation (and may still change as the whole concept of pluggable games gets refined). These include:
 
 * the method `Game.cmdArgList` is intended to enumerate the command line arguments that your game implementation
   understands and that a user can provide to configure your game. The BotWar game, for example uses settings like
@@ -128,7 +130,6 @@ implementation (and may still change as the whole concept gets refined). These i
 
 # How To Write A Game Plug-In For Scalatron
 
-
 ## Step 1: Pick A Name
 
 Pick a name for your game. Then derive a standardized name from it that contains no spaces or other characters
@@ -139,16 +140,14 @@ For this example, we'll use `MyGame`.
 ## Step 2: Create The Project
 
 Create a directory structure for your project. The easiest way to do this is probably by copying and renaming
-the `ScalatronDemoGame` [template on Github](https://github.com/scalatron/scalatron-demo-game).
+the [ScalatronDemoGame template on Github](https://github.com/scalatron/scalatron-demo-game).
 
 The layout can be extremely simple:
 
     /MyGame
         /src
             /scalatron
-                GameFactory.scala
-                /myGame
-                    Game.scala
+                Game.scala
 
 Your game plug-in will rely on the following libraries, which you will need to add as dependencies
 to your SBT build file or to your IDE-specific project file:
@@ -157,11 +156,11 @@ to your SBT build file or to your IDE-specific project file:
     akka-actor-2.0.jar (Akka 2.0)
     scala-library-jar (Scala 2.9.1)
 
-You can find the first library, ScalatronCore.jar, in the Scalatron installation directory of a Scalatron
+You can find the first library, `ScalatronCore.jar`, in the Scalatron installation directory of a Scalatron
 distribution of version 1.1.0.0 or later.
 
 You will then need to configure your project to generate a Java Archive (.jar) artifact with the appropriate
-name, in our case `MyGame.jar`. You can build this wherever you want, but to activate it it will eventually
+name, in our case `MyGame.jar`. You can build this wherever you want, but to activate it, it will eventually
 have to end up in the Scalatron installation's `/bin` directory.
 
 
@@ -172,25 +171,30 @@ you may create to implement the game logic.
 
 ### Implement The `Game` Trait
 
-Implement a class `scalatron.myGame.Game` that implements the `scalatron.core.Game` trait, like so:
+Implement a class `scalatron.Game` (or `scalatron.myGame.Game` if you want a custom package - it does not matter)
+that implements the `scalatron.core.Game` trait, like so:
 
-    package scalatron.myGame
+    package scalatron
+
     case object Game extends scalatron.core.Game {
         ...
     }
+
 
 ### Implement A `GameFactory` Class
 
 Implement a class `scalatron.GameFactory`, like so:
 
     package scalatron
+
     class GameFactory { def create() = scalatron.myGame.Game }
 
 
 ### Implement Additional Classes
 
 Flesh out the functionality of your `Game` implementation, starting with the method `runVisually()`.
-Please check out the example code of the `ScalatronDemoGame` for details.
+Please check out the example code of the `ScalatronDemoGame` and the outline of the overally architecture above
+for details.
 
 
 
@@ -215,26 +219,27 @@ guide.
 The easiest way to do this is via the browser-based editor that is part of the Scalatron IDE provided by the
 Scalatron server. Follow these steps:
 
-* launch the Scalatron server app, as described above
-* this should automatically bring up a browser window pointing at the correct address
-* create one or more user accounts that will be associated with your bots, say `PlayerA` and `PlayerB`
-* log in as each of these players in turn
-* create a source code file that contains the required classes (see the Player Setup guide):
-  `ControlFunctionFactory` and a bot implementation.
-* in the editor toolbar, click **Publish into Tournament**
-* this will upload the source code, build it and publish the bot into the tournament
+* Launch the Scalatron server app, as described above
+* This should automatically bring up a browser window pointing at the correct address
+* Create one or more user accounts that will be associated with your bots, say `PlayerA` and `PlayerB`
+* Log in as each of these players in turn
+* Create a source code file that contains the required `ControlFunctionFactory` implementation (see the Player Setup guide)
+* In the editor toolbar, click **Publish into Tournament**
+* This will upload the source code, build it and publish the bot into the tournament
 
 The next time your game plug-in starts a game round and fetches a fresh collection of `EntityController`
 instances from Scalatron, your bots should be part of them and show up in your game.
 
 
 
-## Step 6: Invite Some Frieds And Run A Tournament
+## Step 6: Invite Some Friends And Run A Tournament
 
 Obviously, some minimal preparatory work is required on your part:
 
 * write some documentation for the rules of your game (see the [Scalatron Game Rules for BotWar](https://github.com/scalatron/scalatron/blob/master/Scalatron/doc/markdown/Scalatron%20Game%20Rules.md) for an example)
 * write some documentation for the game/bot protocol of your game (see the [Scalatron Protocol for BotWar](https://github.com/scalatron/scalatron/blob/master/Scalatron/doc/markdown/Scalatron%20Protocol.md) for an example)
+* write a few simple bots as examples and for testing purposes
+* do some testing :-)
 
 
 
