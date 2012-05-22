@@ -9,7 +9,7 @@ import scalatron.core.Scalatron.Constants._
 import scalatron.Version
 import java.text.DateFormat
 import java.util.Date
-import scalatron.core.Scalatron.{SourceFileCollection, ScalatronException, SourceFile, User}
+import scalatron.core.Scalatron.{ScalatronException, SourceFile, User}
 import java.net.URLDecoder
 import akka.routing.SmallestMailboxRouter
 import scalatron.scalatron.api.ScalatronOutward
@@ -41,14 +41,26 @@ object ScalatronImpl
             val gameName = argMap.get("-game").getOrElse("BotWar")
             val gamePluginJarFilePath = binDirectoryPath + "/" + gameName + ".jar"
             val gamePluginJarFile = new File(gamePluginJarFilePath)
-            val factoryClassNameWithPackagePath = "scalatron.GameFactory" // "scalatron.botwar.GameFactory"
-            Plugin.loadFactoryFunctionFromJar(gamePluginJarFile, factoryClassNameWithPackagePath, verbose) match {
+            val factoryClassNameWithPackagePath = "scalatron.GameFactory"
+            Plugin.loadClassAndMethodFromJar(gamePluginJarFile, Iterable(factoryClassNameWithPackagePath), "create", None, verbose) match {
                 case Right(throwable) =>
+                    System.err.println("error: failed to load game factory '%s' from plug-in '%s': %s".format(factoryClassNameWithPackagePath, gamePluginJarFilePath, throwable.toString))
                     System.exit(-1)
-                    throw throwable     // TODO: TEMP
-                case Left((factoryClass,factoryMethod)) =>
-                    val factory = factoryClass.newInstance()
-                    factoryMethod.invoke(factory).asInstanceOf[Game]
+                    throw throwable
+
+                case Left((extractedClass,methodOnExtractedClass)) =>
+                    if(verbose) println("info: class and method located in game plug-in '%s', will try to instantiate game factory...".format(gamePluginJarFilePath))
+                    try {
+                        val classInstance = extractedClass.newInstance()
+                        val gameInstance = methodOnExtractedClass.invoke(classInstance).asInstanceOf[Game]
+                        if(verbose) println("info: successfully invoked game factory of game plug-in '%s'...".format(gamePluginJarFilePath))
+                        gameInstance
+                    } catch {
+                        case t: Throwable =>
+                            System.err.println("error: failed to load game factory '%s' from plug-in '%s': %s".format(factoryClassNameWithPackagePath, gamePluginJarFilePath, t.toString))
+                            System.exit(-1)
+                            throw t
+                    }
             }
         }
 

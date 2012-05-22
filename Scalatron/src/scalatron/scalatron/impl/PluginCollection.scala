@@ -84,7 +84,7 @@ case class PluginCollection(
                                         // there is no recyclable existing plug-in
                                         val userName = pluginDirectory.getName
                                         val eitherFactoryOrException =
-                                            Plugin.loadFrom(
+                                            Plugin.loadBotControlFunctionFrom(
                                                 pluginJarFile,
                                                 userName,
                                                 gameSpecificPackagePath,
@@ -152,7 +152,7 @@ case class PluginCollection(
 
                             val userName = pluginDirectory.getName
                             val eitherFactoryOrException =
-                                Plugin.loadFrom(
+                                Plugin.loadBotControlFunctionFrom(
                                     pluginFile,
                                     userName,
                                     gameSpecificPackagePath,

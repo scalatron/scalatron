@@ -349,7 +349,7 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
             if( localJarFile.exists() ) {
                 // attempt to load the plug-in
                 val eitherFactoryOrException =
-                    Plugin.loadFrom(
+                    Plugin.loadBotControlFunctionFrom(
                         localJarFile,
                         name,
                         scalatron.game.gameSpecificPackagePath,

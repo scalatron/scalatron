@@ -84,13 +84,13 @@ object Plugin
     /** Attempts to load a ControlFunctionFactory instance from a given plug-in file using a number of package
       * path candidates and returns either the resulting factory function (left, success) or the most recent
       * exception (right, failure).
-      * @param pluginFile a File object representing the plug-in (.jar) file
+      * @param jarFile a File object representing the plug-in (.jar) file
       * @param userName the user name, will be tried as a package name
       * @param gameSpecificPackagePath e.g. "scalatron.botwar.botPlugin"
       * @param factoryClassName e.g. "ControlFunctionFactory"
       */
-    def loadFrom(
-        pluginFile: File,
+    def loadBotControlFunctionFrom(
+        jarFile: File,
         userName: String,
         gameSpecificPackagePath: String,
         factoryClassName: String,
@@ -110,120 +110,126 @@ object Plugin
           * 3) {gamePackage}.{className}            -- game-specific package name, e.g. "scalatron.botwar.botPlugin.ControlFunctionFactory"
           * 4) {className}                          -- no package name, e.g. "ControlFunctionFactory"
           */
-        val classNamesWithPackagePathsToTry = Iterable(
+        val fullyQualifiedControlFunctionFactoryClassNamesToTry = Iterable(
             gameSpecificPackagePath + "." + userName + "." + factoryClassName,
             userName + "." + factoryClassName,
             gameSpecificPackagePath + "." + factoryClassName,
             factoryClassName
         )
-
-        loadControlFunctionFactoryFromJar(
-            pluginFile,
-            classNamesWithPackagePathsToTry,
-            verbose
+        val controlFunctionClassName = "ControlFunction"
+        val fullyQualifiedControlFunctionClassNamesToTry = Iterable(
+            gameSpecificPackagePath + "." + userName + "." + controlFunctionClassName,
+            userName + "." + controlFunctionClassName,
+            gameSpecificPackagePath + "." + controlFunctionClassName,
+            controlFunctionClassName
         )
-    }
 
+        // => look for: class ControlFunctionFactory { def create() : String => String }
+        if(verbose) println("info: will attempt to load bot plug-in '%s'...".format(jarFile.getAbsolutePath))
+        loadClassAndMethodFromJar(jarFile, fullyQualifiedControlFunctionFactoryClassNamesToTry, "create", None, verbose) match {
+            case Right(throwable) =>
+                // no "ControlFunctionFactory" class was present in the plug-in
+                // Maybe this is a Java plug-in, or a Scala plug-in with a static control function?
+                // => look for: class ControlFunction { def respond(input: String) : String }
+                loadClassAndMethodFromJar(jarFile, fullyQualifiedControlFunctionClassNamesToTry, "respond", Some(classOf[String]), verbose) match {
+                    case Right(throwable2) =>
+                        // no "ControlFunction" class was present in the plug-in => nothing else to try
+                        if(verbose) System.err.println("    error: failed to load a control function factory or control function from plug-in '%s': %s".format(jarFile.getAbsolutePath, throwable2.toString))
+                        Right(throwable2)
 
-    /** Creates a URLClassLoader for a given file and attempts to load a class via the loader using a sequence of
-      * class names, one after the other. All exceptions that are detected are mapped to Right(Throwable).
-      * @param jarFile a File object representing the plug-in (.jar) file
-      * @param classNamesWithPackagePathsToTry a collection of class names (including package path) to try to load
-      * @param verbose if true, prints what it is doing to the console
-      * @return the class that was loaded, or the last encountered exception
-      */
-    def loadControlFunctionFactoryFromJar(
-        jarFile: File,
-        classNamesWithPackagePathsToTry: Iterable[String],
-        verbose: Boolean): Either[() => (String => String), Throwable] =
-    {
-        /** TODO: think about sandboxing plug-ins to prevent them from accessing sensitive stuff. See
-          * http://stackoverflow.com/questions/3947558/java-security-sandboxing-plugins-loaded-via-urlclassloader
-          */
-        val classLoader =
-            try {
-                new URLClassLoader(Array(jarFile.toURI.toURL), this.getClass.getClassLoader)
-            } catch {
-                case t: Throwable => return Right(t)
-            }
+                    case Left((extractedClass,methodOnExtractedClass)) =>
+                        // a "ControlFunction" class was present in the plug-in => try to load it
+                        if(verbose) println("    info: ControlFunction class and method located in bot plug-in '%s', will try to instantiate control function...".format(jarFile.getAbsolutePath))
+                        try {
+                            val classInstance = extractedClass.newInstance()
+                            val controlFunction: String => String = (input: String) => methodOnExtractedClass.invoke(classInstance, input).asInstanceOf[String]
+                            val controlFunctionFactory: () => (String => String) = () => controlFunction
+                            if(verbose) println("    info: successfully extracted control function from bot plug-in '%s'...".format(jarFile.getAbsolutePath))
+                            Left(controlFunctionFactory)
+                        } catch {
+                            case t: Throwable =>
+                                // a "ControlFunctionFactory" class was present, but it failed to load; makes no sense to try the "ControlFunction" variant
+                                if(verbose) System.err.println("    error: failed to extract control function factory from bot plug-in '%s': %s".format(jarFile.getAbsolutePath, t.toString))
+                                Right(t)
+                        }
+                }
 
-        val pluginFilePath = jarFile.getAbsolutePath
-        val methodName = "create"
-
-        // can't return from a .foreach to shortcircuit, throws scala.runtime.NonLocalReturnControl; so we iterate manually
-        var lastError: Option[Throwable] = None
-        val iterator = classNamesWithPackagePathsToTry.iterator
-        while(iterator.hasNext) {
-            val classNamesWithPackagePath = iterator.next()
-            try {
-                if(verbose) println("info: will try to load class '%s' from plug-in '%s'...".format(classNamesWithPackagePath, pluginFilePath))
-                val factoryClass = Class.forName(classNamesWithPackagePath, true, classLoader)
-
-                if(verbose) println("info: class '%s' loaded, will try to find method '%s'...".format(classNamesWithPackagePath, methodName))
-                val factoryMethod = factoryClass.getMethod(methodName)
-
-                if(verbose) println("info: method '%s' found, will try to instantiate factory...".format(methodName))
-                val factory = factoryClass.newInstance()
-                val factoryFunction: () => (String => String) = () => factoryMethod.invoke(factory).asInstanceOf[(String => String)]
-
-                if(verbose) println("info: successfully loaded class '%s' from plug-in '%s'...".format(classNamesWithPackagePath, pluginFilePath))
-                return Left(factoryFunction)
-            } catch {
-                case t: Throwable =>
-                    lastError = Some(t)
-                    if(verbose) println("info: failed to load class '%s' from plug-in '%s'...: %s".format(classNamesWithPackagePath, pluginFilePath, t.toString))
-            }
-        }
-
-        lastError match {
-            case Some(t) => Right(t)
-            case None => Right(new IllegalStateException("none of the factory class candidates found in '%s': %s".format(pluginFilePath, classNamesWithPackagePathsToTry.mkString(", "))))
+            case Left((extractedClass,methodOnExtractedClass)) =>
+                // a "ControlFunctionFactory" class was present in the plug-in => try to load it
+                if(verbose) println("    info: ControlFunctionFactory class and method located in bot plug-in '%s', will try to instantiate control function factory...".format(jarFile.getAbsolutePath))
+                try {
+                    val classInstance = extractedClass.newInstance()
+                    val factoryFunction: () => (String => String) = () => methodOnExtractedClass.invoke(classInstance).asInstanceOf[(String => String)]
+                    if(verbose) println("    info: successfully extracted control function factory from bot plug-in '%s'...".format(jarFile.getAbsolutePath))
+                    Left(factoryFunction)
+                } catch {
+                    case t: Throwable =>
+                        // a "ControlFunctionFactory" class was present, but it failed to load; makes no sense to try the "ControlFunction" variant
+                        if(verbose) System.err.println("    error: failed to extract control function factory from bot plug-in '%s': %s".format(jarFile.getAbsolutePath, t.toString))
+                        Right(t)
+                }
         }
     }
 
 
-
-    /** Creates a URLClassLoader for a given file and attempts to load a class via the loader using a sequence of
-      * class names, one after the other. All exceptions that are detected are mapped to Right(Throwable).
+    /** Creates a URLClassLoader for a given .jar file and attempts to load a class via the loader using a sequence
+      * of class names in the sequence in which they appear in the given collection. All exceptions that are detected
+      * are mapped to Right(Throwable). If a class and member function was successfully loaded, it is returned as
+      * Left((extractedClass,methodOnExtractedClass)). The caller is responsible for instantiating the class and
+      * invoking the method, as well as for then making the appropriate casts.
       * @param jarFile a File object representing the plug-in (.jar) file
-      * @param classNameWithPackagePath a collection of class names (including package path) to try to load
+      * @param fullyQualifiedClassNamesToTry a collection of class names (including package path) to try to load,
+      *                                      e.g. Iterable("daniel.Factory", "scalatron.daniel.Factory")
+      * @param methodName the name of the method to extract, e.g. "create"
+      * @param methodParameterClass an optional parameter type if the method takes a parameter
       * @param verbose if true, prints what it is doing to the console
-      * @return (factoryClass,factoryMethod), or the last encountered exception
+      * @return Left((extractedClass,methodOnExtractedClass)), or the last encountered exception as Right(throwable)
       */
-    def loadFactoryFunctionFromJar(
+    def loadClassAndMethodFromJar(
         jarFile: File,
-        classNameWithPackagePath: String,
+        fullyQualifiedClassNamesToTry: Iterable[String],
+        methodName: String,
+        methodParameterClass: Option[java.lang.Class[_]],
         verbose: Boolean): Either[(Class[_],java.lang.reflect.Method), Throwable] =
     {
-        /** TODO: think about sandboxing plug-ins to prevent them from accessing sensitive stuff. See
-          * http://stackoverflow.com/questions/3947558/java-security-sandboxing-plugins-loaded-via-urlclassloader
-          */
-        val classLoader =
-            try {
-                new URLClassLoader(Array(jarFile.toURI.toURL), this.getClass.getClassLoader)
-            } catch {
-                case t: Throwable => return Right(t)
+        try {
+            val classLoader = new URLClassLoader(Array(jarFile.toURI.toURL), this.getClass.getClassLoader)
+
+            val pluginFilePath = jarFile.getAbsolutePath
+
+            // can't return from a .foreach to shortcircuit, throws scala.runtime.NonLocalReturnControl; so we iterate manually
+            var lastError: Option[Throwable] = None
+            val iterator = fullyQualifiedClassNamesToTry.iterator
+            while(iterator.hasNext) {
+                val fullyQualifiedClassName = iterator.next()
+                try {
+                    if(verbose) println("    info: will try to load class '%s' from plug-in '%s'...".format(fullyQualifiedClassName, pluginFilePath))
+                    val extractedClass = Class.forName(fullyQualifiedClassName, true, classLoader)
+
+                    if(verbose) println("    info: class '%s' loaded, will try to find method '%s'...".format(fullyQualifiedClassName, methodName))
+                    val methodOnExtractedClass = methodParameterClass match {
+                        case None => extractedClass.getMethod(methodName)
+                        case Some(parameterClass) => extractedClass.getMethod(methodName, parameterClass)
+                    }
+
+                    if(verbose) println("    info: successfully located method '%s' on class '%s' in plug-in '%s'...".format(methodName, fullyQualifiedClassName, pluginFilePath))
+
+                    return Left((extractedClass,methodOnExtractedClass))
+                } catch {
+                    case t: Throwable =>
+                        lastError = Some(t)
+                        if(verbose) println("    info: failed to load class '%s' from plug-in '%s'...: %s".format(fullyQualifiedClassName, pluginFilePath, t.toString))
+                }
             }
 
-        val pluginFilePath = jarFile.getAbsolutePath
-        val methodName = "create"
-
-        try {
-            if(verbose) println("info: will try to load class '%s' from plug-in '%s'...".format(classNameWithPackagePath, pluginFilePath))
-            val factoryClass = Class.forName(classNameWithPackagePath, true, classLoader)
-
-            if(verbose) println("info: class '%s' loaded, will try to find method '%s'...".format(classNameWithPackagePath, methodName))
-            val factoryMethod = factoryClass.getMethod(methodName)
-
-            if(verbose) println("info: method '%s' found, will try to instantiate factory...".format(methodName))
-            Left((factoryClass,factoryMethod))
+            lastError match {
+                case Some(t) => Right(t)
+                case None => Right(new IllegalStateException("none of the factory class candidates found in '%s': %s".format(pluginFilePath, fullyQualifiedClassNamesToTry.mkString(", "))))
+            }
         } catch {
-            case t: Throwable =>
-                if(verbose) println("info: failed to load class '%s' from plug-in '%s'...: %s".format(classNameWithPackagePath, pluginFilePath, t.toString))
-                Right(t)
+            case t: Throwable => return Right(t)
         }
     }
-
 }
 
 

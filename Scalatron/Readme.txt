@@ -51,6 +51,13 @@ in the public domain. Feel free to use, copy, and improve them!
 
 ## Version History
 
+### Version 1.1.0.1 -- 2012-05-22
+
+* Adds support for bots written in Java. Implement a bot as follows:
+  public class ControlFunction { final public String respond(String input) { return "Status(text=Written in Java)"; } }
+
+
+
 ### Version 1.1.0.0 -- 2012-05-22
 
 * Adds experimental support for additional games beyond BotWar which can be loaded from plug-ins. For details,
