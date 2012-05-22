@@ -33,8 +33,8 @@ in the public domain. Feel free to use, copy, and improve them!
 
 * browse into the `/Scalatron/docs/pdf/` directory
 * here you will find a collection of useful documents, including the following:
-    * `Game Rules`      -- describes the game state & dynamics
-    * `Protocol`        -- describes how server and bots interact
+    * `Game Rules`      -- describes the BotWar game state & dynamics
+    * `Protocol`        -- describes how server and bots interact for the BotWar game
     * `Player Setup`    -- how set up your local working environment to build bots
     * `Server Setup`    -- how to configure the game server
     * `Tutorial`        -- how to code a bot in Scala
@@ -42,17 +42,21 @@ in the public domain. Feel free to use, copy, and improve them!
 
 ## For Developers
 
-* download the Scalatron source package
-* check out `/devdoc` directory, in particular the API
-* check out the `Scalatron Contributor Guide'
-* check out the source code in the `/src` directory
+* go to http://github.com/scalatron to download the Scalatron source code
+* check out developer documentation, in particular the API and the doc on pluggable games
 * send bugs, suggestions and fixes to `scalatron@hotmail.com`
-* soon also on `http://github.com/scalatron`
 
 
 
 
 ## Version History
+
+### Version 1.1.0.0 -- 2012-05-22
+
+* Adds experimental support for additional games beyond BotWar which can be loaded from plug-ins. For details,
+  please refer to the new document `Scalatron Pluggable Games`. Use the command line option `-game name` to
+  load a game other than BotWar.
+
 
 ### Version 1.0.1.2 -- 2012-05-21
 
