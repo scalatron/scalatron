@@ -6,21 +6,30 @@ subtitle: Draft Architecture Documentation
 
 WARNING: this is a draft documenting a work-in-progress!
 
-# Summary
+# How To Write A Game Plug-In For Scalatron
 
-The goal of this project is to move the implementation of the BotWar game implementation into a plug-in and to turn
-Scalatron into a framework and server for hosting a variety of such pluggable games.
+* Create a new project, say `MyGame`
+* Possibly by copying and renaming the `ScalatronDemoGame` template on Github
+* It will currently require the following dependencies:
 
+    ScalatronCore.jar
+    scala-library-jar (Scala 2.9.1)
+    akka-actor-2.0.jar (Akka 2.0)
 
-# Decisions
+* Configure it to generate an artifact called `MyGame.jar` into the Scalatron `/bin` directory
+* implement a class `scalatron.myGame.Game` that implements the `scalatron.core.Game` trait, like so:
 
-The primary decisions concern the level of abstraction: what should the framework require all pluggable games to
-have in common?
+    package scalatron.myGame
+    case object Game extends scalatron.core.Game {
+        ...
+    }
 
+* implement a class `scalatron.GameFactory`, like so:
 
-# TODO
+    package scalatron
+    class GameFactory { def create() = scalatron.myGame.Game }
 
-
+* then flesh out the functionality of your Game implementation, starting with the method `runVisually()`
 
 
 

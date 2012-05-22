@@ -41,7 +41,7 @@ object ScalatronImpl
             val gameName = argMap.get("-game").getOrElse("BotWar")
             val gamePluginJarFilePath = binDirectoryPath + "/" + gameName + ".jar"
             val gamePluginJarFile = new File(gamePluginJarFilePath)
-            val factoryClassNameWithPackagePath = "scalatron.botwar.GameFactory"
+            val factoryClassNameWithPackagePath = "scalatron.GameFactory" // "scalatron.botwar.GameFactory"
             Plugin.loadFactoryFunctionFromJar(gamePluginJarFile, factoryClassNameWithPackagePath, verbose) match {
                 case Right(throwable) =>
                     System.exit(-1)
@@ -49,7 +49,6 @@ object ScalatronImpl
                 case Left((factoryClass,factoryMethod)) =>
                     val factory = factoryClass.newInstance()
                     factoryMethod.invoke(factory).asInstanceOf[Game]
-                    // gameFactory.create()
             }
         }
 

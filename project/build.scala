@@ -160,7 +160,7 @@ object build extends Build {
 
 
 
-        for (jar <- List("Scalatron", "ScalatronCLI")) {
+        for (jar <- List("Scalatron", "ScalatronCLI", "ScalatronCore", "BotWar")) {
             IO.copyFile(file(jar) / "target" / (jar + ".jar"), distDir / "bin" / (jar + ".jar"))
         }
 
@@ -180,5 +180,4 @@ object build extends Build {
         assembly in markdown,
         packageBin in Compile in referenceBot,
         packageBin in Compile in tagTeamBot)
-
 }

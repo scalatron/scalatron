@@ -10,9 +10,11 @@ import akka.dispatch.ExecutionContext
 import scalatron.core._
 
 
-/** BotWar: an implementation of the Scalatron Game trait.
-  * Main.main() feeds this instance to Scalatron.run(). */
-case object BotWar extends Game
+/** Implementation of the core.Game trait for the Scalatron BotWar game.
+  * Since no state is held, this can be a singleton object.
+  * It is made available to the Scalatron server via the GameFactory class.
+  */
+case object Game extends scalatron.core.Game
 {
     def gameSpecificPackagePath = "scalatron.botwar.botPlugin"
 
