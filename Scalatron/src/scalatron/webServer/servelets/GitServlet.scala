@@ -75,6 +75,7 @@ case class GitServlet(context: WebContext) extends org.eclipse.jgit.http.server.
                 def getMessages = buildResult.messages.map(message => "%s:%s %s" format(message.sourceFile, message.lineAndColumn, message.multiLineMessage))
                 if (!buildResult.successful) {
                     (List("") ++ getMessages ++ List("")).map(rp.sendMessage)
+                    // TODO: automatically publish the bot under certain circumstances, such as if the most recent commit message contained some code, such as '!'
                 }
                 buildResult.successful
             }
