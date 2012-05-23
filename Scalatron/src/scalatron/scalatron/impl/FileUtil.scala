@@ -40,9 +40,12 @@ object FileUtil
 
 
     /** Recursively deletes the given directory and all of its contents (CAUTION!)
+      * @param path the path of the directory to begin recursive deletion at
+      * @param atThisLevel if true: the directory at `path` is deleted; if false: only its children
+      * @param verbose if true, log verbosely to the console
       * @throws IllegalStateException if there is a problem deleting a file or directory
       */
-    def deleteRecursively(path: String, verbose: Boolean = false) {
+    def deleteRecursively(path: String, atThisLevel: Boolean, verbose: Boolean) {
         val itemAtPath = new File(path)
         if(itemAtPath.exists) {
             // caller handles exceptions
@@ -50,18 +53,22 @@ object FileUtil
                 if(verbose) println("  deleting contents of directory at: " + path)
                 val filesInsideUserDir = itemAtPath.listFiles()
                 if(filesInsideUserDir != null) {
-                    filesInsideUserDir.foreach(file => deleteRecursively(file.getAbsolutePath, verbose))
+                    filesInsideUserDir.foreach(file => deleteRecursively(file.getAbsolutePath, true, verbose))
                 }
-                if(verbose) println("  deleting directory: " + path)
-                if(!itemAtPath.delete()) {
-                    System.err.println("error: failed to delete directory: %s".format(itemAtPath.getAbsolutePath))
-                    throw new IllegalStateException("failed to delete directory at: " + itemAtPath.getAbsolutePath)
+                if(atThisLevel) {
+                    if(verbose) println("  deleting directory: " + path)
+                    if(!itemAtPath.delete()) {
+                        System.err.println("error: failed to delete directory: %s".format(itemAtPath.getAbsolutePath))
+                        throw new IllegalStateException("failed to delete directory at: " + itemAtPath.getAbsolutePath)
+                    }
                 }
             } else {
-                if(verbose) println("  deleting file at: " + path)
-                if(!itemAtPath.delete()) {
-                    System.err.println("error: failed to delete file: %s".format(itemAtPath.getAbsolutePath))
-                    throw new IllegalStateException("failed to delete file: " + itemAtPath.getAbsolutePath)
+                if(atThisLevel) {
+                    if(verbose) println("  deleting file at: " + path)
+                    if(!itemAtPath.delete()) {
+                        System.err.println("error: failed to delete file: %s".format(itemAtPath.getAbsolutePath))
+                        throw new IllegalStateException("failed to delete file: " + itemAtPath.getAbsolutePath)
+                    }
                 }
             }
         }

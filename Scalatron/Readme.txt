@@ -51,9 +51,16 @@ in the public domain. Feel free to use, copy, and improve them!
 
 ## Version History
 
+### Version 1.1.0.2 -- 2012-05-23
+
+* Adds support for server-side compilation of bots written in Java. This relies on Java's `tools.jar`,
+  which may not be available on all systems. Works with Java 1.6 on MacOSX, fails on Windows.
+
+
+
 ### Version 1.1.0.1 -- 2012-05-22
 
-* Adds support for bots written in Java. Implement a bot as follows:
+* Adds support for bots written in Java. Implement a simple bot by placing this code in a file `ControlFunction.java`:
   public class ControlFunction { final public String respond(String input) { return "Status(text=Written in Java)"; } }
 
 

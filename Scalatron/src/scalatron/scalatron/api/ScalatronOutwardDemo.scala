@@ -227,7 +227,7 @@ object ScalatronOutwardDemo
 
         } finally {
             // delete the temporary directory
-            FileUtil.deleteRecursively(tmpDirPath)
+            FileUtil.deleteRecursively(tmpDirPath, atThisLevel = true, verbose = false)
         }
     }
 }

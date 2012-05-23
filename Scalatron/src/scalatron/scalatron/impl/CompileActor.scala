@@ -10,6 +10,9 @@ import tools.nsc.reporters.StoreReporter
 import scalatron.core.Scalatron
 import scala.tools.nsc.util.{BatchSourceFile, Position}
 import akka.actor.Actor
+import scala.util.parsing.input.OffsetPosition
+import java.util.Locale
+import java.io.IOException
 
 
 /** Each compile actor holds a Scala compiler instance and uses it to process CompileJob messages
@@ -85,6 +88,14 @@ object CompileActor {
 
         classPaths
     }
+
+
+    // constants
+    object Constants {
+        val ScalaCompilerInfo = 0       // see scala.tools.nsc.reporters.Reporter.INFO
+        val ScalaCompilerWarning = 1    // see scala.tools.nsc.reporters.Reporter.WARNING
+        val ScalaCompilerError = 2      // see scala.tools.nsc.reporters.Reporter.ERROR
+    }
 }
 
 case class CompileActor(verbose: Boolean) extends Actor {
@@ -125,12 +136,96 @@ case class CompileActor(verbose: Boolean) extends Actor {
       * @param outputDirectoryPath the output directory path where the class files should go
       */
     private def compileFromFiles(sourceFilePathList: Iterable[String], outputDirectoryPath: String): CompileResult = {
-        // System.err.println("COMPILE WORKER ACTOR = " + self.toString())
-        compile(
+        // feed all source files to the Scala compiler, including *.java files
+        // it will parse the Java files to resolve dependencies, but will not generate code for them
+        val scalaCompilationResult = compileScalaCode(
             (run: Global#Run) => { run.compile(sourceFilePathList.toList) },
             outputDirectoryPath,
             sourceFilePathList.mkString(", ")
         )
+
+        // Test: are there *.java sources among the source files?
+        val javaFilePathList = sourceFilePathList.filter(_.endsWith(".java"))
+        if(javaFilePathList.isEmpty) {
+            // no *.java files, just *.scala
+            scalaCompilationResult
+        } else {
+            // there are some *.java files => compile them and merge the error messages!
+            try {
+                import javax.tools._
+
+                var javaCompilerErrors = 0
+                var javaCompilerWarnings = 0
+                val javaCompilerMessageBuilder = Vector.newBuilder[CompilerMessage]
+                val diagnosticListener = new DiagnosticListener[Any] {
+                    def report(diagnostic: Diagnostic[_]) {
+                        val sourceFilePath = diagnostic.getSource match {
+                            case t: Any => t.toString // TODO
+                        }
+
+                        import CompileActor.Constants._
+                        val severity = diagnostic.getKind match {
+                            case Diagnostic.Kind.ERROR => javaCompilerErrors += 1; ScalaCompilerError
+                            case Diagnostic.Kind.WARNING => javaCompilerWarnings += 1; ScalaCompilerWarning
+                            case Diagnostic.Kind.MANDATORY_WARNING => javaCompilerWarnings += 1; ScalaCompilerWarning
+                            case _ => ScalaCompilerInfo
+                        }
+
+                        javaCompilerMessageBuilder +=
+                            CompilerMessage(
+                                CompilerMessagePosition(sourceFilePath, diagnostic.getLineNumber.toInt, diagnostic.getColumnNumber.toInt),
+                                msg = diagnostic.getMessage(Locale.ENGLISH),
+                                severity = severity
+                            )
+                    }
+                }
+
+                // Prepare the compilation options to be used during Java compilation
+                // We are asking the compiler to place the output files under the /out folder.
+                val compileOptions = scala.collection.JavaConversions.asJavaIterable(Iterable("-d", outputDirectoryPath))
+
+                val compiler = ToolProvider.getSystemJavaCompiler
+                if(compiler==null) throw new IllegalStateException("Java Compiler not available (on this platform)")
+
+                val fileManager  = compiler.getStandardFileManager(diagnosticListener, null, null)
+                val fileObjects = fileManager.getJavaFileObjectsFromStrings(scala.collection.JavaConversions.asJavaIterable(javaFilePathList))
+                val task = compiler.getTask(null, fileManager, diagnosticListener, compileOptions, null, fileObjects)
+                val javaCompilationSuccessful = task.call()
+
+                try {
+                    fileManager.close()
+                } catch {
+                    case t: Throwable =>
+                        System.err.println("error: while closing Java compiler standard file manager: " + t)
+                }
+
+                val javaCompilationDuration = 0 // TODO: milliseconds
+                val javaCompilerMessages = javaCompilerMessageBuilder.result()
+                CompileResult(
+                    javaCompilationSuccessful && scalaCompilationResult.compilationSuccessful,
+                    javaCompilationDuration + scalaCompilationResult.duration,
+                    scalaCompilationResult.errorCount,
+                    scalaCompilationResult.warningCount,
+                    scalaCompilationResult.compilerMessages ++ javaCompilerMessages
+                )
+            } catch {
+                case t: Throwable =>
+                    // Uh, something went wrong with the Java compilation - maybe not working on this system?
+                System.err.println("error: exception during attempt to compile Java files: " + t)
+                CompileResult(
+                    false,
+                    scalaCompilationResult.duration,
+                    scalaCompilationResult.errorCount,
+                    scalaCompilationResult.warningCount,
+                    scalaCompilationResult.compilerMessages ++
+                        Iterable(CompilerMessage(
+                            CompilerMessagePosition(javaFilePathList.head, 0, 0),
+                            msg = "exception during attempt to compile Java files: " + t,
+                            severity = CompileActor.Constants.ScalaCompilerError
+                        ))
+                )
+            }
+        }
     }
 
     /** Compiles a given collection of source files residing in memory into a given output directory.
@@ -157,7 +252,7 @@ case class CompileActor(verbose: Boolean) extends Actor {
                 at scala.tools.nsc.Global$Run.compileSources(Global.scala:916)
                 at scalatron.scalatron.impl.CompileActor$$anonfun$scalatron$scalatron$impl$CompileActor$$compileFromMemory$1.apply(CompileActor.scala:143)
          */
-        compile(
+        compileScalaCode(
             (run: Global#Run) => {
                 val batchSourceFileList = sourceFiles.map(sf => {
                     new BatchSourceFile(sf.filename, sf.code.toCharArray)
@@ -178,7 +273,7 @@ case class CompileActor(verbose: Boolean) extends Actor {
       * @param runDescription a description for verbose output, e.g. a list of filenames
       * @return a CompileResult instance holding any compiler messages
       */
-    private def compile(compilerInvocation: (Global#Run) => Unit, outputDirectoryPath: String, runDescription: String): CompileResult = {
+    private def compileScalaCode(compilerInvocation: (Global#Run) => Unit, outputDirectoryPath: String, runDescription: String): CompileResult = {
         compilerGlobalOpt match {
             case None =>
                 throw new IllegalStateException("compiler not initialized")
@@ -197,7 +292,12 @@ case class CompileActor(verbose: Boolean) extends Actor {
                 val elapsed = (endTime - startTime).toInt
                 if( verbose ) println("    ...compilation completed (" + elapsed + "ms)")
 
-                val errorList = compilerGlobal.reporter.asInstanceOf[StoreReporter].infos.map(info => CompilerMessage(info.pos, info.msg, info.severity.id))
+                val errorList =
+                    compilerGlobal.reporter.asInstanceOf[StoreReporter].infos
+                    .map(info => CompilerMessage(
+                        CompilerMessagePosition(info.pos.source.path, info.pos.line, info.pos.column),
+                        info.msg,
+                        info.severity.id))
                 val hasErrors = compilerGlobal.reporter.hasErrors
                 val errorCount = compilerGlobal.reporter.ERROR.count
                 val warningCount = compilerGlobal.reporter.WARNING.count
@@ -211,7 +311,8 @@ case class CompileActor(verbose: Boolean) extends Actor {
 
 
 /** Records one error or warning that was generated by the compiler. */
-case class CompilerMessage(pos: Position, msg: String, severity: Int)
+case class CompilerMessagePosition(sourceFilePath: String, line: Int, column: Int)
+case class CompilerMessage(pos: CompilerMessagePosition, msg: String, severity: Int)
 
 
 /** Messages passed to and from the compile actor. */

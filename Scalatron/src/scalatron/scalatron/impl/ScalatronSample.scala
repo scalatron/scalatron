@@ -13,5 +13,5 @@ case class ScalatronSample(name: String, scalatron: ScalatronImpl) extends Scala
 
     def sourceFiles: Iterable[SourceFile] = SourceFileCollection.loadFrom(sampleSourceDirectoryPath)
 
-    def delete() { deleteRecursively(sampleDirectoryPath, scalatron.verbose) }
+    def delete() { deleteRecursively(sampleDirectoryPath, atThisLevel = true, verbose = scalatron.verbose) }
 }

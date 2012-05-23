@@ -81,8 +81,8 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
             throw ScalatronException.Forbidden("deleting '" + Scalatron.Constants.AdminUserName + "' account is not permitted")
         } else {
             // caller must handle IOError exceptions
-            deleteRecursively(userDirectoryPath, scalatron.verbose)
-            deleteRecursively(userPluginDirectoryPath, scalatron.verbose)
+            deleteRecursively(userDirectoryPath, atThisLevel = true, verbose = scalatron.verbose)
+            deleteRecursively(userPluginDirectoryPath, atThisLevel = true, verbose = scalatron.verbose)
 
             // remove from cache
             release()
@@ -144,12 +144,17 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
           */
         val gameSpecificPackagePath = scalatron.game.gameSpecificPackagePath
         val packagePath = gameSpecificPackagePath + "." + name
-        val packageStatementWithNewline = "package " + packagePath + "\n"
+        val packageStatement = "package " + packagePath
         val patchedSourceFiles = transientSourceFiles.map(sf => {
             val localCode = sf.code
             // CBB: warn the user about conflicts if she embeds her own package name
             // but if(localCode.contains("package")) ... is too dumb
-            val patchedCode = packageStatementWithNewline + localCode
+            val patchedCode =
+                if(sf.filename.endsWith(".java")) {
+                    packageStatement + ";\n" + localCode
+                } else {
+                    packageStatement + "\n" + localCode
+                }
             if(scalatron.verbose) println("  patching '%s' with 'package %s'".format(sf.filename, packagePath))
             SourceFile(sf.filename, patchedCode)
         })
@@ -163,7 +168,9 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
         // so, as a temporary work-around, we create temp files on disk:
         // TODO: this code should probably exist within writeSourceFiles() - refactor!
         val patchedSourceDirectory = new File(patchedSourceDirectoryPath)
-        if(!patchedSourceDirectory.exists) {
+        if(patchedSourceDirectory.exists) {
+            deleteRecursively(patchedSourceDirectoryPath, atThisLevel = false, verbose = scalatron.verbose)
+        } else {
             if(!patchedSourceDirectory.mkdirs()) {
                 System.err.println("error: cannot create patched source directory at: " + patchedSourceDirectory)
                 throw new IllegalStateException("error: cannot create patched source directory at: " + patchedSourceDirectory)
@@ -424,10 +431,11 @@ object ScalatronUser {
                 val outputDirectoryPath = compileJob.outputDirectoryPath
                 val outputDirectory = new File(outputDirectoryPath)
                 if( outputDirectory.exists() ) {
-                    // it should not exist before we start. If it does, we delete it
-                    deleteRecursively(outputDirectoryPath, scalatron.verbose)
+                    // it should be empty before we start. If it exists, we clear it
+                    deleteRecursively(outputDirectoryPath, atThisLevel = false, verbose = scalatron.verbose)
+                } else {
+                    outputDirectory.mkdirs()
                 }
-                outputDirectory.mkdirs()
 
 
                 // compile the source file, using an Akka Actor with a fixed time-out
@@ -451,8 +459,10 @@ object ScalatronUser {
                         // build the .jar archive file
                         JarBuilder(outputDirectoryPath, jarFilePath, scalatron.verbose)
 
-                        // delete the output directory - it is no longer needed
-                        deleteRecursively(outputDirectoryPath, scalatron.verbose)
+                        // we DO NOT delete the contents of the output directory, even though they are no longer needed
+                        // the directory will be cleared before the next compilation starts, and leaving the files is
+                        // useful when diagnosing problems.
+                        // deleteRecursively(outputDirectoryPath, atThisLevel = false, verbose = scalatron.verbose)
                     }
 
                     // transform compiler output into the BuildResult format expected by the Scalatron API
@@ -463,7 +473,7 @@ object ScalatronUser {
                         compileResult.errorCount,
                         compileResult.warningCount,
                         compileResult.compilerMessages.map(msg => {
-                            val absoluteSourceFilePath = msg.pos.source.path
+                            val absoluteSourceFilePath = msg.pos.sourceFilePath
                             val relativeSourceFilePath =
                                 if(absoluteSourceFilePath.startsWith(sourceDirectoryPrefix)) {
                                     absoluteSourceFilePath.drop(sourceDirectoryPrefix.length)
