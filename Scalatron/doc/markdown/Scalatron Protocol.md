@@ -232,6 +232,7 @@ following property names are reserved and must not be used for custom properties
 * "direction"
 * "master"
 * "collision"
+* "slaves"
 
 Custom state properties cannot have empty strings as their values. Setting a custom state property
 to an empty string deletes it from the state.
@@ -246,7 +247,7 @@ These are the opcodes valid for commands sent by the server to a plug-in's contr
 Only one opcode will be present per control function invocation.
 
 
-### Welcome(name=String,apocalypse=int,round=int)
+### Welcome(name=String,apocalypse=int,round=int,maxslaves=int)
 
 "Welcome" is the first command sent by the server to a plug-in before any other invocations of
 the control function.
@@ -262,9 +263,11 @@ Parameters:
 * `round`:  the index of the round for which the control function was instantiated.
             A game server continually runs rounds of the game, and the round index is
             incremented each time.
+* `maxslaves`: the number of slave bots that a user can have alive at any one time. If a call
+            to `Spawn` is made when this number of user bots exist, then the request will be
+            denied.
 
-
-### React(generation=int,name=string,time=int,view=string,energy=string,master=int:int,collision=int:int,...)
+### React(generation=int,name=string,time=int,view=string,energy=string,master=int:int,collision=int:int,slaves=int,...)
 
 "React" is invoked by the server once for each entity for each step in which the entity is
 allowed to move (mini-bots every cycle, bots every second cycle - see the *Game Rules* for
@@ -296,6 +299,7 @@ Parameters:
             collision with another entity occurred, this parameter is set to the direction of the
 	        failed move, e.g. "1:-1" if a move right and up could not be executed. If no collision
 	        occurred, this property is not defined.
+* `slaves`  the number of slave bots that the user currently has alive as at the current `time`.
 
 In addition to these system-generated parameters, the server passes in all state parameters of
 the entity that were set by the player via `Spawn()` or `Set()` (see below). If, for example,
