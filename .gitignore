@@ -1,4 +1,5 @@
 *.class
+*~
 .idea
 .idea_modules
 target
