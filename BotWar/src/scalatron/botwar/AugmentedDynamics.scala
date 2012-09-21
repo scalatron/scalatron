@@ -138,8 +138,8 @@ case object AugmentedDynamics extends ((State,Random,Iterable[(Entity.Id,Iterabl
                             val maxSlaveCount = state.config.boardParams.maxSlaveCount
                             if(maxSlaveCount < Int.MaxValue) {
                                 val siblings = board.siblingsOfBot(thisBot)
-                                val siblingCount = siblings.size
-                                if(siblingCount > maxSlaveCount + 1) {
+                                val slaveCount = siblings.size - 1
+                                if (slaveCount >= maxSlaveCount) {
                                     throw new IllegalStateException("Spawn(): maximum permissible number of mini-bots has been reached: " + maxSlaveCount )
                                 }
                             }
