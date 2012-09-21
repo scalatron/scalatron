@@ -163,6 +163,7 @@ object Board
     )
     = {
         val boardSize = boardParams.size
+        val maxSlaves = boardParams.maxSlaveCount
 
         var updatedBoard = Empty
         val rnd = new Random(randomSeed)
@@ -180,6 +181,7 @@ object Board
                         "name=" + entityController.name + "," +
                         "apocalypse=" + stepsPerRound + "," +
                         "round=" + roundIndex +
+                        (if (maxSlaves < Int.MaxValue) ",maxslaves=" + maxSlaves else "") +
                         ")")
             } catch {
                 case t: Throwable =>

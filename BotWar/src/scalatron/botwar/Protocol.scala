@@ -47,10 +47,11 @@ object Protocol {
         val Collision = "collision"
         val Generation = "generation"
         val Name = "name"
+        val Slaves = "slaves"
 
         val ListOfReserved =
             List(
-                Energy, Time, View, Generation, Name,
+                Energy, Time, View, Generation, Name, Slaves,
                 PluginOpcode.ParameterName.Direction,
                 ServerOpcode.ParameterName.Master
             )

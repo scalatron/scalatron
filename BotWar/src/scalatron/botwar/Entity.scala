@@ -173,12 +173,15 @@ object Bot {
                         Protocol.PropertyName.Time + "=" + state.time + "," +
                         Protocol.PropertyName.View + "=" + renderedView + "," +
                         maybeMasterParameter +
-                        Protocol.PropertyName.Energy + "=" + bot.energy +
+                        Protocol.PropertyName.Energy + "=" + bot.energy + "," +
+                        Protocol.PropertyName.Slaves + "=" + slaveCount(bot, state) +
                         (if(stateMapString.isEmpty) "" else "," + stateMapString) +
                         ")"
                         
                 controlFunctionInput
             }
+
+            def slaveCount(bot: Bot, state: State): Int = state.board.siblingsOfBot(bot).size - 1
 
             val controlFunctionInput =
                 if(isMaster) computeBotInputForMaster(bot, state)
