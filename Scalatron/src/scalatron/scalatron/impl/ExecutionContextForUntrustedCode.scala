@@ -112,6 +112,10 @@ object ExecutionContextForUntrustedCode
                                     // System.err.println("warning: granting permission to untrusted code: '%s'".format(permission))
                                     return // granted
 
+                                case "accessDeclaredMembers" =>
+                                  // this is triggered by Enumeration$$populateNameMap
+                                  return // granted
+
                                 case _ => // denied
                             }
 
