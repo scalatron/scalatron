@@ -6,7 +6,12 @@ import AssemblyKeys._
 
 object build extends Build {
     def standardSettings = Defaults.defaultSettings ++ src ++ assemblySettings ++ Seq (
-        mergeStrategy in assembly := {_ => MergeStrategy.first}
+        mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) => {
+            case "plugin.properties" => MergeStrategy.first
+            case "about.html" => MergeStrategy.first
+            case x => old(x)
+          }
+        }
     ) ++ implVersion
 
     lazy val implVersion = Seq (
