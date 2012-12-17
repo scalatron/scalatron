@@ -12,7 +12,9 @@ object build extends Build {
             case x => old(x)
           }
         }
-    ) ++ implVersion
+    ) ++ implVersion ++ Seq (
+        resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
+    )
 
     lazy val implVersion = Seq (
         packageOptions <<= (version) map {
@@ -70,7 +72,6 @@ object build extends Build {
                 "org.specs2" %% "specs2" % "1.9" % "test",
                 "org.specs2" %% "specs2-scalaz-core" % "6.0.1"
             ),
-            resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
             resolvers += "JGit Repository" at "http://download.eclipse.org/jgit/maven"
         ) ++ Seq (
             jarName in assembly := "Scalatron.jar" // , logLevel in assembly := Level.Debug
