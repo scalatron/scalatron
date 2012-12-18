@@ -76,7 +76,7 @@ object build extends Build {
         ) ++ Seq (
             jarName in assembly := "Scalatron.jar" // , logLevel in assembly := Level.Debug
         )
-    ) dependsOn( core )
+    ) dependsOn( botwar )
 
     lazy val cli = Project("ScalatronCLI", file("ScalatronCLI"),
         settings = standardSettings ++ Seq(
