@@ -6,8 +6,15 @@ import AssemblyKeys._
 
 object build extends Build {
     def standardSettings = Defaults.defaultSettings ++ src ++ assemblySettings ++ Seq (
-        mergeStrategy in assembly := {_ => MergeStrategy.first}
-    ) ++ implVersion
+        mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) => {
+            case "plugin.properties" => MergeStrategy.first
+            case "about.html" => MergeStrategy.first
+            case x => old(x)
+          }
+        }
+    ) ++ implVersion ++ Seq (
+        resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
+    )
 
     lazy val implVersion = Seq (
         packageOptions <<= (version) map {
@@ -65,12 +72,11 @@ object build extends Build {
                 "org.specs2" %% "specs2" % "1.9" % "test",
                 "org.specs2" %% "specs2-scalaz-core" % "6.0.1"
             ),
-            resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
             resolvers += "JGit Repository" at "http://download.eclipse.org/jgit/maven"
         ) ++ Seq (
             jarName in assembly := "Scalatron.jar" // , logLevel in assembly := Level.Debug
         )
-    ) dependsOn( core )
+    ) dependsOn( botwar )
 
     lazy val cli = Project("ScalatronCLI", file("ScalatronCLI"),
         settings = standardSettings ++ Seq(
