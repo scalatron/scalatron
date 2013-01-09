@@ -241,7 +241,7 @@ list of values or types. Let's do that for our example:
 Here are some other examples for the use of tuples:
 
     val pair = (1, "A")                     // = Tuple2[Int,String]
-    val triple = (1, 2, 3)                  // = Tuple3[Int,Int,String]
+    val triple = (1, 2, 3)                  // = Tuple3[Int,Int,Int]
 
 Scala's syntactic sugar not just helps with creating tuples, it also extends to
 declaring tuple types. In the original declaration of our example function `foo`,

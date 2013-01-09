@@ -22,7 +22,8 @@ case class View(cells: String) {
     def offsetToNearest(c: Char) = {
         var nearestPosOpt : Option[XY] = None
         var nearestDistance = Double.MaxValue
-        for(i <- 0 until cells.length) {
+        var i = 0
+        while(i < cells.length) {
             if(c == cells(i)) {
                 val pos = absPosFromIndex(i)
                 val distanceToCenter = pos.distanceTo(center)
@@ -31,6 +32,7 @@ case class View(cells: String) {
                     nearestPosOpt = Some(pos - center)
                 }
             }
+            i += 1
         }
         nearestPosOpt
     }
