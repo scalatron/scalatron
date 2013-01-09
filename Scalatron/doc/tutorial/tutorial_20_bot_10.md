@@ -330,7 +330,8 @@ loop to do an efficient traversal:
     def offsetToNearest(c: Char) = {
         var nearestPosOpt : Option[XY] = None
         var nearestDistance = Double.MaxValue
-        for(i <- 0 until cells.length) {
+        var i = 0
+        while(i < cells.length) {
             if(c == cells(i)) {
                 val pos = absPosFromIndex(i)
                 val distanceToCenter = pos.distanceTo(center)
@@ -339,6 +340,7 @@ loop to do an efficient traversal:
                     nearestPosOpt = Some(pos - center)
                 }
             }
+            i += 1
         }
         nearestPosOpt
     }
