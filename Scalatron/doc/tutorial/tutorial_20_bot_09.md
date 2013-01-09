@@ -217,7 +217,7 @@ The modifier keyword `case` before the `class` keyword basically instructs the c
  
 * an immutable field for each parameter of the `class` definition  
 * an `equals()` method that tests equality by checking each field 
-* a `hasCode` method that takes into account each field 
+* a `hashCode` method that takes into account each field 
 * a `toString` method that takes into account each field 
 
 as well as a few others. Upgrading a `class` to a `case class` also automatically 
