@@ -3,12 +3,12 @@
   */
 package scalatron.botwar
 
+import scala.concurrent.{Await, Future, ExecutionContext}
+import scala.concurrent.duration._
 import scalatron.core.{Simulation, EntityController}
 import Simulation.Time
 import scala.util.Random
 import BoardParams.Perimeter
-import akka.dispatch.{Await, Future, ExecutionContext}
-import akka.util.duration._
 import java.util.concurrent.TimeoutException
 
 

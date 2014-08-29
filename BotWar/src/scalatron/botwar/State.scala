@@ -3,9 +3,9 @@
   */
 package scalatron.botwar
 
+import scala.concurrent.ExecutionContext
 import scalatron.core.EntityController
 import scalatron.core.Simulation.Time
-import akka.dispatch.ExecutionContext
 
 
 /** Game state storing the current (game) time, the board parameters, the actual board (i.e.

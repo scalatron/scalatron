@@ -12,9 +12,10 @@ object build extends Build {
             case x => old(x)
           }
         }
-    ) ++ implVersion ++ Seq (
-        resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
     )
+//  ++ implVersion ++ Seq (
+//        resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
+//    )
 
     lazy val implVersion = Seq (
         packageOptions <<= (version) map {
@@ -28,8 +29,8 @@ object build extends Build {
         id        = "all",
         base      = file("."),
         settings  = standardSettings ++ Seq(distTask),
-        aggregate = Seq(main, cli, markdown, referenceBot, tagTeamBot)
-    )
+        aggregate = Seq(main, cli, markdown)
+    ).settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*)
 
     lazy val src = Seq(
         scalaSource in Compile <<= baseDirectory / "src",
@@ -39,44 +40,44 @@ object build extends Build {
     lazy val core = Project("ScalatronCore", file("ScalatronCore"),
         settings = standardSettings ++ Seq(
             libraryDependencies ++= Seq(
-                "com.typesafe.akka" % "akka-actor" % "2.0"
+                "com.typesafe.akka" %% "akka-actor" % "2.3.5"
             )
         ) ++ Seq (
             jarName in assembly := "ScalatronCore.jar" // , logLevel in assembly := Level.Debug
         )
-    )
+    ).settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*)
 
     lazy val botwar = Project("BotWar", file("BotWar"),
         settings = standardSettings ++ Seq(
             libraryDependencies ++= Seq(
-                "com.typesafe.akka" % "akka-actor" % "2.0"
+                "com.typesafe.akka" %% "akka-actor" % "2.3.5"
             )
         ) ++ Seq (
             jarName in assembly := "BotWar.jar" // , logLevel in assembly := Level.Debug
         )
-    ) dependsOn( core )
+    ).settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*) dependsOn( core )
 
     lazy val main = Project("Scalatron", file("Scalatron"),
         settings = standardSettings ++ Seq(
             libraryDependencies ++= Seq(
-                "org.scala-lang" % "scala-compiler" % "2.9.1",
-                "com.typesafe.akka" % "akka-actor" % "2.0",
+                "org.scala-lang" % "scala-compiler" % "2.10.4",
+                "com.typesafe.akka" %% "akka-actor" % "2.3.5",
                 "org.eclipse.jetty.aggregate" % "jetty-webapp" % "7.6.2.v20120308" intransitive,
                 "org.codehaus.jackson" % "jackson-jaxrs" % "1.9.2",
                 "com.sun.jersey" % "jersey-bundle" % "1.12",
                 "javax.servlet" % "servlet-api" % "2.5",
                 "org.eclipse.jgit" % "org.eclipse.jgit" % "1.3.0.201202151440-r",
                 "org.eclipse.jgit" % "org.eclipse.jgit.http.server" % "1.3.0.201202151440-r",
-                "org.scalatest" %% "scalatest" % "1.7.2" % "test",
+                "org.scalatest" %% "scalatest" % "2.0" % "test",
                 "org.testng" % "testng" % "6.5.1" % "test",
-                "org.specs2" %% "specs2" % "1.9" % "test",
+                "org.specs2" %% "specs2" % "2.4.1" % "test",
                 "org.specs2" %% "specs2-scalaz-core" % "6.0.1"
             ),
             resolvers += "JGit Repository" at "http://download.eclipse.org/jgit/maven"
         ) ++ Seq (
             jarName in assembly := "Scalatron.jar" // , logLevel in assembly := Level.Debug
         )
-    ) dependsOn( botwar )
+    ).settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*) dependsOn( botwar )
 
     lazy val cli = Project("ScalatronCLI", file("ScalatronCLI"),
         settings = standardSettings ++ Seq(
@@ -86,7 +87,7 @@ object build extends Build {
         ) ++ Seq (
             jarName in assembly := "ScalatronCLI.jar"
         )
-    )
+    ).settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*)
 
     lazy val markdown = Project("ScalaMarkdown", file("ScalaMarkdown"),
         settings = standardSettings ++ Seq(
@@ -102,18 +103,18 @@ object build extends Build {
         ) ++ Seq (
             jarName in assembly := "ScalaMarkdown.jar"
         )
-    )
+    ).settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*)
 
-    lazy val samples = (IO.listFiles(file("Scalatron") / "samples")) filter (!_.isFile) map {
-        sample: File => sample.getName -> Project(sample.getName, sample, settings = Defaults.defaultSettings ++ Seq (
-            scalaSource in Compile <<= baseDirectory / "src",
-            artifactName in packageBin := ((_, _, _) => "ScalatronBot.jar")
-        ))
-    } toMap
+//    lazy val samples = (IO.listFiles(file("Scalatron") / "samples")) filter (!_.isFile) map {
+//        sample: File => sample.getName -> Project(sample.getName, sample, settings = Defaults.defaultSettings ++ Seq (
+ //           scalaSource in Compile <<= baseDirectory / "src",
+//            artifactName in packageBin := ((_, _, _) => "ScalatronBot.jar")
+//        ))
+//    } toMap
 
     // TODO How can we do this automatically?!?
-    lazy val referenceBot = samples("Example Bot 01 - Reference")
-    lazy val tagTeamBot = samples("Example Bot 02 - TagTeam")
+    //lazy val referenceBot = samples("Example Bot 01 - Reference")
+    //lazy val tagTeamBot = samples("Example Bot 02 - TagTeam")
 
     val dist = TaskKey[Unit]("dist", "Makes the distribution zip file")
     val distTask = dist <<= (version, scalaVersion) map { (scalatronVersion, version) =>
@@ -141,16 +142,16 @@ object build extends Build {
 
         val distSamples = distDir / "samples"
         def sampleJar(sample: Project) = sample.base / ("target/scala-%s/ScalatronBot.jar" format version)
-        for (sample <- samples.values) {
-            if (sampleJar(sample).exists) {
-                println("Copying " + sample.base)
-                IO.copyDirectory(sample.base / "src", distSamples / sample.base.getName / "src")
-                IO.copyFile(sampleJar(sample), distSamples / sample.base.getName / "ScalatronBot.jar")
-            }
-        }
+//        for (sample <- samples.values) {
+//            if (sampleJar(sample).exists) {
+//                println("Copying " + sample.base)
+//                IO.copyDirectory(sample.base / "src", distSamples / sample.base.getName / "src")
+//                IO.copyFile(sampleJar(sample), distSamples / sample.base.getName / "ScalatronBot.jar")
+//            }
+//        }
 
-        println ("Copying Reference bot to /bots directory...")
-        IO.copyFile(sampleJar(referenceBot), distDir / "bots" / "Reference" / "ScalatronBot.jar")
+//        println ("Copying Reference bot to /bots directory...")
+//        IO.copyFile(sampleJar(referenceBot), distDir / "bots" / "Reference" / "ScalatronBot.jar")
 
 
         def markdown(docDir: File, htmlDir: File) = {
@@ -183,7 +184,5 @@ object build extends Build {
         assembly in botwar,
         assembly in main,
         assembly in cli,
-        assembly in markdown,
-        packageBin in Compile in referenceBot,
-        packageBin in Compile in tagTeamBot)
+        assembly in markdown)
 }

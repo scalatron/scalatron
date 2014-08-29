@@ -3,12 +3,11 @@
   */
 package scalatron.botwar
 
-import scala.util.Random
-import akka.util.duration._
-import akka.dispatch._
-import java.util.concurrent.TimeoutException
 import akka.actor.ActorSystem
-import akka.util.Duration
+
+import scala.concurrent.duration._
+import scala.concurrent.{Future, Await, ExecutionContext}
+import scala.util.Random
 import scalatron.core.TournamentRoundResult
 
 
