@@ -8,8 +8,12 @@ import scalatron.core.Scalatron
 import ScalatronApiTest._
 import org.specs2.execute.Result
 import scalatron.scalatron.impl.FileUtil
+import org.specs2.matcher.FileMatchers
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
-class ScalatronApiSpec extends Specification
+@RunWith(classOf[JUnitRunner])
+class ScalatronApiSpec extends Specification with FileMatchers
 {
     //------------------------------------------------------------------------------------------
     // test (web) user management
@@ -24,16 +28,16 @@ class ScalatronApiSpec extends Specification
             })
         }
 
-//        "be able to create a new user" in {
-//            runTest((scalatron: Scalatron, usersBaseDirPath: String, samplesBaseDirPath: String, pluginBaseDirPath: String) => {
-//                scalatron.createUser(name = "ExampleUser", password = "", initialSourceFiles = sourceFiles)
-//
-//                (scalatron.users() must have size (2)) and
-//                    ((usersBaseDirPath + "/" + "ExampleUser") must beAnExistingPath) and
-//                    (scalatron.user("ExampleUser") must beSome) and
-//                    ((usersBaseDirPath + "/ExampleUser/src/Bot.scala") must beAnExistingPath)
-//            })
-//        }
+        "be able to create a new user" in {
+            runTest((scalatron: Scalatron, usersBaseDirPath: String, samplesBaseDirPath: String, pluginBaseDirPath: String) => {
+                scalatron.createUser(name = "ExampleUser", password = "", initialSourceFiles = sourceFiles)
+
+                (scalatron.users() must have size (2)) and
+                    ((usersBaseDirPath + "/" + "ExampleUser") must beAnExistingPath) and
+                    (scalatron.user("ExampleUser") must beSome) and
+                    ((usersBaseDirPath + "/ExampleUser/src/Bot.scala") must beAnExistingPath)
+            })
+        }
 
         "be able to delete a newly created user" in {
             runTest((scalatron: Scalatron, usersBaseDirPath: String, samplesBaseDirPath: String, pluginBaseDirPath: String) => {

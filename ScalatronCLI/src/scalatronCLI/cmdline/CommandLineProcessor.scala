@@ -636,7 +636,7 @@ object CommandLineProcessor {
 
                     // update the source code to the reference bot
                     val sampleList = scalatron.samples
-                    val referenceBotSample = sampleList.get("Example Bot 01 - Reference").get
+                    val referenceBotSample = sampleList.get("ExampleBot01-Reference").get
                     val referenceBotSourceFiles = referenceBotSample.sourceFiles
                     regularUser.updateSourceFiles(referenceBotSourceFiles)
 
