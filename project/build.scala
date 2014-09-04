@@ -161,7 +161,7 @@ object build extends Build {
 
 
       def markdown(docDir: File, htmlDir: File) = {
-        Seq("java", "-Xmx1G", "-jar", "ScalaMarkdown/target/ScalaMarkdown.jar", docDir.getPath, htmlDir.getPath) !
+        Seq("java", "-Xmx1G", "-jar", "ScalaMarkdown/target/scala-2.10/ScalaMarkdown.jar", docDir.getPath, htmlDir.getPath) !
       }
 
       // generate HTML from Markdown, for /doc and /devdoc
