@@ -62,15 +62,12 @@ object build extends Build {
   lazy val main = Project("Scalatron", file("Scalatron"),
     settings = standardSettings ++ Seq(
       libraryDependencies ++= Seq(
-        "org.scala-lang" % "scala-compiler" % "2.10.4",
-        //        "org.scala-lang" % "scala-library" % "2.10.4",
-        //        "org.scala-lang" % "scala-reflect" % "2.10.4",
+        "org.scala-lang" % "scala-compiler" % "2.11.2",
         "com.typesafe.akka" %% "akka-actor" % "2.3.5",
         "org.eclipse.jetty.aggregate" % "jetty-webapp" % "8.1.15.v20140411" intransitive(),
         "org.codehaus.jackson" % "jackson-jaxrs" % "1.9.13",
         "com.sun.jersey" % "jersey-bundle" % "1.18.1",
         "javax.servlet" % "javax.servlet-api" % "3.0.1",
-        //        "org.eclipse.jgit" % "org.eclipse.jgit" % "3.4.1.201406201815-r",
         "org.eclipse.jgit" % "org.eclipse.jgit.http.server" % "3.4.1.201406201815-r",
         "org.scalatest" %% "scalatest" % "2.2.2" % "test",
         "org.testng" % "testng" % "6.8.8" % "test",
@@ -87,7 +84,8 @@ object build extends Build {
   lazy val cli = Project("ScalatronCLI", file("ScalatronCLI"),
     settings = standardSettings ++ Seq(
       libraryDependencies ++= Seq(
-        "org.apache.httpcomponents" % "httpclient" % "4.3.5"
+        "org.apache.httpcomponents" % "httpclient" % "4.3.5",
+        "org.scala-lang" % "scala-parser-combinators" % "2.11.0-M4"
       )
     ) ++ Seq(
       jarName in assembly := "ScalatronCLI.jar"
@@ -101,7 +99,7 @@ object build extends Build {
       resourceDirectory in Test <<= baseDirectory / "test/resources"
     ) ++ Seq(
       libraryDependencies ++= Seq(
-        "org.scala-tools.testing" %% "specs" % "1.6.9",
+        "org.specs2" %% "specs2" % "2.4.1" % "test",
         "commons-io" % "commons-io" % "2.4",
         "org.apache.commons" % "commons-lang3" % "3.3.2"
       )
@@ -161,7 +159,7 @@ object build extends Build {
 
 
       def markdown(docDir: File, htmlDir: File) = {
-        Seq("java", "-Xmx1G", "-jar", "ScalaMarkdown/target/scala-2.10/ScalaMarkdown.jar", docDir.getPath, htmlDir.getPath) !
+        Seq("java", "-Xmx1G", "-jar", "ScalaMarkdown/target/scala-2.11/ScalaMarkdown.jar", docDir.getPath, htmlDir.getPath) !
       }
 
       // generate HTML from Markdown, for /doc and /devdoc
@@ -174,7 +172,7 @@ object build extends Build {
 
 
       for (jar <- List("Scalatron", "ScalatronCLI", "ScalatronCore", "BotWar")) {
-        IO.copyFile(file(jar) / "target/scala-2.10" / (jar + ".jar"), distDir / "bin" / (jar + ".jar"))
+        IO.copyFile(file(jar) / "target/scala-2.11" / (jar + ".jar"), distDir / "bin" / (jar + ".jar"))
       }
 
       // This is ridiculous, there has to be be an easier way to zip up a directory
