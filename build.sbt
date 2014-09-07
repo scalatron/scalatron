@@ -4,7 +4,7 @@ name         := "Scalatron"
 
 version in Global := "1.1.0.2"
 
-scalaVersion := "2.10.4"
+scalaVersion in ThisBuild := "2.11.2"
 
 fork in ( Test, run ) := true
 //scalacOptions in ThisBuild ++= Seq ("-feature", "-deprecation")
