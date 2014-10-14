@@ -5,6 +5,8 @@ import AssemblyKeys._
 
 
 object build extends Build {
+    val compilerVersion = "2.9.2"
+
     def standardSettings = Defaults.defaultSettings ++ src ++ assemblySettings ++ Seq (
         mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) => {
             case "plugin.properties" => MergeStrategy.first
@@ -12,6 +14,7 @@ object build extends Build {
             case x => old(x)
           }
         }
+      ,  scalaVersion := compilerVersion
     ) ++ implVersion ++ Seq (
         resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
     )
@@ -59,7 +62,7 @@ object build extends Build {
     lazy val main = Project("Scalatron", file("Scalatron"),
         settings = standardSettings ++ Seq(
             libraryDependencies ++= Seq(
-                "org.scala-lang" % "scala-compiler" % "2.9.1",
+                "org.scala-lang" % "scala-compiler" % compilerVersion,
                 "com.typesafe.akka" % "akka-actor" % "2.0",
                 "org.eclipse.jetty.aggregate" % "jetty-webapp" % "7.6.2.v20120308" intransitive,
                 "org.codehaus.jackson" % "jackson-jaxrs" % "1.9.2",
@@ -72,7 +75,8 @@ object build extends Build {
                 "org.specs2" %% "specs2" % "1.9" % "test",
                 "org.specs2" %% "specs2-scalaz-core" % "6.0.1"
             ),
-            resolvers += "JGit Repository" at "http://download.eclipse.org/jgit/maven"
+            resolvers ++= Seq("JGit Repository" at "http://download.eclipse.org/jgit/maven",
+            "Scalaz Bintray Repo"  at "http://dl.bintray.com/scalaz/releases")
         ) ++ Seq (
             jarName in assembly := "Scalatron.jar" // , logLevel in assembly := Level.Debug
         )
@@ -105,9 +109,10 @@ object build extends Build {
     )
 
     lazy val samples = (IO.listFiles(file("Scalatron") / "samples")) filter (!_.isFile) map {
-        sample: File => sample.getName -> Project(sample.getName, sample, settings = Defaults.defaultSettings ++ Seq (
+        sample: File => sample.getName -> Project(sample.getName.replace(" ",""), sample, settings = Defaults.defaultSettings ++ Seq (
             scalaSource in Compile <<= baseDirectory / "src",
             artifactName in packageBin := ((_, _, _) => "ScalatronBot.jar")
+           , scalaVersion := compilerVersion
         ))
     } toMap
 
@@ -154,7 +159,7 @@ object build extends Build {
 
 
         def markdown(docDir: File, htmlDir: File) = {
-            Seq("java", "-Xmx1G", "-jar", "ScalaMarkdown/target/ScalaMarkdown.jar", docDir.getPath, htmlDir.getPath) !
+            Seq("java", "-Xmx1G", "-jar", "ScalaMarkdown/target/scala-%s/ScalaMarkdown.jar" format version, docDir.getPath, htmlDir.getPath) !
         }
 
         // generate HTML from Markdown, for /doc and /devdoc
@@ -167,7 +172,7 @@ object build extends Build {
 
 
         for (jar <- List("Scalatron", "ScalatronCLI", "ScalatronCore", "BotWar")) {
-            IO.copyFile(file(jar) / "target" / (jar + ".jar"), distDir / "bin" / (jar + ".jar"))
+            IO.copyFile(file(jar) / "target" / ("scala-%s" format version) / (jar + ".jar"), distDir / "bin" / (jar + ".jar"))
         }
 
         // This is ridiculous, there has to be be an easier way to zip up a directory
