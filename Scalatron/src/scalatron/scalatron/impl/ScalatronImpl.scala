@@ -239,6 +239,7 @@ case class ScalatronImpl(
 
   val userCache = collection.mutable.Map.empty[String, ScalatronUser]
 
+  val auditor = actorSystem.actorOf(Auditor.props())
   def computeUserDirectoryPath(name: String) = usersBaseDirectoryPath + "/" + name
 
 
@@ -258,6 +259,7 @@ case class ScalatronImpl(
   }
 
   def postRoundCallback(finalState: Simulation.UntypedState, result: TournamentRoundResult) {
+    auditor ! result
     tournamentState.updateMostRecentState(finalState)
     tournamentState.addResult(result)
   }

@@ -1,6 +1,5 @@
 package scalatron.webServer.rest
 
-import org.codehaus.jackson.jaxrs.JacksonJsonProvider
 import java.lang.reflect.Type
 import java.io.OutputStream
 import resources._
@@ -10,6 +9,7 @@ import java.lang.Class
 import javax.ws.rs.core.{Response, MultivaluedMap, MediaType}
 import java.util.logging.Level
 import javax.ws.rs.ext.{ContextResolver, ExceptionMapper, Provider}
+import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider
 
 
 /** The central init point for the Scalatron RESTful web API.
