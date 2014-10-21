@@ -4,7 +4,7 @@ import javax.ws.rs._
 import core.{Response, MediaType}
 import scalatron.core.Scalatron.SandboxState
 import collection.JavaConversions
-import collection.JavaConversions.JMapWrapper
+import collection.JavaConversions._
 import scalatron.webServer.rest.UserSession
 import UserSession.SandboxAttributeKey
 import org.eclipse.jetty.http.HttpStatus
@@ -27,7 +27,7 @@ class SandboxesResource extends ResourceWithUser {
                         userSession -= SandboxAttributeKey
 
                         // extract the arguments, like Map("-x" -> 50, "-y" -> 50)
-                        val argMap = JMapWrapper(startConfig.getConfig).toMap
+                        val argMap = startConfig.getConfig.toMap
                         val sandbox = user.createSandbox(argMap)
                         val state = sandbox.initialState
                         userSession += SandboxAttributeKey -> state

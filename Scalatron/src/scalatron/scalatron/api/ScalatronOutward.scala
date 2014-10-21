@@ -38,7 +38,7 @@ object ScalatronOutward {
       * scalatron.shutdown()
       * </pre>
       */
-    def apply(argMap: Map[String, String], actorSystem: ActorSystem, verbose: Boolean = false): ScalatronOutward =
+    def apply(argMap: Map[String, String], actorSystem: ActorSystem, verbose: Boolean = true): ScalatronOutward =
         scalatron.scalatron.impl.ScalatronImpl(argMap, actorSystem, verbose)
 
 

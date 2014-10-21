@@ -1,15 +1,19 @@
 package scalatron.scalatron.api
 
-import org.specs2._
 import java.io.{IOException, File}
 import akka.actor.ActorSystem
+import org.specs2.mutable.Specification
 import scalatron.core.Scalatron.Constants._
 import scalatron.core.Scalatron
 import ScalatronApiTest._
 import org.specs2.execute.Result
 import scalatron.scalatron.impl.FileUtil
+import org.specs2.matcher.FileMatchers
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
-class ScalatronApiSpec extends mutable.Specification
+@RunWith(classOf[JUnitRunner])
+class ScalatronApiSpec extends Specification with FileMatchers
 {
     //------------------------------------------------------------------------------------------
     // test (web) user management
