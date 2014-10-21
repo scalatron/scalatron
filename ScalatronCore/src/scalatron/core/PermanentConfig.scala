@@ -7,14 +7,15 @@ package scalatron.core
   * @param secureMode if true, certain bot processing restrictions apply
   * @param stepsPerRound number of steps to run the game
   */
-case class PermanentConfig(secureMode: Boolean, stepsPerRound: Int)
+case class PermanentConfig(secureMode: Boolean, stepsPerRound: Int, cpuRatio: Int = 500000)
 
 
 object PermanentConfig
 {
     def fromArgMap(secureMode: Boolean, argMap: Map[String, String]) = {
         val steps = argMap.get("-steps").map(_.toInt).getOrElse(5000)
-        PermanentConfig(secureMode = secureMode, stepsPerRound = steps)
+        val ratio = argMap.get("-cpuRatio").map(_.toInt).getOrElse(5000)
+        PermanentConfig(secureMode = secureMode, stepsPerRound = steps, cpuRatio = ratio)
     }
 
     /** Dump the display-specific command line configuration options via println. */
