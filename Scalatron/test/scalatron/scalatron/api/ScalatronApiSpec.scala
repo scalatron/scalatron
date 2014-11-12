@@ -363,7 +363,8 @@ object ScalatronApiTest
             result
         } finally {
             // delete the temporary directory
-            FileUtil.deleteRecursively(tmpDirPath, atThisLevel = true, verbose = verbose)
+            // Currently broken on Windows
+            //FileUtil.deleteRecursively(tmpDirPath, atThisLevel = true, verbose = verbose)
         }
     }
 
