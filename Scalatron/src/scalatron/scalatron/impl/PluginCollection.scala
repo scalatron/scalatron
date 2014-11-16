@@ -67,56 +67,54 @@ case class PluginCollection(
             // for each sub-directory in the base directory, try to load a plug-in
             val options: Iterable[Option[Either[Plugin.FromJarFile, Plugin.LoadFailure]]] =
                 filteredPluginDirectories.map(pluginDirectory => {
-                    val pluginDirectoryPath = pluginDirectory.getAbsolutePath
 
-                    // is there are .jar file?
-                    val pluginJarFilePath = pluginDirectoryPath + "/" + Plugin.JarFilename
-                    val pluginJarFile = new File(pluginJarFilePath)
+                    PluginDirectory(pluginDirectory).mostRecentPlugin match {
+                        case None => None
+                        case Some(pluginJarFile) => {
+                            val pluginJarFilePath = pluginJarFile.getPath
 
-                    try {
-                        if(pluginJarFile.exists()) {
-                            val fileTime = pluginJarFile.lastModified
+                            try {
+                                val fileTime = pluginJarFile.lastModified
 
-                            // does this plug-in already exist?
-                            val eitherPluginOrLoadFailure =
-                                existingRecyclableLoadResult(pluginJarFilePath, fileTime) match {
-                                    case None =>
-                                        // there is no recyclable existing plug-in
-                                        val userName = pluginDirectory.getName
-                                        val eitherFactoryOrException =
-                                            Plugin.loadBotControlFunctionFrom(
-                                                pluginJarFile,
-                                                userName,
-                                                gameSpecificPackagePath,
-                                                Plugin.ControlFunctionFactoryClassName,
-                                                verbose)
+                                // does this plug-in already exist?
+                                val eitherPluginOrLoadFailure =
+                                    existingRecyclableLoadResult(pluginJarFilePath, fileTime) match {
+                                        case None =>
+                                            // there is no recyclable existing plug-in
+                                            val userName = pluginDirectory.getName
+                                            val eitherFactoryOrException =
+                                                Plugin.loadBotControlFunctionFrom(
+                                                    pluginJarFile,
+                                                    userName,
+                                                    gameSpecificPackagePath,
+                                                    Plugin.ControlFunctionFactoryClassName,
+                                                    verbose)
 
-                                        eitherFactoryOrException match {
-                                            case Left(controlFunctionFactory) =>
-                                                val externalPlugin = Plugin.FromJarFile(pluginDirectoryPath, pluginJarFilePath, fileTime, pluginDirectory.getName, controlFunctionFactory)
-                                                println("plugin loaded: " + externalPlugin)
-                                                Left(externalPlugin)
-                                            case Right(exception) =>
-                                                val loadFailure = Plugin.LoadFailure(pluginDirectoryPath, pluginJarFilePath, fileTime, exception)
-                                                println("plugin load failure: " + loadFailure)
-                                                Right(loadFailure)
-                                        }
+                                            eitherFactoryOrException match {
+                                                case Left(controlFunctionFactory) =>
+                                                    val externalPlugin = Plugin.FromJarFile(pluginDirectoryPath, pluginJarFilePath, fileTime, pluginDirectory.getName, controlFunctionFactory)
+                                                    println("plugin loaded: " + externalPlugin)
+                                                    Left(externalPlugin)
+                                                case Right(exception) =>
+                                                    val loadFailure = Plugin.LoadFailure(pluginDirectoryPath, pluginJarFilePath, fileTime, exception)
+                                                    println("plugin load failure: " + loadFailure)
+                                                    Right(loadFailure)
+                                            }
 
-                                    case Some(existingEither) =>
-                                        // there is a recyclable existing plug-in
-                                        // println("recycling already-loaded plugin: " + existingEither.merge)
-                                        existingEither
-                                }
+                                        case Some(existingEither) =>
+                                            // there is a recyclable existing plug-in
+                                            // println("recycling already-loaded plugin: " + existingEither.merge)
+                                            existingEither
+                                    }
 
-                            Some(eitherPluginOrLoadFailure)
-                        } else {
-                            println("warning: plug-in file does not exist: " + pluginJarFilePath)
-                            None
+                                Some(eitherPluginOrLoadFailure)
+
+                            } catch {
+                                case t: Throwable =>
+                                    System.err.println("warning: exception while examining plug-in file: " + pluginJarFilePath)
+                                    None
+                            }
                         }
-                    } catch {
-                        case t: Throwable =>
-                            System.err.println("warning: exception while examining plug-in file: " + pluginJarFilePath)
-                            None
                     }
                 })
 
@@ -143,46 +141,46 @@ case class PluginCollection(
             // for each sub-directory in the base directory, try to load a plug-in
             val options: Iterable[Option[Either[Plugin.FromJarFile, Plugin.LoadFailure]]] =
                 filteredPluginDirectories.map(pluginDirectory => {
-                    val pluginDirectoryPath = pluginDirectory.getAbsolutePath
-                    val pluginFilePath = pluginDirectoryPath + "/" + Plugin.JarFilename
-                    try {
-                        val pluginFile = new File(pluginFilePath)
-                        if(pluginFile.exists()) {
-                            val fileTime = pluginFile.lastModified
+                    PluginDirectory(pluginDirectory).mostRecentPlugin match {
+                        case None => None
+                        case Some(pluginFile) => {
+                            val pluginFilePath = pluginFile.getPath
 
-                            val userName = pluginDirectory.getName
-                            val eitherFactoryOrException =
-                                Plugin.loadBotControlFunctionFrom(
-                                    pluginFile,
-                                    userName,
-                                    gameSpecificPackagePath,
-                                    Plugin.ControlFunctionFactoryClassName,
-                                    verbose)
+                            try {
+                                val fileTime = pluginFile.lastModified
 
-                            val eitherPluginOrLoadFailure = eitherFactoryOrException match {
-                                case Left(controlFunctionFactory) =>
-                                    val externalPlugin = Plugin.FromJarFile(pluginDirectoryPath, pluginFilePath, fileTime, pluginDirectory.getName, controlFunctionFactory)
-                                    println("plugin loaded: " + externalPlugin)
-                                    Left(externalPlugin)
-                                case Right(exception) =>
-                                    val loadFailure = Plugin.LoadFailure(pluginDirectoryPath, pluginFilePath, fileTime, exception)
-                                    println("plugin load failure: " + loadFailure)
-                                    Right(loadFailure)
+                                val userName = pluginDirectory.getName
+                                val eitherFactoryOrException =
+                                    Plugin.loadBotControlFunctionFrom(
+                                        pluginFile,
+                                        userName,
+                                        gameSpecificPackagePath,
+                                        Plugin.ControlFunctionFactoryClassName,
+                                        verbose)
+
+                                val eitherPluginOrLoadFailure = eitherFactoryOrException match {
+                                    case Left(controlFunctionFactory) =>
+                                        val externalPlugin = Plugin.FromJarFile(pluginDirectoryPath, pluginFilePath, fileTime, pluginDirectory.getName, controlFunctionFactory)
+                                        println("plugin loaded: " + externalPlugin)
+                                        Left(externalPlugin)
+                                    case Right(exception) =>
+                                        val loadFailure = Plugin.LoadFailure(pluginDirectoryPath, pluginFilePath, fileTime, exception)
+                                        println("plugin load failure: " + loadFailure)
+                                        Right(loadFailure)
+                                }
+
+                                Some(eitherPluginOrLoadFailure)
+
+                            } catch {
+                                case t: Throwable =>
+                                    System.err.println("warning: exception while examining plug-in file: " + pluginFilePath)
+                                    None
                             }
-
-                            Some(eitherPluginOrLoadFailure)
-                        } else {
-                            System.err.println("warning: plug-in file does not exist: " + pluginFilePath)
-                            None
                         }
-                    } catch {
-                        case t: Throwable =>
-                            System.err.println("warning: exception while examining plug-in file: " + pluginFilePath)
-                            None
+
                     }
                 })
-
-            PluginCollection(pluginDirectoryPath, gameSpecificPackagePath, verbose, options.flatten)
+                  PluginCollection(pluginDirectoryPath, gameSpecificPackagePath, verbose, options.flatten)
         }
     }
 }
