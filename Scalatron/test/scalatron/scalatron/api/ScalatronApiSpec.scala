@@ -153,13 +153,13 @@ class ScalatronApiSpec extends mutable.Specification
 
                 val sortedMessages = compileResult.messages.toArray.sortBy(_.sourceFile)
                 val msg0 = sortedMessages(0)
-                assert(msg0.sourceFile == "1.scala")
+                assert(msg0.sourceFile.contains("1.scala"))
                 assert(msg0.lineAndColumn ==(1, 1))
                 assert(msg0.severity == 2)
                 assert(msg0.multiLineMessage == "expected class or object definition")
 
                 val msg1 = sortedMessages(1)
-                assert(msg1.sourceFile == "2.scala")
+                assert(msg1.sourceFile.contains("2.scala"))
                 assert(msg1.lineAndColumn ==(1, 12))
                 assert(msg1.severity == 2)
                 assert(msg1.multiLineMessage == "expected class or object definition")
