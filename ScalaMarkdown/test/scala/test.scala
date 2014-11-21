@@ -15,16 +15,17 @@ object MarkdownSpec extends Specification {
     def apply(name: => String) = {
       val textFile = this.getClass.getResourceAsStream("/" + name + ".text")
       val htmlFile = this.getClass.getResourceAsStream("/" + name + ".html")
-      val text = Markdown(IOUtils.toString(textFile, "ISO-8859-1")).trim
-//      println("[%s]".format(text))
-      val html = IOUtils.toString(htmlFile, "ISO-8859-1").trim
-      val diffIndex = StringUtils.indexOfDifference(text, html)
-      val diff = StringUtils.difference(text, html)
+      val text = normalize(Markdown(IOUtils.toString(textFile, "ISO-8859-1")))
+      val expectedHtml = normalize(IOUtils.toString(htmlFile, "ISO-8859-1"))
+      val diffIndex = StringUtils.indexOfDifference(text, expectedHtml)
+      val diff = StringUtils.difference(text, expectedHtml)
       (diffIndex == -1,
           "\"" + name + "\" is fine",
           "\"" + name + "\" fails at " + diffIndex + ": " + StringUtils.abbreviate(diff, 32))
     }
   }
+
+  def normalize(s: String) : String = s.trim.replace(sys.props("line.separator"),"\n")
 
   def process = addToSusVerb("process")
 
