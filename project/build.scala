@@ -111,7 +111,7 @@ object build extends Build {
     lazy val samples = (IO.listFiles(file("Scalatron") / "samples")) filter (!_.isFile) map {
         sample: File => sample.getName -> Project(sample.getName.replace(" ",""), sample, settings = Defaults.defaultSettings ++ Seq (
             scalaSource in Compile <<= baseDirectory / "src",
-            artifactName in packageBin := ((_, _, _) => "ScalatronBot.jar")
+            artifactName in packageBin := ((_, _, _) => "ScalatronBot_1.jar")
            , scalaVersion := compilerVersion
         ))
     } toMap
@@ -145,17 +145,17 @@ object build extends Build {
         }
 
         val distSamples = distDir / "samples"
-        def sampleJar(sample: Project) = sample.base / ("target/scala-%s/ScalatronBot.jar" format version)
+        def sampleJar(sample: Project) = sample.base / ("target/scala-%s/ScalatronBot_1.jar" format version)
         for (sample <- samples.values) {
             if (sampleJar(sample).exists) {
                 println("Copying " + sample.base)
                 IO.copyDirectory(sample.base / "src", distSamples / sample.base.getName / "src")
-                IO.copyFile(sampleJar(sample), distSamples / sample.base.getName / "ScalatronBot.jar")
+                IO.copyFile(sampleJar(sample), distSamples / sample.base.getName / "ScalatronBot_1.jar")
             }
         }
 
         println ("Copying Reference bot to /bots directory...")
-        IO.copyFile(sampleJar(referenceBot), distDir / "bots" / "Reference" / "ScalatronBot.jar")
+        IO.copyFile(sampleJar(referenceBot), distDir / "bots" / "Reference" / "ScalatronBot_1.jar")
 
 
         def markdown(docDir: File, htmlDir: File) = {
