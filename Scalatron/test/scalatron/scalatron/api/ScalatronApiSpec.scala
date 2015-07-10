@@ -9,6 +9,7 @@ import ScalatronApiTest._
 import org.specs2.execute.Result
 import scalatron.scalatron.impl.FileUtil
 
+
 class ScalatronApiSpec extends mutable.Specification
 {
     //------------------------------------------------------------------------------------------
@@ -29,9 +30,9 @@ class ScalatronApiSpec extends mutable.Specification
                 scalatron.createUser(name = "ExampleUser", password = "", initialSourceFiles = sourceFiles)
 
                 (scalatron.users() must have size (2)) and
-                    ((usersBaseDirPath + "/" + "ExampleUser") must beAnExistingPath) and
+                    ((usersBaseDirPath + "/" + "ExampleUser") must be) and
                     (scalatron.user("ExampleUser") must beSome) and
-                    ((usersBaseDirPath + "/ExampleUser/src/Bot.scala") must beAnExistingPath)
+                    (new File(usersBaseDirPath + "/ExampleUser/src/Bot.scala").exists must beTrue)
             })
         }
 

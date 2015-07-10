@@ -5,7 +5,9 @@ import AssemblyKeys._
 
 
 object build extends Build {
-    val compilerVersion = "2.9.2"
+    val compilerVersion = "2.10.5"
+
+    val libAkkaActors = "com.typesafe.akka" % "akka-actor" % "2.0"
 
     def standardSettings = Defaults.defaultSettings ++ src ++ assemblySettings ++ Seq (
         mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) => {
@@ -41,9 +43,7 @@ object build extends Build {
 
     lazy val core = Project("ScalatronCore", file("ScalatronCore"),
         settings = standardSettings ++ Seq(
-            libraryDependencies ++= Seq(
-                "com.typesafe.akka" % "akka-actor" % "2.0"
-            )
+            libraryDependencies ++= Seq( libAkkaActors )
         ) ++ Seq (
             jarName in assembly := "ScalatronCore.jar" // , logLevel in assembly := Level.Debug
         )
@@ -51,9 +51,7 @@ object build extends Build {
 
     lazy val botwar = Project("BotWar", file("BotWar"),
         settings = standardSettings ++ Seq(
-            libraryDependencies ++= Seq(
-                "com.typesafe.akka" % "akka-actor" % "2.0"
-            )
+            libraryDependencies ++= Seq( libAkkaActors )
         ) ++ Seq (
             jarName in assembly := "BotWar.jar" // , logLevel in assembly := Level.Debug
         )
@@ -63,17 +61,17 @@ object build extends Build {
         settings = standardSettings ++ Seq(
             libraryDependencies ++= Seq(
                 "org.scala-lang" % "scala-compiler" % compilerVersion,
-                "com.typesafe.akka" % "akka-actor" % "2.0",
+                libAkkaActors,
                 "org.eclipse.jetty.aggregate" % "jetty-webapp" % "7.6.2.v20120308" intransitive,
                 "org.codehaus.jackson" % "jackson-jaxrs" % "1.9.2",
                 "com.sun.jersey" % "jersey-bundle" % "1.12",
                 "javax.servlet" % "servlet-api" % "2.5",
                 "org.eclipse.jgit" % "org.eclipse.jgit" % "1.3.0.201202151440-r",
                 "org.eclipse.jgit" % "org.eclipse.jgit.http.server" % "1.3.0.201202151440-r",
-                "org.scalatest" %% "scalatest" % "1.7.2" % "test",
+		            "org.scalatest" %% "scalatest" % "2.2.4" % "test",
                 "org.testng" % "testng" % "6.5.1" % "test",
-                "org.specs2" %% "specs2" % "1.9" % "test",
-                "org.specs2" %% "specs2-scalaz-core" % "6.0.1"
+		            "org.specs2" % "specs2_2.10" % "2.4.17",
+                "org.specs2" %% "specs2-scalaz-core" % "7.0.0"
             ),
             resolvers ++= Seq("JGit Repository" at "http://download.eclipse.org/jgit/maven",
             "Scalaz Bintray Repo"  at "http://dl.bintray.com/scalaz/releases")
