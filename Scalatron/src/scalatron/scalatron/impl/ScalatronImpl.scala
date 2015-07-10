@@ -5,6 +5,7 @@ package scalatron.scalatron.impl
 
 import java.io._
 import akka.actor._
+import scala.concurrent.ExecutionContext
 import scalatron.core.Scalatron.Constants._
 import scalatron.Version
 import java.text.DateFormat
@@ -15,7 +16,6 @@ import akka.routing.SmallestMailboxRouter
 import scalatron.scalatron.api.ScalatronOutward
 import scalatron.core.Simulation.UntypedState
 import scalatron.core._
-import akka.dispatch.ExecutionContext
 
 
 object ScalatronImpl

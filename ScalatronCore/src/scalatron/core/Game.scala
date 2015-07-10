@@ -4,7 +4,7 @@
 
 package scalatron.core
 
-import akka.dispatch.ExecutionContext
+import scala.concurrent.ExecutionContext
 
 /** This is the API that game plug-ins implement and expose toward the managing Scalatron server. */
 trait Game

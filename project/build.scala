@@ -7,7 +7,7 @@ import AssemblyKeys._
 object build extends Build {
     val compilerVersion = "2.10.5"
 
-    val libAkkaActors = "com.typesafe.akka" % "akka-actor" % "2.0"
+    lazy val libAkkaActors = "com.typesafe.akka" %% "akka-actor" % "2.3.6"
 
     def standardSettings = Defaults.defaultSettings ++ src ++ assemblySettings ++ Seq (
         mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) => {
@@ -17,9 +17,7 @@ object build extends Build {
           }
         }
       ,  scalaVersion := compilerVersion
-    ) ++ implVersion ++ Seq (
-        resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
-    )
+    ) ++ implVersion
 
     lazy val implVersion = Seq (
         packageOptions <<= (version) map {
@@ -43,7 +41,9 @@ object build extends Build {
 
     lazy val core = Project("ScalatronCore", file("ScalatronCore"),
         settings = standardSettings ++ Seq(
-            libraryDependencies ++= Seq( libAkkaActors )
+            libraryDependencies ++= Seq(
+                libAkkaActors
+            )
         ) ++ Seq (
             jarName in assembly := "ScalatronCore.jar" // , logLevel in assembly := Level.Debug
         )

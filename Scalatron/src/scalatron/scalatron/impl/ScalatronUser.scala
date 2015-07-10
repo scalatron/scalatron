@@ -8,11 +8,11 @@ package scalatron.scalatron.impl
 import java.io._
 import scala.collection.JavaConverters._
 
-import akka.util.duration._
 import akka.pattern.ask
 import akka.util.Timeout
-import akka.dispatch.Await
 
+import scala.concurrent.{Await, Future, ExecutionContext}
+import scala.concurrent.duration._
 
 import scalatron.scalatron.impl.FileUtil._
 import ConfigFile.loadConfigFile

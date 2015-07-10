@@ -10,9 +10,7 @@ import tools.nsc.reporters.StoreReporter
 import scalatron.core.Scalatron
 import scala.tools.nsc.util.{BatchSourceFile, Position}
 import akka.actor.Actor
-import scala.util.parsing.input.OffsetPosition
 import java.util.Locale
-import java.io.IOException
 
 
 /** Each compile actor holds a Scala compiler instance and uses it to process CompileJob messages

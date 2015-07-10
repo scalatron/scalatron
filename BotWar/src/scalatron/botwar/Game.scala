@@ -4,9 +4,9 @@
 package scalatron.botwar
 
 import renderer.Renderer
+import scala.concurrent.ExecutionContext
 import scalatron.botwar.BotWarSimulation.SimState
 import java.awt.event.{WindowEvent, WindowAdapter, KeyEvent, KeyListener}
-import akka.dispatch.ExecutionContext
 import scalatron.core._
 
 
