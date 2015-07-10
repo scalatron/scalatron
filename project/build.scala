@@ -125,6 +125,8 @@ object build extends Build {
         println ("Beginning distribution generation...")
         val distDir = file("dist")
 
+        println("with scalaVersion = " + version)
+
         // clean distribution directory
         println("Deleting /dist directory...")
         IO delete distDir
@@ -145,7 +147,8 @@ object build extends Build {
         }
 
         val distSamples = distDir / "samples"
-        def sampleJar(sample: Project) = sample.base / ("target/scala-%s/ScalatronBot.jar" format version)
+        val targetVersion = version.split("\\.").toList.take(2).mkString(".")
+        def sampleJar(sample: Project) = sample.base / ("target/scala-%s/ScalatronBot.jar" format targetVersion)
         for (sample <- samples.values) {
             if (sampleJar(sample).exists) {
                 println("Copying " + sample.base)
@@ -159,7 +162,7 @@ object build extends Build {
 
 
         def markdown(docDir: File, htmlDir: File) = {
-            Seq("java", "-Xmx1G", "-jar", "ScalaMarkdown/target/scala-%s/ScalaMarkdown.jar" format version, docDir.getPath, htmlDir.getPath) !
+            Seq("java", "-Xmx1G", "-jar", "ScalaMarkdown/target/scala-%s/ScalaMarkdown.jar" format targetVersion, docDir.getPath, htmlDir.getPath) !
         }
 
         // generate HTML from Markdown, for /doc and /devdoc
@@ -172,7 +175,7 @@ object build extends Build {
 
 
         for (jar <- List("Scalatron", "ScalatronCLI", "ScalatronCore", "BotWar")) {
-            IO.copyFile(file(jar) / "target" / ("scala-%s" format version) / (jar + ".jar"), distDir / "bin" / (jar + ".jar"))
+            IO.copyFile(file(jar) / "target" / ("scala-%s" format targetVersion) / (jar + ".jar"), distDir / "bin" / (jar + ".jar"))
         }
 
         // This is ridiculous, there has to be be an easier way to zip up a directory
