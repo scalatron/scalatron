@@ -112,7 +112,7 @@ case class CompileActor(verbose: Boolean) extends Actor {
         settings.unchecked.value = true // enable detailed unchecked warnings
         settings.explaintypes.value = true // explain type errors
         settings.verbose.value = false // verbose output -- too verbose even for our own 'verbose' setting
-        
+
         val reporter = new StoreReporter()
         val compilerGlobal = new Global(settings, reporter)
 
