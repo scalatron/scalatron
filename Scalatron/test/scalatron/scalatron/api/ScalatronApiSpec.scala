@@ -108,7 +108,7 @@ class ScalatronApiSpec extends mutable.Specification
         //------------------------------------------------------------------------------------------
         // test building
         //------------------------------------------------------------------------------------------
-/*
+
         "be able to build from sources from disk containing no errors" in {
             runTest((scalatron: Scalatron, usersBaseDirPath: String, samplesBaseDirPath: String, pluginBaseDirPath: String) => {
                 val user = scalatron.createUser("ExampleUser", "", sourceFiles)
@@ -126,8 +126,8 @@ class ScalatronApiSpec extends mutable.Specification
                 success
             })
         }
-*/
-        /*
+
+
         "be able to report errors when building invalid sources" in {
             runTest((scalatron: Scalatron, usersBaseDirPath: String, samplesBaseDirPath: String, pluginBaseDirPath: String) => {
                 val user = scalatron.createUser("ExampleUser", "", sourceFiles)
@@ -169,13 +169,13 @@ class ScalatronApiSpec extends mutable.Specification
                 success
             })
         }
-*/
+
 
         //------------------------------------------------------------------------------------------
         // test publishing into tournament
         //------------------------------------------------------------------------------------------
 
-        /*
+
         "be able to publish a jar built from sources into the tournament" in {
             runTest((scalatron: Scalatron, usersBaseDirPath: String, samplesBaseDirPath: String, pluginBaseDirPath: String) => {
                 val user = scalatron.createUser("ExampleUser", "", sourceFiles)
@@ -192,13 +192,13 @@ class ScalatronApiSpec extends mutable.Specification
                 success
             })
         }
-*/
+
 
         //------------------------------------------------------------------------------------------
         // test publishing into sandbox
         //------------------------------------------------------------------------------------------
 
-        /*
+
         "be able to run a sandboxed game using a jar built from sources" in {
             runTest((scalatron: Scalatron, usersBaseDirPath: String, samplesBaseDirPath: String, pluginBaseDirPath: String) => {
                 val user = scalatron.createUser("ExampleUser", "", sourceFiles)
@@ -242,7 +242,7 @@ class ScalatronApiSpec extends mutable.Specification
                 success
             })
         }
-        */
+
     }
 
 

@@ -107,11 +107,12 @@ case class CompileActor(verbose: Boolean) extends Actor {
 
         val settings = new Settings(error)
         detectedScalaClassPaths.foreach(settings.classpath.append)
+        detectedScalaClassPaths.foreach(settings.bootclasspath.append)
         settings.deprecation.value = true // enable detailed deprecation warnings
         settings.unchecked.value = true // enable detailed unchecked warnings
         settings.explaintypes.value = true // explain type errors
         settings.verbose.value = false // verbose output -- too verbose even for our own 'verbose' setting
-
+        
         val reporter = new StoreReporter()
         val compilerGlobal = new Global(settings, reporter)
 
