@@ -4,15 +4,20 @@
 package scalatron.scalatron.impl
 
 import java.io._
+
 import akka.actor._
+
 import scala.concurrent.ExecutionContext
 import scalatron.core.Scalatron.Constants._
 import scalatron.Version
 import java.text.DateFormat
 import java.util.Date
+
 import scalatron.core.Scalatron.{ScalatronException, SourceFile, User}
 import java.net.URLDecoder
-import akka.routing.SmallestMailboxRouter
+
+import akka.routing._
+
 import scalatron.scalatron.api.ScalatronOutward
 import scalatron.core.Simulation.UntypedState
 import scalatron.core._
@@ -272,18 +277,16 @@ case class ScalatronImpl(
 
     def start() {
         val compileWorkerCount = 3
-        val routees = Vector.tabulate[ActorRef](compileWorkerCount)(n => actorSystem.actorOf(Props(new CompileActor(verbose))))
 
         // using a SmallestMailboxRouter has the advantage of only ever loading (and bloating) a single compile actor
         // instance when a single user (or a small number of users) is working on the system.
-        val router = SmallestMailboxRouter(routees) // RoundRobinRouter(routees)
-        val compileWorkerRouter = actorSystem.actorOf(Props(new CompileActor(verbose)).withRouter(router), name = "workerRouter")
+        val compileWorkerRouter = actorSystem.actorOf(SmallestMailboxPool(compileWorkerCount).props(Props(new CompileActor(verbose))), name = "workerRouter")
         compileWorkerRouterOpt = Some(compileWorkerRouter)
     }
 
     def run(argMap: Map[String, String]) {
         val rounds = argMap.get("-rounds").map(_.toInt).getOrElse(Int.MaxValue)
-        val headless = (argMap.get("-headless").getOrElse("no") == "yes")
+        val headless = argMap.getOrElse("-headless", "no") == "yes"
         if(headless) {
             game.runHeadless(rounds, this)
         } else {

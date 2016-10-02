@@ -4,7 +4,7 @@ import javax.ws.rs._
 import core.{Response, MediaType}
 import scalatron.core.Scalatron.SandboxState
 import collection.JavaConversions
-import collection.JavaConversions.JMapWrapper
+import collection.convert.decorateAll._
 import scalatron.webServer.rest.UserSession
 import UserSession.SandboxAttributeKey
 import org.eclipse.jetty.http.HttpStatus
@@ -27,7 +27,7 @@ class SandboxesResource extends ResourceWithUser {
                         userSession -= SandboxAttributeKey
 
                         // extract the arguments, like Map("-x" -> 50, "-y" -> 50)
-                        val argMap = JMapWrapper(startConfig.getConfig).toMap
+                        val argMap = startConfig.getConfig.asScala.toMap
                         val sandbox = user.createSandbox(argMap)
                         val state = sandbox.initialState
                         userSession += SandboxAttributeKey -> state
@@ -102,7 +102,7 @@ class SandboxesResource extends ResourceWithUser {
                                     Response.ok(SandboxesResource.createSandboxResult(userName, currentSandboxState)).build()
                                 } else
                                 if(timeDelta < 0) {
-                                    Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, "cannot step sandbox with id=%d for user '%s' backwards in time".format(id, userName, timeDelta))).build()
+                                    Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, "cannot step sandbox with id=%d for user '%s' backwards in time %d".format(id, userName, timeDelta))).build()
                                 } else {
                                     val updatedSandboxState = currentSandboxState.step(timeDelta)
                                     userSession += SandboxAttributeKey -> updatedSandboxState
@@ -153,7 +153,7 @@ class SandboxesResource extends ResourceWithUser {
                         e.debugOutput)
                 }).toArray
 
-                Response.ok(new SandboxResult(mappedEntities)).build();
+                Response.ok(SandboxResult(mappedEntities)).build();
 
             case _ =>
                 Response.serverError().build()
