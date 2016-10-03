@@ -2,7 +2,7 @@ package scalatron.webServer.servelets
 
 import scalatron.core.Scalatron
 import scalatron.core.Scalatron.SourceFile
-import Scalatron.Constants._
+import scalatron.core.Scalatron.Constants._
 import javax.servlet.http.{Cookie, HttpServletResponse, HttpServletRequest}
 
 
@@ -10,17 +10,17 @@ import javax.servlet.http.{Cookie, HttpServletResponse, HttpServletRequest}
   * Note that this should really all be done via the REST API and Ajax on the client now.
   */
 case class UserServlet(context: WebContext) extends BaseServlet {
-    override def doPost(req: HttpServletRequest, resp: HttpServletResponse) {
+    override def doPost(req: HttpServletRequest, resp: HttpServletResponse): Unit = {
         doGet(req, resp)
     }
 
-    override def doPut(req: HttpServletRequest, resp: HttpServletResponse) {
+    override def doPut(req: HttpServletRequest, resp: HttpServletResponse): Unit = {
         doGet(req, resp)
     }
 
-    override def doGet(request: HttpServletRequest, response: HttpServletResponse) {
+    override def doGet(request: HttpServletRequest, response: HttpServletResponse): Unit = {
 
-        val target = request.getRequestURI;
+        val target = request.getRequestURI
 
         if(!target.startsWith("/user/")) {
             serveErrorPage("unexpected user url: '" + target + "'", request, response)
@@ -48,7 +48,6 @@ case class UserServlet(context: WebContext) extends BaseServlet {
                     case None =>
                         serveErrorPage("the user account for '" + userName + "' does not exist", "/admin/list", "return to administration main page", request, response)
                         System.err.println("error: the user account for '" + userName + "' does not exist")
-                        return
 
                     case Some(user) =>
                         user.getPasswordOpt match {
@@ -88,7 +87,7 @@ case class UserServlet(context: WebContext) extends BaseServlet {
 
 
     // "/user/name/login" -> verify
-    private def handleUserLogin(userName: String, request: HttpServletRequest, response: HttpServletResponse) {
+    private def handleUserLogin(userName: String, request: HttpServletRequest, response: HttpServletResponse): Unit = {
         if(context.verbose) println("/user/name/login for user: " + userName)
 
         val candidatePassword = request.getParameter("password")
@@ -104,7 +103,6 @@ case class UserServlet(context: WebContext) extends BaseServlet {
             case None =>
                 serveErrorPage("the user account for '" + userName + "' does not exist", "/admin/list", "return to administration main page", request, response)
                 System.err.println("error: the user account for '" + userName + "' does not exist")
-                return
 
             case Some(user) =>
                 user.getPasswordOpt match {
@@ -120,7 +118,7 @@ case class UserServlet(context: WebContext) extends BaseServlet {
                         }
                 }
 
-                setUserToSession(request, response, userName);
+                setUserToSession(request, response, userName)
 
                 // TODO: this is totally retarded - we need to store the log-in state as session state
                 if(context.verbose) println("user logged in: " + userName)
@@ -132,23 +130,23 @@ case class UserServlet(context: WebContext) extends BaseServlet {
         }
     }
 
-    private def setUserToSession(request: HttpServletRequest, response: HttpServletResponse, userName: String) {
+    private def setUserToSession(request: HttpServletRequest, response: HttpServletResponse, userName: String): Unit = {
         // Set at least the user as session attribute - can be used by the web socket to identify the bot.
-        request.getSession(true).setAttribute("user", userName);
+        request.getSession(true).setAttribute("user", userName)
         // val list = request.getCookies.toList
         //if(!list.exists(e => e.getName == "scalatron-user")) {
-        val cookie = new Cookie("scalatron-user", userName);
-        cookie.setMaxAge(24 * 60 * 60);
-        response.addCookie(cookie);
+        val cookie = new Cookie("scalatron-user", userName)
+        cookie.setMaxAge(24 * 60 * 60)
+        response.addCookie(cookie)
         //}
     }
 
     // "/user/name/edit" -> open editor; before that, create bot if necessary
-    private def handleUserEdit(userName: String, request: HttpServletRequest, response: HttpServletResponse) {
+    private def handleUserEdit(userName: String, request: HttpServletRequest, response: HttpServletResponse): Unit = {
         // Make sure we have a user session - If not we will redirect to the the user prompt
         if(request.getSession(true).getAttribute("user") != userName) {
-            response.sendRedirect("/user/%s/loginprompt".format(userName));
-            return;
+            response.sendRedirect(s"/user/$userName/loginprompt")
+            return
         }
 
         val userOpt = context.scalatron.user(userName)
@@ -156,7 +154,6 @@ case class UserServlet(context: WebContext) extends BaseServlet {
             case None =>
                 serveErrorPage("the user account for '" + userName + "' does not exist", "/admin/list", "return to administration main page", request, response)
                 System.err.println("error: the user account for '" + userName + "' does not exist")
-                return
 
             case Some(user) =>
                 val botSources =

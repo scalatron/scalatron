@@ -1,7 +1,7 @@
 package scalatron.webServer.rest.resources
 
 import javax.ws.rs._
-import core.{Response, MediaType}
+import javax.ws.rs.core.{Response, MediaType}
 import scalatron.core.Scalatron
 import scalatron.core.Scalatron.ScalatronException
 import org.eclipse.jetty.http.HttpStatus
@@ -32,8 +32,8 @@ class UsersResource extends Resource {
             scalatron.users().map(u =>
                 UsersResource.User(
                     u.name,
-                    "/api/users/%s/session".format(u.name),
-                    "/api/users/%s".format(u.name)
+                    s"/api/users/${u.name}/session",
+                    s"/api/users/${u.name}"
                 )
             ).toArray
         )
@@ -56,8 +56,8 @@ class UsersResource extends Resource {
                 */
                 UsersResource.User(
                     param.getName,
-                    "/api/users/%s/session".format(user.name),
-                    "/api/users/%s".format(user.name)
+                    s"/api/users/${user.name}/session",
+                    s"/api/users/${user.name}"
                 )
             } catch {
                 case e: ScalatronException.IllegalUserName =>
@@ -163,15 +163,15 @@ object UsersResource {
     class Attributes(var attributeList: Array[Attribute]) {
         def this() = this(null)
         def getAttributes = attributeList
-        def setAttributes(al: Array[Attribute]) { this.attributeList = al }
+        def setAttributes(al: Array[Attribute]): Unit = { this.attributeList = al }
     }
 
     class Attribute(var k: String, var v: String) {
         def this() = this(null, null)
         def getName = k
-        def setName(k: String) { this.k = k }
+        def setName(k: String): Unit = { this.k = k }
         def getValue = v
-        def setValue(v: String) { this.v = v }
+        def setValue(v: String): Unit = { this.v = v }
     }
 
     case class AttributesAndResources(a: Array[Attribute], r: Array[SessionResource.ResourceLink]) {
@@ -182,15 +182,15 @@ object UsersResource {
     class Password(var p: String) {
         def this() = this(null)
         def getPassword = p
-        def setPassword(p: String) {this.p = p}
+        def setPassword(p: String): Unit = {this.p = p}
     }
 
     class UserPassword(var n: String, var p: String) {
         def this() = this(null, null)
         def getPassword = p
-        def setPassword(p: String) {this.p = p}
+        def setPassword(p: String): Unit = {this.p = p}
         def getName = n
-        def setName(n: String) {this.n = n}
+        def setName(n: String): Unit = {this.n = n}
     }
 
     case class UserList(list: Array[User]) {

@@ -5,7 +5,7 @@ import java.io.{IOException, File}
 import akka.actor.ActorSystem
 import scalatron.core.Scalatron.Constants._
 import scalatron.core.Scalatron
-import ScalatronApiTest._
+import scalatron.scalatron.api.ScalatronApiTest._
 import org.specs2.execute.Result
 import scalatron.scalatron.impl.FileUtil
 
@@ -29,7 +29,7 @@ class ScalatronApiSpec extends mutable.Specification
             runTest((scalatron: Scalatron, usersBaseDirPath: String, samplesBaseDirPath: String, pluginBaseDirPath: String) => {
                 scalatron.createUser(name = "ExampleUser", password = "", initialSourceFiles = sourceFiles)
 
-                (scalatron.users() must have size (2)) and
+                (scalatron.users() must have size 2) and
                     ((usersBaseDirPath + "/" + "ExampleUser") must be) and
                     (scalatron.user("ExampleUser") must beSome) and
                     (new File(usersBaseDirPath + "/ExampleUser/src/Bot.scala").exists must beTrue)
@@ -156,13 +156,13 @@ class ScalatronApiSpec extends mutable.Specification
                 val sortedMessages = compileResult.messages.toArray.sortBy(_.sourceFile)
                 val msg0 = sortedMessages(0)
                 assert(msg0.sourceFile == "1.scala")
-                assert(msg0.lineAndColumn ==(1, 1))
+                assert(msg0.lineAndColumn == ((1, 1)))
                 assert(msg0.severity == 2)
                 assert(msg0.multiLineMessage == "expected class or object definition")
 
                 val msg1 = sortedMessages(1)
                 assert(msg1.sourceFile == "2.scala")
-                assert(msg1.lineAndColumn ==(1, 12))
+                assert(msg1.lineAndColumn == ((1, 12)))
                 assert(msg1.severity == 2)
                 assert(msg1.multiLineMessage == "expected class or object definition")
 
@@ -209,14 +209,14 @@ class ScalatronApiSpec extends mutable.Specification
                 // create a sandbox game
                 val sandbox = user.createSandbox(
                     Map(
-                        ("-x" -> "50"),
-                        ("-y" -> "50"),
-                        ("-perimeter" -> "open"),
-                        ("-walls" -> "20"),
-                        ("-snorgs" -> "20"),
-                        ("-fluppets" -> "20"),
-                        ("-toxifera" -> "20"),
-                        ("-zugars" -> "20")
+                        "-x" -> "50",
+                        "-y" -> "50",
+                        "-perimeter" -> "open",
+                        "-walls" -> "20",
+                        "-snorgs" -> "20",
+                        "-fluppets" -> "20",
+                        "-toxifera" -> "20",
+                        "-zugars" -> "20"
                     )
                 )
 
@@ -296,7 +296,7 @@ class ScalatronApiSpec extends mutable.Specification
                 assert(scalatron.samples.size == 1)
 
                 createdSample.delete()
-                assert(scalatron.samples.size == 0)
+                assert(scalatron.samples.isEmpty)
 
                 success
             })
@@ -349,9 +349,9 @@ object ScalatronApiTest
             val scalatron =
                 ScalatronOutward(
                     Map(
-                        ( "-users" -> usersBaseDirPath ),
-                        ( "-samples" -> samplesBaseDirPath ),
-                        ( "-plugins" -> pluginBaseDirPath )
+                        "-users" -> usersBaseDirPath,
+                        "-samples" -> samplesBaseDirPath,
+                        "-plugins" -> pluginBaseDirPath
                     ),
                     actorSystem,
                     verbose

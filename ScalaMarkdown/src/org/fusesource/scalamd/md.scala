@@ -7,7 +7,7 @@ package org.fusesource.scalamd
 import java.util.regex._
 import java.util.Random
 import java.lang.StringBuilder
-import collection.mutable.ListBuffer
+import scala.collection.mutable.ListBuffer
 
 // # The Markdown Processor
 
@@ -177,7 +177,7 @@ object Markdown {
 // # Processing Stuff
 case class MacroDefinition(pattern: String, flags: String, replacement: (Matcher)=>String, literally: Boolean) {
   val regex: Pattern = {
-    var f = 0;
+    var f = 0
     if (flags != null) flags.toList.foreach {
       case 'i' => f = f | Pattern.CASE_INSENSITIVE
       case 'd' => f = f | Pattern.UNIX_LINES
@@ -198,13 +198,13 @@ case class MacroDefinition(pattern: String, flags: String, replacement: (Matcher
 class MarkdownText(source: CharSequence) {
   protected var listLevel = 0
   protected var text = new StringEx(source)
-  import Markdown._
+  import org.fusesource.scalamd.Markdown._
 
   /**
    * Link Definitions
    */
 
-  case class LinkDefinition(val url: String, val title: String) {
+  case class LinkDefinition(url: String, title: String) {
     override def toString = url + " (" + title + ")"
   }
 
@@ -343,7 +343,7 @@ class MarkdownText(source: CharSequence) {
   protected def stripMacroDefinitions(text: StringEx) =
     text.replaceAll(rMacroDefs, m => {
       val replacement = m.group(3)
-      macros ++= List(MacroDefinition(m.group(1), m.group(2), (x)=> replacement, false))
+      macros ++= List(MacroDefinition(m.group(1), m.group(2), (x)=> replacement, literally = false))
       ""
     })
 
@@ -359,7 +359,7 @@ class MarkdownText(source: CharSequence) {
     result = doBlockQuotes(result)
     result = hashHtmlBlocks(result)    // Again, now hashing our generated markup
     result = formParagraphs(result)
-    return result
+    result
   }
 
   /**
@@ -424,10 +424,10 @@ class MarkdownText(source: CharSequence) {
       if (leadingLine != null || content.indexOf("\n\n") != -1)
         item = runBlockGamut(item)
       else item = runSpanGamut(doLists(item))
-      "<li>" + item.toString.trim + "</li>\n";
+      "<li>" + item.toString.trim + "</li>\n"
     })
     listLevel -= 1
-    return sx
+    sx
   }
 
   /**
@@ -437,7 +437,7 @@ class MarkdownText(source: CharSequence) {
     text.replaceAll(rCodeBlock, m => {
       var langExpr = ""
       val code = encodeCode(new StringEx(m.group(1)))
-          .outdent
+          .outdent()
           .replaceAll(rTrailingWS, "")
           .replaceAll(rCodeLangId, m => {
         langExpr = " class=\"" + m.group(1) + "\""
@@ -488,7 +488,7 @@ class MarkdownText(source: CharSequence) {
     result = doAmpSpans(text)
     result = doEmphasis(text)
     result = unprotect(protector, text)
-    return result
+    result
   }
 
   protected def protectHtmlTags(protector: Protector, text: StringEx): StringEx =
@@ -552,7 +552,7 @@ class MarkdownText(source: CharSequence) {
           .replaceAll("\\*", "&#42;")
           .replaceAll("_", "&#95;")
       var titleAttr = ""
-      var title = m.group(5)
+      val title = m.group(5)
       if (title != null) titleAttr = " title=\"" + title
           .replaceAll("\\*", "&#42;")
           .replaceAll("_", "&#95;")
@@ -626,14 +626,14 @@ class MarkdownText(source: CharSequence) {
           (1, 3)
         }
       }
-      (new TOC(start_level, end_level, text.toString)).toHtml
-    }, true);
+      new TOC(start_level, end_level, text.toString).toHtml
+    }, literally = true)
   }
 
   /**
    * Transform the Markdown source into HTML.
    */
-  def toHtml(): String = {
+  def toHtml: String = {
     var result = text
     result = stripMacroDefinitions(result)
     result = doMacros(result)
@@ -645,7 +645,7 @@ class MarkdownText(source: CharSequence) {
     result = stripLinkDefinitions(result)
     result = runBlockGamut(result)
     result = doToc(result)
-    return result.toString
+    result.toString
   }
 
 }
@@ -665,7 +665,7 @@ class TOC(val start_level:Int, val end_level:Int, val html: String) {
   val headings: Seq[Heading] = TOC.rHeadings.findAllIn(html).matchData.toList
       .flatMap { m =>
         if( m.group(4)!=null ) {
-          val h = new Heading(m.group(1).toInt, m.group(4), m.group(5))
+          val h = Heading(m.group(1).toInt, m.group(4), m.group(5))
           if( start_level <= h.level && h.level <= end_level ) {
             Some(h)
           } else {
@@ -674,9 +674,9 @@ class TOC(val start_level:Int, val end_level:Int, val html: String) {
         } else {
           None
         }
-      }.toList
+      }
 
-  val toHtml: String = if (headings.size == 0) "" else {
+  val toHtml: String = if (headings.isEmpty) "" else {
     val sb = new StringBuilder
     def startList(l: Int) = sb.append("  " * (1 + l - start_level) + """<li><ul style="list-style:none;">"""+"\n")
     def endList(l: Int) = sb.append("  " * (l - start_level) + "</ul></li>\n")

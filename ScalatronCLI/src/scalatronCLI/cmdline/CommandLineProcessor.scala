@@ -14,14 +14,14 @@ import scalatronRemote.api.ScalatronRemote.{SourceFileCollection, ScalatronExcep
 /** A command line interface for interaction with a remote Scalatron server over the RESTful HTTP API.
   */
 object CommandLineProcessor {
-    def apply(args: Array[String]) {
+    def apply(args: Array[String]): Unit = {
         if(args.length == 0) {
             println("Scalatron Remote Command Line Client " + Version.VersionString)
             println("use -help to list available command line parameters")
             println("e.g. java -jar ScalatronTest.jar -help")
             System.exit(0)
         } else
-        if(args.find(_ == "-help").isDefined) {
+        if(args.contains("-help")) {
             // print list of available command line parameters to the console
             println("Scalatron Remote Command Line Client " + Version.VersionString)
             println("invocation syntax:")
@@ -107,12 +107,12 @@ object CommandLineProcessor {
         val argMap = args.grouped(2).filter(_.length == 2).map(a => (a(0), a(1))).toMap // Map["-key" -> "value"]
 
         // find out if we should provide verbose output
-        val verbose = (argMap.get("-verbose").getOrElse("no") == "yes")
+        val verbose = argMap.getOrElse("-verbose", "no") == "yes"
 
         // find out where we can connect to the server
-        val webServerHostname = argMap.get("-hostname").getOrElse("localhost")
+        val webServerHostname = argMap.getOrElse("-hostname", "localhost")
         val webServerPort = argMap.get("-port").map(_.toInt).getOrElse(ScalatronRemote.Constants.DefaultPort)
-        val webServerApi = argMap.get("-api").getOrElse(ScalatronRemote.Constants.ApiEntryPoint)
+        val webServerApi = argMap.getOrElse("-api", ScalatronRemote.Constants.ApiEntryPoint)
 
         val connectionConfig = ConnectionConfig(webServerHostname, webServerPort, webServerApi, verbose)
 
@@ -158,7 +158,7 @@ object CommandLineProcessor {
 
     /** -command users          lists all users")
       */
-    def cmd_users(connectionConfig: ConnectionConfig) {
+    def cmd_users(connectionConfig: ConnectionConfig): Unit = {
         val scalatron = ScalatronRemote(connectionConfig)
         val users = scalatron.users()
         if(connectionConfig.verbose) println("Users on Scalatron server '" + scalatron.hostname + "':")
@@ -169,7 +169,7 @@ object CommandLineProcessor {
       * -targetUser name           the user name for the new user (required)
       * -newPassword string     the password for the new user (default: empty password)
       */
-    def cmd_createUser(connectionConfig: ConnectionConfig, argMap: Map[String, String]) {
+    def cmd_createUser(connectionConfig: ConnectionConfig, argMap: Map[String, String]): Unit = {
         argMap.get("-targetUser") match {
             case None =>
                 System.err.println("error: command 'createUser' requires option '-targetUser'")
@@ -182,7 +182,7 @@ object CommandLineProcessor {
                     (scalatron: ScalatronRemote, users: ScalatronRemote.UserList) => {
                         // create the new user account (1 round-trip)
                         handleScalatronExceptionsFor {
-                            val newPassword = argMap.get("-newPassword").getOrElse("")
+                            val newPassword = argMap.getOrElse("-newPassword", "")
                             val user = scalatron.createUser(targetUser, newPassword)
                             if(connectionConfig.verbose) println("Created user '" + user.name + "' on the Scalatron server '" + scalatron.hostname + "'")
                         }
@@ -194,7 +194,7 @@ object CommandLineProcessor {
     /** -command deleteUser          deletes an existing user (along with all content!); Administrator only
       * -targetUser name        the name of the user to delete (required)
       */
-    def cmd_deleteUser(connectionConfig: ConnectionConfig, argMap: Map[String, String]) {
+    def cmd_deleteUser(connectionConfig: ConnectionConfig, argMap: Map[String, String]): Unit = {
         argMap.get("-targetUser") match {
             case None =>
                 System.err.println("error: command 'deleteUser' requires option '-targetUser'")
@@ -224,17 +224,17 @@ object CommandLineProcessor {
 
     /** -command deleteAllUsers          deletes all existing users (along with all content!); Administrator only
       */
-    def cmd_deleteAllUsers(connectionConfig: ConnectionConfig, argMap: Map[String, String]) {
+    def cmd_deleteAllUsers(connectionConfig: ConnectionConfig, argMap: Map[String, String]): Unit = {
         doAsAdministrator(
             connectionConfig,
             argMap,
             (scalatron: ScalatronRemote, users: ScalatronRemote.UserList) => {
-                if(connectionConfig.verbose) println("Deleting %d users on server '%s'...".format(users.size, scalatron.hostname))
+                if(connectionConfig.verbose) println(s"Deleting ${users.size} users on server '${scalatron.hostname}'...")
                 users.foreach(user => {
                     if(!user.isAdministrator) {
                         handleScalatronExceptionsFor {
                             user.delete()
-                            if(connectionConfig.verbose) println("Deleted user '%s'" format user.name)
+                            if(connectionConfig.verbose) println(s"Deleted user '${user.name}'")
                         }
                     }
                 })
@@ -246,7 +246,7 @@ object CommandLineProcessor {
       * -key name               the key of the attribute to set
       * -value name             the value of the attribute to set
       */
-    def cmd_setUserAttribute(connectionConfig: ConnectionConfig, argMap: Map[String, String]) {
+    def cmd_setUserAttribute(connectionConfig: ConnectionConfig, argMap: Map[String, String]): Unit = {
         val targetUserName: String = argMap.get("-targetUser") match {
             case None => argMap.getOrElse("-user", "")
             case Some(value) => value
@@ -293,7 +293,7 @@ object CommandLineProcessor {
     /** -command getUserAttribute       gets a configuration attribute of a user; user or Administrator
       * -key name               the key of the attribute to set
       */
-    def cmd_getUserAttribute(connectionConfig: ConnectionConfig, argMap: Map[String, String]) {
+    def cmd_getUserAttribute(connectionConfig: ConnectionConfig, argMap: Map[String, String]): Unit = {
         val targetUserName: String = argMap.get("-targetUser") match {
             case None => argMap.getOrElse("-user", "")
             case Some(value) => value
@@ -340,7 +340,7 @@ object CommandLineProcessor {
     /** -command sources         gets a source files from a user workspace; user or Administrator
       * -targetDir path         the path of the local directory where the source files should be stored
       */
-    def cmd_sources(connectionConfig: ConnectionConfig, argMap: Map[String, String]) {
+    def cmd_sources(connectionConfig: ConnectionConfig, argMap: Map[String, String]): Unit = {
         argMap.get("-targetDir") match {
             case None =>
                 System.err.println("error: command 'sources' requires option '-targetDir'")
@@ -357,7 +357,7 @@ object CommandLineProcessor {
                             SourceFileCollection.writeTo(targetDirPath, sourceFileCollection, connectionConfig.verbose)
 
                             if(connectionConfig.verbose)
-                                println("Wrote %d source files to '%s'".format(sourceFileCollection.size, targetDirPath))
+                                println(s"Wrote ${sourceFileCollection.size} source files to '$targetDirPath'")
                         }
                     }
                 )
@@ -368,7 +368,7 @@ object CommandLineProcessor {
     /** -command updateSources      updates a source files in the user's server workspace; as user only
       * -sourceDir path         the path of the local directory where the source files can be found
       */
-    def cmd_updateSources(connectionConfig: ConnectionConfig, argMap: Map[String, String]) {
+    def cmd_updateSources(connectionConfig: ConnectionConfig, argMap: Map[String, String]): Unit = {
         argMap.get("-sourceDir") match {
             case None =>
                 System.err.println("error: command 'updateSources' requires option '-sourceDir'")
@@ -386,7 +386,7 @@ object CommandLineProcessor {
                             loggedonUser.updateSourceFiles(sourceFileCollection)
 
                             if(connectionConfig.verbose)
-                                println("Updated %d source files from '%s'".format(sourceFileCollection.size, sourceDirPath))
+                                println(s"Updated ${sourceFileCollection.size} source files from '$sourceDirPath'")
                         }
                     }
                 )
@@ -396,7 +396,7 @@ object CommandLineProcessor {
 
     /** -command build
       */
-    def cmd_buildSources(connectionConfig: ConnectionConfig, argMap: Map[String, String]) {
+    def cmd_buildSources(connectionConfig: ConnectionConfig, argMap: Map[String, String]): Unit = {
         doAsUser(
             connectionConfig,
             argMap,
@@ -406,10 +406,10 @@ object CommandLineProcessor {
                     val buildResult = loggedonUser.buildSources()
                     if(buildResult.successful) {
                         buildResult.messages.foreach(m => println(m.sourceFile + ": line " + m.lineAndColumn._1 + ", col " + m.lineAndColumn._2 + ": " + m.multiLineMessage))
-                        println("%d errors, %d warnings".format(buildResult.errorCount, buildResult.warningCount))
+                        println(s"${buildResult.errorCount} errors, ${buildResult.warningCount} warnings")
                     } else {
                         buildResult.messages.foreach(m => System.err.println(m.sourceFile + ": line " + m.lineAndColumn._1 + ", col " + m.lineAndColumn._2 + ": " + m.multiLineMessage))
-                        System.err.println("%d errors, %d warnings".format(buildResult.errorCount, buildResult.warningCount))
+                        System.err.println(s"${buildResult.errorCount} errors, ${buildResult.warningCount} warnings")
                         System.exit(-1)
                     }
                 }
@@ -420,7 +420,7 @@ object CommandLineProcessor {
 
     /** -command publish
       */
-    def cmd_publish(connectionConfig: ConnectionConfig, argMap: Map[String, String]) {
+    def cmd_publish(connectionConfig: ConnectionConfig, argMap: Map[String, String]): Unit = {
         doAsUser(
             connectionConfig,
             argMap,
@@ -433,7 +433,7 @@ object CommandLineProcessor {
 
     /** -command versions         gets a list of versions for a specific user; as user only
       */
-    def cmd_versions(connectionConfig: ConnectionConfig, argMap: Map[String, String]) {
+    def cmd_versions(connectionConfig: ConnectionConfig, argMap: Map[String, String]): Unit = {
         doAsUser(
             connectionConfig,
             argMap,
@@ -452,7 +452,7 @@ object CommandLineProcessor {
       * -sourceDir path             the path of the local directory where the source files can be found
       * -label string
       */
-    def cmd_createVersion(connectionConfig: ConnectionConfig, argMap: Map[String, String]) {
+    def cmd_createVersion(connectionConfig: ConnectionConfig, argMap: Map[String, String]): Unit = {
         argMap.get("-sourceDir") match {
             case None =>
                 System.err.println("error: command 'createVersion' requires option '-sourceDir'")
@@ -471,7 +471,7 @@ object CommandLineProcessor {
                             val version = loggedonUser.createVersion(label, sourceFileCollection)
 
                             if(connectionConfig.verbose)
-                                println("Create version %s from %d source files from '%s'".format(version.id, sourceFileCollection.size, sourceDirPath))
+                                println(s"Create version ${version.id} from ${sourceFileCollection.size} source files from '$sourceDirPath'")
                         }
                     }
                 )
@@ -483,7 +483,7 @@ object CommandLineProcessor {
       *     -targetDir path         the path of the local directory where the source files should be stored
       *     -id int                 the version's ID
       */
-    def cmd_restoreVersion(connectionConfig: ConnectionConfig, argMap: Map[String, String]) {
+    def cmd_restoreVersion(connectionConfig: ConnectionConfig, argMap: Map[String, String]): Unit = {
         argMap.get("-targetDir") match {
             case None =>
                 System.err.println("error: command 'restoreVersion' requires option '-targetDir'")
@@ -504,7 +504,7 @@ object CommandLineProcessor {
                                 handleScalatronExceptionsFor {
                                     loggedonUser.version(versionIdStr) match {
                                         case None =>
-                                            System.err.println("error: cannot locate version with id '%s'".format(versionIdStr))
+                                            System.err.println(s"error: cannot locate version with id '$versionIdStr'")
                                             System.exit(-1)
 
                                         case Some(version) =>
@@ -512,7 +512,7 @@ object CommandLineProcessor {
                                             SourceFileCollection.writeTo(targetDirPath, sourceFileCollection, connectionConfig.verbose)
 
                                             if(connectionConfig.verbose)
-                                                println("Wrote %d source files to '%s'".format(sourceFileCollection.size, targetDirPath))
+                                                println(s"Wrote ${sourceFileCollection.size} source files to '$targetDirPath'")
                                     }
                                 }
                             }
@@ -526,7 +526,7 @@ object CommandLineProcessor {
     /** -command benchmark
       * -sourceDir path     the path of the local directory where the source files can be found
       */
-    def cmd_benchmark(connectionConfig: ConnectionConfig, argMap: Map[String, String]) {
+    def cmd_benchmark(connectionConfig: ConnectionConfig, argMap: Map[String, String]): Unit = {
         argMap.get("-sourceDir") match {
             case None =>
                 System.err.println("error: command 'benchmark' requires option '-sourceDir'")
@@ -542,18 +542,18 @@ object CommandLineProcessor {
                             val sourceFileCollection = SourceFileCollection.loadFrom(sourceDirPath)
                             loggedonUser.updateSourceFiles(sourceFileCollection)
                             if(connectionConfig.verbose)
-                                println("Updated %d source files from '%s'".format(sourceFileCollection.size, sourceDirPath))
+                                println(s"Updated ${sourceFileCollection.size} source files from '$sourceDirPath'")
 
                             // build uploaded user source files (1 round-trip)
                             val buildResult = loggedonUser.buildSources()
                             if(!buildResult.successful) {
                                 buildResult.messages.foreach(m => System.err.println(m.sourceFile + ": line " + m.lineAndColumn._1 + ", col " + m.lineAndColumn._2 + ": " + m.multiLineMessage))
-                                System.err.println("%d errors, %d warnings".format(buildResult.errorCount, buildResult.warningCount))
+                                System.err.println(s"${buildResult.errorCount} errors, ${buildResult.warningCount} warnings")
                                 System.exit(-1)
                             } else {
                                 if(connectionConfig.verbose) {
                                     buildResult.messages.foreach(m => println(m.sourceFile + ": line " + m.lineAndColumn._1 + ", col " + m.lineAndColumn._2 + ": " + m.multiLineMessage))
-                                    println("%d errors, %d warnings".format(buildResult.errorCount, buildResult.warningCount))
+                                    println(s"${buildResult.errorCount} errors, ${buildResult.warningCount} warnings")
                                 }
                             }
 
@@ -593,15 +593,14 @@ object CommandLineProcessor {
     /** -command stresstest     runs a stress test, simulating a hack-a-thon workload on the server; as Administrator only
       * -clients int            the number of clients to simulate (default: 1)
       */
-    def cmd_stresstest(connectionConfig: ConnectionConfig, argMap: Map[String, String])
-    {
+    def cmd_stresstest(connectionConfig: ConnectionConfig, argMap: Map[String, String]): Unit = {
         // clean up the server before we start the stress test
         cmd_deleteAllUsers(connectionConfig, argMap)
 
         val clientCount = argMap.get("-clients").map(_.toInt).getOrElse(1)
 
-        def stressTask(clientId: Int) {
-            def log(s: String) { System.out.println("[" + clientId + "] " + s) }
+        def stressTask(clientId: Int): Unit = {
+            def log(s: String): Unit = { System.out.println("[" + clientId + "] " + s) }
             try {
                 // create one connection per task
                 val scalatron = ScalatronRemote(connectionConfig)
@@ -610,9 +609,9 @@ object CommandLineProcessor {
 
                 // retrieve Administrator credentials
                 val adminUserName = ScalatronRemote.Constants.AdminUserName
-                val adminPassword = argMap.get("-password").getOrElse("")
+                val adminPassword = argMap.getOrElse("-password", "")
 
-                log("logging on as %s" format adminUserName)
+                log(s"logging on as $adminUserName")
                 val initialUsers = scalatron.users()       // retrieve user list (1 round-trip)
                 val adminUser = initialUsers.adminUser     // fetch Administrator user (no round-trips)
                 adminUser.logOn(adminPassword)      // log-on as Administrator (1 round-trip)
@@ -620,16 +619,16 @@ object CommandLineProcessor {
                 // create the new user account (1 round-trip)
                 val userName = "Stresstest_" + clientId
                 val userPassword = "Stresstest_" + clientId
-                log("creating user %s" format userName)
+                log(s"creating user $userName")
                 scalatron.createUser(userName, userPassword)
 
-                log("logging off as %s" format adminUserName)
+                log(s"logging off as $adminUserName")
                 adminUser.logOff()  // log off as Administrator (1 round-trip)
 
 
                 // --- outer stress loop ---
                 (0 until Int.MaxValue).foreach(outerCounter => {
-                    log("cycle %d: logging on as %s" format(outerCounter, userName))
+                    log(s"cycle $outerCounter: logging on as $userName")
                     val updatedUsers = scalatron.users()                // retrieve user list (1 round-trip)
                     val regularUser = updatedUsers.get(userName).get   // fetch Administrator user (no round-trips)
                     regularUser.logOn(userPassword)                     // log-on as Administrator (1 round-trip)
@@ -644,10 +643,7 @@ object CommandLineProcessor {
                     val innerCycleCount = 10
                     (0 until innerCycleCount).foreach(innerCounter => {
                         val (buildResult, buildTime) = timedResult { regularUser.buildSources() }
-                        log("%d:%d - buildSources() - %d ms total, %d ms pure - %s".format(
-                            outerCounter, innerCounter,
-                            buildTime, buildResult.duration,
-                            (if(buildResult.successful) "succeeded" else "failed (%s)".format(buildResult.messages.mkString(",")))))
+                        log(s"$outerCounter:$innerCounter - buildSources() - $buildTime ms total, ${buildResult.duration} ms pure - ${if (buildResult.successful) "succeeded" else s"failed (${buildResult.messages.mkString(",")})"}")
 
                         val (sandbox, sandboxTime) = timedResult { regularUser.createSandbox() }
                         // log("%d:%d - createSandbox() - %d ms" format(outerCounter, innerCounter, sandboxTime))
@@ -666,7 +662,7 @@ object CommandLineProcessor {
             }
         }
 
-        (0 until clientCount).foreach(n => new Thread( new Runnable { def run() { stressTask(n) } }, "LoadThread-" + n).start() )
+        (0 until clientCount).foreach(n => new Thread( new Runnable { def run(): Unit = { stressTask(n) } }, "LoadThread-" + n).start() )
     }
 
 
@@ -694,7 +690,7 @@ object CommandLineProcessor {
 
     /** Accepts a closure; handles typical server exceptions. Exists with error code on such exceptions.
       */
-    private def handleScalatronExceptionsFor(action: => Unit) {
+    private def handleScalatronExceptionsFor(action: => Unit): Unit = {
         try {
             action
         } catch {
@@ -726,16 +722,16 @@ object CommandLineProcessor {
     private def doAsAdministrator(
         connectionConfig: ConnectionConfig,
         argMap: Map[String, String],
-        action: (ScalatronRemote, ScalatronRemote.UserList) => Unit) {
+        action: (ScalatronRemote, ScalatronRemote.UserList) => Unit): Unit = {
         val scalatron = ScalatronRemote(connectionConfig)
 
         // retrieve Administrator credentials
-        val adminUserName = argMap.get("-user").getOrElse(ScalatronRemote.Constants.AdminUserName)
+        val adminUserName = argMap.getOrElse("-user", ScalatronRemote.Constants.AdminUserName)
         if(adminUserName != ScalatronRemote.Constants.AdminUserName) {
             System.err.println("error: command requires log-on as user '" + ScalatronRemote.Constants.AdminUserName + "'")
             System.exit(-1)
         }
-        val adminPassword = argMap.get("-password").getOrElse("")
+        val adminPassword = argMap.getOrElse("-password", "")
 
         // retrieve user list (1 round-trip)
         val users = scalatron.users()
@@ -796,12 +792,12 @@ object CommandLineProcessor {
     private def doAsUser(
         connectionConfig: ConnectionConfig,
         argMap: Map[String, String],
-        action: (ScalatronRemote, ScalatronRemote.User, ScalatronRemote.UserList) => Unit) {
+        action: (ScalatronRemote, ScalatronRemote.User, ScalatronRemote.UserList) => Unit): Unit = {
         val scalatron = ScalatronRemote(connectionConfig)
 
         // retrieve Administrator credentials
-        val logonUserName = argMap.get("-user").getOrElse(ScalatronRemote.Constants.AdminUserName)
-        val logonPassword = argMap.get("-password").getOrElse("")
+        val logonUserName = argMap.getOrElse("-user", ScalatronRemote.Constants.AdminUserName)
+        val logonPassword = argMap.getOrElse("-password", "")
 
         // retrieve user list (1 round-trip)
         val users = scalatron.users()
@@ -809,7 +805,7 @@ object CommandLineProcessor {
         // fetch user (no round-trips)
         users.get(logonUserName) match {
             case None =>
-                System.err.println("error: user '%s' does not exist".format(logonUserName))
+                System.err.println(s"error: user '$logonUserName' does not exist")
                 System.exit(-1)
             case Some(loggedonUser) =>
                 // log-on as Administrator (1 round-trip)

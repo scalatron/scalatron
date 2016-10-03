@@ -8,7 +8,7 @@ import scalatronRemote.api.ScalatronRemote
 import scalatronRemote.api.ScalatronRemote._
 import scalatronRemote.impl.Connection.HttpFailureCodeException
 import org.apache.http.HttpStatus
-import ScalatronSandboxState.StateData
+import scalatronRemote.impl.ScalatronSandboxState.StateData
 
 
 case class ScalatronSandboxState(stateData: StateData, sandbox: ScalatronSandbox) extends ScalatronRemote.SandboxState
@@ -24,11 +24,11 @@ case class ScalatronSandboxState(stateData: StateData, sandbox: ScalatronSandbox
             // hack: we ignore the resource URLs to construct one that matches the exact count
             val desiredTime = time + count
             val user = sandbox.user
-            val nextResourceUrl =  "/api/users/%s/sandboxes/%d/%d".format(user.name, sandbox.id, desiredTime)
+            val nextResourceUrl =  s"/api/users/${user.name}/sandboxes/${sandbox.id}/$desiredTime"
             val jsonOpt = user.scalatron.connection.GET_json(nextResourceUrl)
             val nextStateData = ScalatronSandboxState.StateData.fromJson(jsonOpt)
             if(nextStateData.id != stateData.id)
-                throw new IllegalStateException("stepping from state of sandbox id=%d returned state in sandbox with id=%d".format(sandbox.id, nextStateData.id))
+                throw new IllegalStateException(s"stepping from state of sandbox id=${sandbox.id} returned state in sandbox with id=${nextStateData.id}")
 
             ScalatronSandboxState(nextStateData, sandbox)
         } catch {

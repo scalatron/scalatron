@@ -174,7 +174,7 @@ object Scalatron
           * @throws ScalatronException.Forbidden attempt to delete the Administrator account
           * @throws IOError if the user's workspace directories could not be deleted.
           */
-        def delete()
+        def delete(): Unit
 
 
         // get/set configuration attributes
@@ -187,7 +187,7 @@ object Scalatron
           * Caution: ensure proper credentials for remote users when updating the 'password' value this way.
           * @throws IOError on failure to read or write the user's configuration file.
           */
-        def updateAttributes(map: Map[String, String])
+        def updateAttributes(map: Map[String, String]): Unit
 
         /** Returns the configuration attribute value associated with the given key.
           * Returns None if the attempt to find a configuration file or to find the key fails.
@@ -219,7 +219,7 @@ object Scalatron
         /** Sets the password of the given user to the given string.
           * @throws IOError on failure to read or write the user's configuration file.
           */
-        def setPassword(password: String) { updateAttributes(Map(Scalatron.Constants.PasswordKey -> password)) }
+        def setPassword(password: String): Unit = { updateAttributes(Map(Scalatron.Constants.PasswordKey -> password)) }
 
 
         //----------------------------------------------------------------------------------------------
@@ -240,7 +240,7 @@ object Scalatron
           * before instructing it to build them.
           * @throws IOError if the source files could not be written.
           **/
-        def updateSourceFiles(sourceFiles: SourceFileCollection)
+        def updateSourceFiles(sourceFiles: SourceFileCollection): Unit
 
         /** Builds a local (unpublished) .jar bot plug-in from the given (in-memory) source files.
           *
@@ -360,7 +360,7 @@ object Scalatron
           * @throws IllegalStateException if the old plug-in file could not be backed up or the backup deleted
           * @throws IOError if the unpublished plug-in file could not be copied
           */
-        def publish()
+        def publish(): Unit
 
 
         //----------------------------------------------------------------------------------------------
@@ -465,7 +465,7 @@ object Scalatron
         /** Deletes this sample, including all associated source code files.
           * @throws IOError if sample's source files cannot be deleted on disk
           */
-        def delete()
+        def delete(): Unit
     }
 
 
@@ -489,7 +489,7 @@ object Scalatron
         /** Restores the contents of the source directory to this version.
           * @throws IOError if the repository is in a corrupt state.
           */
-        def restore()
+        def restore(): Unit
     }
 
 

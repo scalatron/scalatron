@@ -3,7 +3,7 @@ package scalatron.webServer.rest.resources
 import javax.ws.rs.core.MediaType
 import javax.ws.rs.{GET, Produces, Consumes, Path}
 import scalatron.Version
-import ApiResource.JSON
+import scalatron.webServer.rest.resources.ApiResource.JSON
 
 
 /*

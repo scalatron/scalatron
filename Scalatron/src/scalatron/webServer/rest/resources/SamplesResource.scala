@@ -1,7 +1,7 @@
 package scalatron.webServer.rest.resources
 
 import javax.ws.rs._
-import core.{Response, MediaType}
+import javax.ws.rs.core.{Response, MediaType}
 import scalatron.core.Scalatron
 import org.eclipse.jetty.http.HttpStatus
 import scalatron.core.Scalatron.ScalatronException
@@ -32,7 +32,7 @@ class SamplesResource extends Resource
                 scalatron.samples.map(s => {
                     val sampleName = s.name
                     val encodedSampleName = URLEncoder.encode(sampleName, "UTF-8")
-                    val sampleURL = "/api/samples/%s" format encodedSampleName
+                    val sampleURL = s"/api/samples/$encodedSampleName"
                     SamplesResource.Sample(sampleName, sampleURL)
                 }).toArray
             )
@@ -80,7 +80,7 @@ class SamplesResource extends Resource
                         val sourceFiles = s.map(sf => SourcesResource.SourceFile(sf.filename, sf.code)).toArray
                         SourcesResource.SourceFiles(sourceFiles)
                     case None =>
-                        Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, "sample '%s' (%s) does not exist" format(decodedSampleName, sampleName))).build()
+                        Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, s"sample '$decodedSampleName' ($sampleName) does not exist")).build()
                 }
             } catch {
                 case e: IllegalStateException =>
@@ -99,7 +99,7 @@ class SamplesResource extends Resource
     @Path("{sample}")
     def deleteSample(@PathParam("sample") sampleName: String) = {
         if(!userSession.isLoggedOnAsAdministrator) {
-            Response.status(CustomStatusType(HttpStatus.UNAUTHORIZED_401, "must be logged on as '%s'" format Scalatron.Constants.AdminUserName)).build()
+            Response.status(CustomStatusType(HttpStatus.UNAUTHORIZED_401, s"must be logged on as '${Scalatron.Constants.AdminUserName}'")).build()
         } else {
             try {
                 val decodedSampleName = URLDecoder.decode(sampleName, "UTF-8")
@@ -109,7 +109,7 @@ class SamplesResource extends Resource
                         Response.noContent().build()
 
                     case None =>
-                        Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, "sample '%s' (%s) does not exist" format(decodedSampleName, sampleName))).build()
+                        Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, s"sample '$decodedSampleName' ($sampleName) does not exist")).build()
                 }
             } catch {
                 case e: ScalatronException.Forbidden =>
@@ -137,17 +137,17 @@ object SamplesResource {
     case class CreateSample(var name: String, var fileList: Array[SourceFile]) {
         def this() = this(null, null)
         def getName = name
-        def setName(l: String) { this.name = l }
+        def setName(l: String): Unit = { this.name = l }
         def getFiles = fileList
-        def setFiles(fl: Array[SourceFile]) { this.fileList = fl }
+        def setFiles(fl: Array[SourceFile]): Unit = { this.fileList = fl }
     }
 
     case class SourceFile(var n: String, var c: String) {
         def this() = this(null, null)
         def getFilename = n
         def getCode = c
-        def setFilename(name: String) { n = name }
-        def setCode(co: String) { c = co }
+        def setFilename(name: String): Unit = { n = name }
+        def setCode(co: String): Unit = { c = co }
     }
 
 }

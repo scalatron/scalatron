@@ -2,7 +2,7 @@ package scalatron.webServer.rest.resources
 
 import scalatron.core.Scalatron
 import javax.ws.rs._
-import core.{Response, MediaType}
+import javax.ws.rs.core.{Response, MediaType}
 import org.eclipse.jetty.http.HttpStatus
 import java.io.IOError
 import java.text.DateFormat
@@ -23,7 +23,7 @@ class VersionsResource extends ResourceWithUser {
                     case Some(user) =>
                         val v = user.versions
                         val versionList = v.map(e => {
-                            val url = "/api/users/%s/versions/%s".format(userName, e.id)
+                            val url = s"/api/users/$userName/versions/${e.id}"
                             val dateString = e.date.toString // milliseconds since the epoch, as string
                             VersionsResource.Version(e.id, e.label, dateString, url)
                         }).toArray
@@ -53,7 +53,7 @@ class VersionsResource extends ResourceWithUser {
                         val sourceFiles = sources.getFiles.map(sf => Scalatron.SourceFile(sf.getFilename, sf.getCode))
 
                         // 1 - as a precaution, back up the user's current workspace source files
-                        user.createVersion("Secondary backup before '%s'" format label)
+                        user.createVersion(s"Secondary backup before '$label'")
 
                         // 2 - write the given source files to disk
                         user.updateSourceFiles(sourceFiles)
@@ -65,7 +65,7 @@ class VersionsResource extends ResourceWithUser {
                         val version = versionOpt.getOrElse(user.latestVersion.get)
 
                         // send information about the new version to the user
-                        val url = "/api/users/%s/versions/%s".format(userName, version.id)
+                        val url = s"/api/users/$userName/versions/${version.id}"
                         val dateString = version.date.toString // milliseconds since the epoch, as string
                         VersionsResource.Version(version.id, version.label, dateString, url)
                     case None =>
@@ -95,7 +95,7 @@ class VersionsResource extends ResourceWithUser {
                     case Some(user) =>
                         user.version(id) match {
                             case None =>
-                                Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, "version %s of user %s does not exist".format(id,userName))).build()
+                                Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, s"version $id of user $userName does not exist")).build()
                             case Some(version) =>
                                 // check source files out from version control into workspace, overwriting what was there
                                 version.restore()
@@ -134,17 +134,17 @@ object VersionsResource {
     case class CreateVersion(var label: String, var fileList: Array[SourceFile]) {
         def this() = this(null, null)
         def getLabel = label
-        def setLabel(l: String) { this.label = l }
+        def setLabel(l: String): Unit = { this.label = l }
         def getFiles = fileList
-        def setFiles(fl: Array[SourceFile]) { this.fileList = fl }
+        def setFiles(fl: Array[SourceFile]): Unit = { this.fileList = fl }
     }
 
     case class SourceFile(var n: String, var c: String) {
         def this() = this(null, null)
         def getFilename = n
         def getCode = c
-        def setFilename(name: String) { n = name }
-        def setCode(co: String) { c = co }
+        def setFilename(name: String): Unit = { n = name }
+        def setCode(co: String): Unit = { c = co }
     }
 }
 

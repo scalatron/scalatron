@@ -2,7 +2,7 @@ package scalatron.scalatron.impl
 
 import java.io.{File, FileWriter}
 import scala.io.Source
-import FileUtil.use
+import scalatron.scalatron.impl.FileUtil.use
 
 
 object ConfigFile
@@ -24,12 +24,12 @@ object ConfigFile
 
 
     /** Loads, parses, updates and writes back a file with one key/val pair per line. */
-    def updateConfigFile(absolutePath: String, key: String, value: String) {
-        updateConfigFileMulti(absolutePath, Map(( key -> value )))
+    def updateConfigFile(absolutePath: String, key: String, value: String): Unit = {
+        updateConfigFileMulti(absolutePath, Map(key -> value))
     }
 
     /** Loads, parses, updates and writes back a file with one key/val pair per line. */
-    def updateConfigFileMulti(absolutePath: String, kvMap: Map[String, String]) {
+    def updateConfigFileMulti(absolutePath: String, kvMap: Map[String, String]): Unit = {
         val updatedMap =
             if( new File(absolutePath).exists() ) {
                 val paramMap = loadConfigFile(absolutePath)

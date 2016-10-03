@@ -3,7 +3,7 @@ package scalatron.webServer.rest
 import javax.servlet.http.HttpSession
 import javax.ws.rs.core.Response.ResponseBuilder
 import javax.ws.rs.core.{NewCookie, Response}
-import UserSession.UserAttributeKey
+import scalatron.webServer.rest.UserSession.UserAttributeKey
 import scalatron.core.Scalatron
 
 
@@ -22,19 +22,19 @@ case class UserSession(session: HttpSession) {
         Response.ok().cookie(new NewCookie("scalatron-user", userName))
     }
 
-    def destroy() {
+    def destroy(): Unit = {
         session.removeAttribute(UserAttributeKey)
         session.invalidate()
     }
 
-    def +=(kv: (String, Any)) {session.setAttribute(kv._1, kv._2)}
+    def +=(kv: (String, Any)): Unit = {session.setAttribute(kv._1, kv._2)}
 
-    def -=(key: String) {session.removeAttribute(key)}
+    def -=(key: String): Unit = {session.removeAttribute(key)}
 
     /** Returns the value of the given key as a Some(Any) instance if it is defined, or None if not. */
     def get(key: String): Option[Any] = {
         val value = session.getAttribute(key)
-        if(value == null) None else Some(value)
+        Option(value)
     }
 
     /** Returns the value of the given key as a Some(String) instance if it is defined, or None
@@ -52,7 +52,7 @@ case class UserSession(session: HttpSession) {
     }
 
 
-    def requireLoggedOnAsOwningUser(candidateUserName: String) {
+    def requireLoggedOnAsOwningUser(candidateUserName: String): Unit = {
         usernameOpt match {
             case None =>
                 throw new SecurityException("Access denied: not logged in")
@@ -62,7 +62,7 @@ case class UserSession(session: HttpSession) {
         }
     }
 
-    def requireLoggedOnAsOwningUserOrAdministrator(candidateUserName: String) {
+    def requireLoggedOnAsOwningUserOrAdministrator(candidateUserName: String): Unit = {
         usernameOpt match {
             case None =>
                 throw new SecurityException("Access denied: not logged in")
@@ -72,7 +72,7 @@ case class UserSession(session: HttpSession) {
         }
     }
 
-    def requireLoggedOnAsAdministrator() {
+    def requireLoggedOnAsAdministrator(): Unit = {
         usernameOpt match {
             case None =>
                 throw new SecurityException("Access denied: not logged in")

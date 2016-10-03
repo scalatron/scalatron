@@ -1,7 +1,7 @@
 package scalatron.webServer.servelets
 
 import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
-import io.Source
+import scala.io.Source
 import java.net.URL
 import java.io.{InputStream, BufferedOutputStream, BufferedInputStream}
 import scalatron.scalatron.impl.FileUtil
@@ -13,7 +13,7 @@ trait BaseServlet extends HttpServlet {
     def context: WebContext
 
 
-    override def doGet(req: HttpServletRequest, resp: HttpServletResponse) {}
+    override def doGet(req: HttpServletRequest, resp: HttpServletResponse): Unit = {}
 
     def loadRelTextFile(relativePath: String) = FileUtil.loadTextFileContents(relativeToAbsolutePath(relativePath))
 
@@ -27,7 +27,7 @@ trait BaseServlet extends HttpServlet {
     }
 
 
-    def serveString(string: String, request: HttpServletRequest, response: HttpServletResponse) {
+    def serveString(string: String, request: HttpServletRequest, response: HttpServletResponse): Unit = {
         response.setContentType("text/html")
         response.setStatus(HttpServletResponse.SC_OK)
         response.getWriter.append(string)
@@ -41,7 +41,7 @@ trait BaseServlet extends HttpServlet {
         returnUrl: String,
         returnUrlText: String,
         request: HttpServletRequest,
-        response: HttpServletResponse) {
+        response: HttpServletResponse): Unit = {
         serveString(
             loadRelTextFile("error.html")
             .replace("$Error$", errorString)
@@ -50,12 +50,12 @@ trait BaseServlet extends HttpServlet {
             request, response)
     }
 
-    def serveErrorPage(errorString: String, request: HttpServletRequest, response: HttpServletResponse) {
+    def serveErrorPage(errorString: String, request: HttpServletRequest, response: HttpServletResponse): Unit = {
         serveErrorPage(errorString, "/", "return to welcome page", request, response)
     }
 
     // from http://www.devx.com/getHelpOn/Article/11698/1954
-    def streamFile(absolutePath: String, mimeType: String, request: HttpServletRequest, response: HttpServletResponse) {
+    def streamFile(absolutePath: String, mimeType: String, request: HttpServletRequest, response: HttpServletResponse): Unit = {
         if(context.verbose) println("streaming file: " + absolutePath)
         response.setContentType(mimeType)
         val outputStream = response.getOutputStream
@@ -95,8 +95,8 @@ trait BaseServlet extends HttpServlet {
                 bos.close()
             }
             if(outputStream != null) {
-                outputStream.flush();
-                outputStream.close();
+                outputStream.flush()
+              outputStream.close()
             }
         }
     }

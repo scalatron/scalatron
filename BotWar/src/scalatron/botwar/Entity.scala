@@ -4,8 +4,8 @@
 package scalatron.botwar
 
 import scalatron.core.{Simulation, EntityController}
-import Simulation.Time
-import util.Random
+import scalatron.core.Simulation.Time
+import scala.util.Random
 import java.lang.IllegalStateException
 
 

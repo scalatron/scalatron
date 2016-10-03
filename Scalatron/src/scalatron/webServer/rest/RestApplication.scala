@@ -3,7 +3,7 @@ package scalatron.webServer.rest
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider
 import java.lang.reflect.Type
 import java.io.OutputStream
-import resources._
+import scalatron.webServer.rest.resources._
 import scalatron.core.Scalatron
 import javax.ws.rs.Produces
 import java.lang.Class
@@ -16,18 +16,18 @@ import javax.ws.rs.ext.{ContextResolver, ExceptionMapper, Provider}
   */
 case class RestApplication(scalatron: Scalatron, verbose: Boolean) extends javax.ws.rs.core.Application {
 
-    java.util.logging.Logger.getLogger("com.sun.jersey").setLevel(Level.FINER);
+    java.util.logging.Logger.getLogger("com.sun.jersey").setLevel(Level.FINER)
 
-    val resources = new java.util.HashSet[Object]();
-    resources.add(new MapProvider())
+  val resources = new java.util.HashSet[Object]()
+  resources.add(new MapProvider())
     resources.add(new ListProvider())
     resources.add(new JacksonJsonProvider())
     resources.add(new ScalatronProvider(scalatron))
     resources.add(new VerbosityProvider(Verbosity(verbose)))
-    resources.add(new UnauthorizedExceptionMapper());
+    resources.add(new UnauthorizedExceptionMapper())
 
-    val resourcesCls = new java.util.HashSet[Class[_]]();
-    resourcesCls.add(classOf[ApiResource])
+  val resourcesCls = new java.util.HashSet[Class[_]]()
+  resourcesCls.add(classOf[ApiResource])
     resourcesCls.add(classOf[UsersResource])
     resourcesCls.add(classOf[SessionResource])
     resourcesCls.add(classOf[SandboxesResource])
@@ -50,7 +50,7 @@ case class RestApplication(scalatron: Scalatron, verbose: Boolean) extends javax
 @Provider
 @Produces(Array("application/json"))
 class UnauthorizedExceptionMapper extends ExceptionMapper[SecurityException] {
-    def toResponse(p1: SecurityException) = Response.status(401).build();
+    def toResponse(p1: SecurityException) = Response.status(401).build()
 }
 
 
@@ -61,15 +61,15 @@ class UnauthorizedExceptionMapper extends ExceptionMapper[SecurityException] {
 @Produces(Array("application/json"))
 class ListProvider extends JacksonJsonProvider {
 
-    private val arrayListClass = classOf[java.util.ArrayList[_]];
+    private val arrayListClass = classOf[java.util.ArrayList[_]]
 
-    override def isWriteable(c: Class[_],
+  override def isWriteable(c: Class[_],
         gt: Type,
         annotations: Array[java.lang.annotation.Annotation],
         mediaType: MediaType): Boolean = {
         classOf[List[_]].isAssignableFrom(c) &&
             super.isWriteable(arrayListClass, arrayListClass,
-                annotations, MediaType.APPLICATION_JSON_TYPE);
+                annotations, MediaType.APPLICATION_JSON_TYPE)
     }
 
     override def writeTo(t: Object,
@@ -78,11 +78,11 @@ class ListProvider extends JacksonJsonProvider {
         annotations: Array[java.lang.annotation.Annotation],
         mediaType: MediaType,
         httpHeaders: MultivaluedMap[String, Object],
-        entityStream: OutputStream) {
+        entityStream: OutputStream): Unit = {
 
-        val l = t.asInstanceOf[List[_]];
-        val al = new java.util.ArrayList[Any]();
-        for(m <- l) {
+        val l = t.asInstanceOf[List[_]]
+      val al = new java.util.ArrayList[Any]()
+      for(m <- l) {
             al.add(m)
         }
 
@@ -99,12 +99,12 @@ class ListProvider extends JacksonJsonProvider {
 @Produces(Array("application/json"))
 class MapProvider extends JacksonJsonProvider {
 
-    private val mapClass = classOf[java.util.HashMap[_, _]];
+    private val mapClass = classOf[java.util.HashMap[_, _]]
 
-    override def isWriteable(c: Class[_], gt: Type, annotations: Array[java.lang.annotation.Annotation], mediaType: MediaType): Boolean = {
+  override def isWriteable(c: Class[_], gt: Type, annotations: Array[java.lang.annotation.Annotation], mediaType: MediaType): Boolean = {
 
         classOf[Map[_, _]].isAssignableFrom(c) && super.isWriteable(mapClass, mapClass,
-            annotations, MediaType.APPLICATION_JSON_TYPE);
+            annotations, MediaType.APPLICATION_JSON_TYPE)
     }
 
     override def writeTo(t: Object,
@@ -113,11 +113,11 @@ class MapProvider extends JacksonJsonProvider {
         annotations: Array[java.lang.annotation.Annotation],
         mediaType: MediaType,
         httpHeaders: MultivaluedMap[String, Object],
-        entityStream: OutputStream) {
+        entityStream: OutputStream): Unit = {
 
-        val l = t.asInstanceOf[Map[_, _]];
-        val al = new java.util.HashMap[Any, Any]();
-        for((k, v) <- l) {
+        val l = t.asInstanceOf[Map[_, _]]
+      val al = new java.util.HashMap[Any, Any]()
+      for((k, v) <- l) {
             al.put(k, v)
         }
 

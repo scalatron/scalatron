@@ -1,8 +1,8 @@
 package scalatron.webServer.rest.resources
 
 import javax.ws.rs._
-import core.{NewCookie, Response, MediaType}
-import SessionResource.resourceList
+import javax.ws.rs.core.{NewCookie, Response, MediaType}
+import scalatron.webServer.rest.resources.SessionResource.resourceList
 import org.eclipse.jetty.http.HttpStatus
 
 
@@ -41,7 +41,7 @@ class SessionResource extends ResourceWithUser {
     }
 
     @DELETE
-    def logoff(@PathParam("user") userName: String) {
+    def logoff(@PathParam("user") userName: String): Unit = {
         if(!userSession.isLoggedOnAsUser(userName)) {
             System.err.println("Refused logout: not logged on as user '" + userName + "'")
             Response.status(CustomStatusType(HttpStatus.UNAUTHORIZED_401, "not logged on as user '" + userName + "'")).build()
@@ -55,14 +55,14 @@ class SessionResource extends ResourceWithUser {
 object SessionResource {
     def resources(userName: String) =
             Array(
-                SessionResource.ResourceLink("Session", "/api/users/%s/session".format(userName)),
-                SessionResource.ResourceLink("Sources", "/api/users/%s/sources".format(userName)),
-                SessionResource.ResourceLink("Build", "/api/users/%s/sources/build".format(userName)),
-                SessionResource.ResourceLink("Sandboxes", "/api/users/%s/sandboxes".format(userName)),
-                SessionResource.ResourceLink("Publish", "/api/users/%s/unpublished/publish".format(userName)),
-                SessionResource.ResourceLink("Published", "/api/users/%s/published".format(userName)),
-                SessionResource.ResourceLink("Unpublished", "/api/users/%s/unpublished".format(userName)),
-                SessionResource.ResourceLink("Versions", "/api/users/%s/versions".format(userName))
+                SessionResource.ResourceLink("Session", s"/api/users/$userName/session"),
+                SessionResource.ResourceLink("Sources", s"/api/users/$userName/sources"),
+                SessionResource.ResourceLink("Build", s"/api/users/$userName/sources/build"),
+                SessionResource.ResourceLink("Sandboxes", s"/api/users/$userName/sandboxes"),
+                SessionResource.ResourceLink("Publish", s"/api/users/$userName/unpublished/publish"),
+                SessionResource.ResourceLink("Published", s"/api/users/$userName/published"),
+                SessionResource.ResourceLink("Unpublished", s"/api/users/$userName/unpublished"),
+                SessionResource.ResourceLink("Versions", s"/api/users/$userName/versions")
             )
 
     def resourceList(userName: String) =
@@ -71,7 +71,7 @@ object SessionResource {
     case class Password(var p: String) {
         def this() = this(null)
         def getPassword = p
-        def setPassword(p: String) {this.p = p}
+        def setPassword(p: String): Unit = {this.p = p}
     }
 
     case class ResourceList(r: Array[ResourceLink]) {

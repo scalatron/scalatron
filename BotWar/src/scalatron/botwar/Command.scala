@@ -3,7 +3,7 @@
   */
 package scalatron.botwar
 
-import MultiCommandParser.MultiCommand
+import scalatron.botwar.MultiCommandParser.MultiCommand
 
 
 /** A command issued by a bot, e.g. Move, Spawn, etc. */
@@ -88,10 +88,10 @@ object Command
             Spawn(params)
 
         case Protocol.PluginOpcode.Say =>            // "Say(text=<string>)"
-            Say(params.get(Protocol.PluginOpcode.ParameterName.Text).getOrElse("?!?"))
+            Say(params.getOrElse(Protocol.PluginOpcode.ParameterName.Text, "?!?"))
 
         case Protocol.PluginOpcode.Status =>         // "Status(text=<string>)"
-            Status(params.get(Protocol.PluginOpcode.ParameterName.Text).getOrElse("?!?"))
+            Status(params.getOrElse(Protocol.PluginOpcode.ParameterName.Text, "?!?"))
 
         case Protocol.PluginOpcode.Set =>            // "Set(key=string)"
             Set(params)
@@ -100,21 +100,21 @@ object Command
             Explode(params.get(Protocol.PluginOpcode.ParameterName.BlastRadius).map(_.toInt.max(2)).getOrElse(5))
 
         case Protocol.PluginOpcode.Log =>            // "Log(text=<string>)"
-            Log(params.get(Protocol.PluginOpcode.ParameterName.Text).getOrElse(""))
+            Log(params.getOrElse(Protocol.PluginOpcode.ParameterName.Text, ""))
 
         case Protocol.PluginOpcode.Disable =>        // "Disable(text=<string>)"
-            Disable(params.get(Protocol.PluginOpcode.ParameterName.Text).getOrElse(""))
+            Disable(params.getOrElse(Protocol.PluginOpcode.ParameterName.Text, ""))
 
         case Protocol.PluginOpcode.MarkCell =>       // "MarkCell(position=x:y,color=#ff0000)"
             MarkCell(
                 params.get(Protocol.PluginOpcode.ParameterName.Position).map(s => XY(s)).getOrElse( XY.Zero),
-                params.get(Protocol.PluginOpcode.ParameterName.Color).getOrElse("#8888ff")) // default to a light blue
+                params.getOrElse(Protocol.PluginOpcode.ParameterName.Color, "#8888ff")) // default to a light blue
 
         case Protocol.PluginOpcode.DrawLine =>       // "DrawLine(from=x:y,to=x:y,color=#ffffff)"
             DrawLine(
                 params.get(Protocol.PluginOpcode.ParameterName.From).map(s => XY(s)).getOrElse( XY.Zero),
                 params.get(Protocol.PluginOpcode.ParameterName.To).map(s => XY(s)).getOrElse( XY.Zero),
-                params.get(Protocol.PluginOpcode.ParameterName.Color).getOrElse("#cccccc")) // default to a light grey
+                params.getOrElse(Protocol.PluginOpcode.ParameterName.Color, "#cccccc")) // default to a light grey
                 
         case _ =>
             throw new IllegalStateException("unknown opcode: '" + opcode + "'")

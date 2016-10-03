@@ -2,10 +2,10 @@ package scalatron.webServer.rest.resources
 
 import scalatron.core.Scalatron
 import javax.ws.rs._
-import core.{Response, MediaType}
+import javax.ws.rs.core.{Response, MediaType}
 import org.eclipse.jetty.http.HttpStatus
 import java.io.IOError
-import Scalatron.VersionPolicy
+import scalatron.core.Scalatron.VersionPolicy
 
 
 @Produces(Array(MediaType.APPLICATION_JSON))
@@ -91,7 +91,7 @@ object SourcesResource {
         if(s.compareToIgnoreCase(SourcesResource.Constants.Never)==0 ) {
             VersionPolicy.Never
         } else {
-            throw new IllegalArgumentException("invalid version policy: '%s'".format(s) )
+            throw new IllegalArgumentException(s"invalid version policy: '$s'" )
         }
 
 
@@ -99,28 +99,28 @@ object SourcesResource {
     case class SourceFiles(var fileList: Array[SourceFile]) {
         def this() = this(null)
         def getFiles = fileList
-        def setFiles(fl: Array[SourceFile]) { this.fileList = fl }
+        def setFiles(fl: Array[SourceFile]): Unit = { this.fileList = fl }
     }
 
     /** Used for client -> server transfers, includes optional versioning policy and label. */
     case class SourceFileUpdate(var fileList: Array[SourceFile], var versionPolicy: String, var versionLabel: String) {
         def this() = this(null,null,null)
         def getFiles = fileList
-        def setFiles(fl: Array[SourceFile]) { this.fileList = fl }
+        def setFiles(fl: Array[SourceFile]): Unit = { this.fileList = fl }
         
         def getVersionPolicy = versionPolicy
-        def setVersionPolicy(versionPolicy: String) { this.versionPolicy = versionPolicy }
+        def setVersionPolicy(versionPolicy: String): Unit = { this.versionPolicy = versionPolicy }
         
         def getVersionLabel = versionLabel
-        def setVersionLabel(versionLabel: String) { this.versionLabel = versionLabel }
+        def setVersionLabel(versionLabel: String): Unit = { this.versionLabel = versionLabel }
     }
 
     case class SourceFile(var n: String, var c: String) {
         def this() = this(null, null)
         def getFilename = n
         def getCode = c
-        def setFilename(name: String) { n = name }
-        def setCode(co: String) { c = co }
+        def setFilename(name: String): Unit = { n = name }
+        def setCode(co: String): Unit = { c = co }
     }
 }
 

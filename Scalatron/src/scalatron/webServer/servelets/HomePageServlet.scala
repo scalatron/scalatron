@@ -5,7 +5,7 @@ import java.io.File
 
 
 case class HomePageServlet(context: WebContext) extends BaseServlet {
-    override def doGet(req: HttpServletRequest, resp: HttpServletResponse) {
+    override def doGet(req: HttpServletRequest, resp: HttpServletResponse): Unit = {
         if(req.getRequestURI == "" || req.getRequestURI == "/") {
             // enumerate web user account details as collection of (name, path) tuples
             val webUsers = context.scalatron.users()
@@ -29,7 +29,7 @@ case class HomePageServlet(context: WebContext) extends BaseServlet {
         }
     }
 
-    def doGetOther(request: HttpServletRequest, response: HttpServletResponse) {
+    def doGetOther(request: HttpServletRequest, response: HttpServletResponse): Unit = {
         val absolutePath = relativeToAbsolutePath(request.getRequestURI)
         val fileName = new File(absolutePath).getName
 

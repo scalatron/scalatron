@@ -125,7 +125,7 @@ object Plugin
         )
 
         // => look for: class ControlFunctionFactory { def create() : String => String }
-        if(verbose) println("info: will attempt to load bot plug-in '%s'...".format(jarFile.getAbsolutePath))
+        if(verbose) println(s"info: will attempt to load bot plug-in '${jarFile.getAbsolutePath}'...")
         loadClassAndMethodFromJar(jarFile, fullyQualifiedControlFunctionFactoryClassNamesToTry, "create", None, verbose) match {
             case Right(throwable) =>
                 // no "ControlFunctionFactory" class was present in the plug-in
@@ -134,38 +134,38 @@ object Plugin
                 loadClassAndMethodFromJar(jarFile, fullyQualifiedControlFunctionClassNamesToTry, "respond", Some(classOf[String]), verbose) match {
                     case Right(throwable2) =>
                         // no "ControlFunction" class was present in the plug-in => nothing else to try
-                        if(verbose) System.err.println("    error: failed to load a control function factory or control function from plug-in '%s': %s".format(jarFile.getAbsolutePath, throwable2.toString))
+                        if(verbose) System.err.println(s"    error: failed to load a control function factory or control function from plug-in '${jarFile.getAbsolutePath}': ${throwable2.toString}")
                         Right(throwable2)
 
                     case Left((extractedClass,methodOnExtractedClass)) =>
                         // a "ControlFunction" class was present in the plug-in => try to load it
-                        if(verbose) println("    info: ControlFunction class and method located in bot plug-in '%s', will try to instantiate control function...".format(jarFile.getAbsolutePath))
+                        if(verbose) println(s"    info: ControlFunction class and method located in bot plug-in '${jarFile.getAbsolutePath}', will try to instantiate control function...")
                         try {
                             val classInstance = extractedClass.newInstance()
                             val controlFunction: String => String = (input: String) => methodOnExtractedClass.invoke(classInstance, input).asInstanceOf[String]
                             val controlFunctionFactory: () => (String => String) = () => controlFunction
-                            if(verbose) println("    info: successfully extracted control function from bot plug-in '%s'...".format(jarFile.getAbsolutePath))
+                            if(verbose) println(s"    info: successfully extracted control function from bot plug-in '${jarFile.getAbsolutePath}'...")
                             Left(controlFunctionFactory)
                         } catch {
                             case t: Throwable =>
                                 // a "ControlFunctionFactory" class was present, but it failed to load; makes no sense to try the "ControlFunction" variant
-                                if(verbose) System.err.println("    error: failed to extract control function factory from bot plug-in '%s': %s".format(jarFile.getAbsolutePath, t.toString))
+                                if(verbose) System.err.println(s"    error: failed to extract control function factory from bot plug-in '${jarFile.getAbsolutePath}': ${t.toString}")
                                 Right(t)
                         }
                 }
 
             case Left((extractedClass,methodOnExtractedClass)) =>
                 // a "ControlFunctionFactory" class was present in the plug-in => try to load it
-                if(verbose) println("    info: ControlFunctionFactory class and method located in bot plug-in '%s', will try to instantiate control function factory...".format(jarFile.getAbsolutePath))
+                if(verbose) println(s"    info: ControlFunctionFactory class and method located in bot plug-in '${jarFile.getAbsolutePath}', will try to instantiate control function factory...")
                 try {
                     val classInstance = extractedClass.newInstance()
                     val factoryFunction: () => (String => String) = () => methodOnExtractedClass.invoke(classInstance).asInstanceOf[(String => String)]
-                    if(verbose) println("    info: successfully extracted control function factory from bot plug-in '%s'...".format(jarFile.getAbsolutePath))
+                    if(verbose) println(s"    info: successfully extracted control function factory from bot plug-in '${jarFile.getAbsolutePath}'...")
                     Left(factoryFunction)
                 } catch {
                     case t: Throwable =>
                         // a "ControlFunctionFactory" class was present, but it failed to load; makes no sense to try the "ControlFunction" variant
-                        if(verbose) System.err.println("    error: failed to extract control function factory from bot plug-in '%s': %s".format(jarFile.getAbsolutePath, t.toString))
+                        if(verbose) System.err.println(s"    error: failed to extract control function factory from bot plug-in '${jarFile.getAbsolutePath}': ${t.toString}")
                         Right(t)
                 }
         }
@@ -203,31 +203,31 @@ object Plugin
             while(iterator.hasNext) {
                 val fullyQualifiedClassName = iterator.next()
                 try {
-                    if(verbose) println("    info: will try to load class '%s' from plug-in '%s'...".format(fullyQualifiedClassName, pluginFilePath))
+                    if(verbose) println(s"    info: will try to load class '$fullyQualifiedClassName' from plug-in '$pluginFilePath'...")
                     val extractedClass = Class.forName(fullyQualifiedClassName, true, classLoader)
 
-                    if(verbose) println("    info: class '%s' loaded, will try to find method '%s'...".format(fullyQualifiedClassName, methodName))
+                    if(verbose) println(s"    info: class '$fullyQualifiedClassName' loaded, will try to find method '$methodName'...")
                     val methodOnExtractedClass = methodParameterClass match {
                         case None => extractedClass.getMethod(methodName)
                         case Some(parameterClass) => extractedClass.getMethod(methodName, parameterClass)
                     }
 
-                    if(verbose) println("    info: successfully located method '%s' on class '%s' in plug-in '%s'...".format(methodName, fullyQualifiedClassName, pluginFilePath))
+                    if(verbose) println(s"    info: successfully located method '$methodName' on class '$fullyQualifiedClassName' in plug-in '$pluginFilePath'...")
 
                     return Left((extractedClass,methodOnExtractedClass))
                 } catch {
                     case t: Throwable =>
                         lastError = Some(t)
-                        if(verbose) println("    info: failed to load class '%s' from plug-in '%s'...: %s".format(fullyQualifiedClassName, pluginFilePath, t.toString))
+                        if(verbose) println(s"    info: failed to load class '$fullyQualifiedClassName' from plug-in '$pluginFilePath'...: ${t.toString}")
                 }
             }
 
             lastError match {
                 case Some(t) => Right(t)
-                case None => Right(new IllegalStateException("none of the factory class candidates found in '%s': %s".format(pluginFilePath, fullyQualifiedClassNamesToTry.mkString(", "))))
+                case None => Right(new IllegalStateException(s"none of the factory class candidates found in '$pluginFilePath': ${fullyQualifiedClassNamesToTry.mkString(", ")}"))
             }
         } catch {
-            case t: Throwable => return Right(t)
+            case t: Throwable => Right(t)
         }
     }
 }

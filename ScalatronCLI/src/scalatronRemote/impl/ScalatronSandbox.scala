@@ -18,10 +18,10 @@ case class ScalatronSandbox(
 {
     def initialState = ScalatronSandboxState(initialStateData, this)
 
-    def delete() {
+    def delete(): Unit = {
         try {
             // hack: we ignore the resource URLs to construct one that matches the exact count
-            val resourceUrl =  "/api/users/%s/sandboxes/%d".format(user.name, id)
+            val resourceUrl =  s"/api/users/${user.name}/sandboxes/$id"
             user.scalatron.connection.DELETE(resourceUrl)
 
             // CBB: would be nice to mark this resource as unusable

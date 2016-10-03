@@ -4,7 +4,7 @@
 
 package scalatronCLI
 
-import cmdline.CommandLineProcessor
+import scalatronCLI.cmdline.CommandLineProcessor
 
 
 /**A simple test application that exercises the Scalatron RESTful API over HTTP.
@@ -14,7 +14,7 @@ import cmdline.CommandLineProcessor
  *
  */
 object Main {
-    def main(args: Array[String]) {
+    def main(args: Array[String]): Unit = {
         CommandLineProcessor(args)
     }
 }

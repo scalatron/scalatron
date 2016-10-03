@@ -2,13 +2,21 @@ organization := "Scalatron"
 
 name := "Scalatron"
 
-version := "1.2.0"
+version := "1.3.0"
 
-lazy val standardSettings = Seq( //Defaults.defaultSettings ++ src ++ Seq(
-  scalaSource in Compile <<= baseDirectory / "src",
-  scalaSource in Test <<= baseDirectory / "test",
-  resourceDirectory in Test <<= baseDirectory / "test/resources",
+lazy val targetJvm = SettingKey[String]("jvm-version", "The version of the JVM the build targets")
+
+lazy val commonSettings = Seq( //Defaults.defaultSettings ++ src ++ Seq(
+  scalaSource in Compile := baseDirectory.value / "src",
+  scalaSource in Test := baseDirectory.value / "test",
+  resourceDirectory in Test := baseDirectory.value / "test/resources",
   scalaVersion := "2.11.8",
+  crossPaths := false,
+  targetJvm := "1.8",
+  parallelExecution in Test := false,
+  scalacOptions ++= Seq("-target:jvm-" + targetJvm.value, "-feature", "-deprecation", "-unchecked", "-Xlint", "-Xfatal-warnings"),
+  javacOptions ++= Seq("-source", targetJvm.value, "-target", targetJvm.value),
+  externalResolvers := Seq(Resolver.jcenterRepo),
   assemblyMergeStrategy in assembly := {
     case "plugin.properties" => MergeStrategy.first
     case "about.html" => MergeStrategy.first
@@ -18,39 +26,38 @@ lazy val standardSettings = Seq( //Defaults.defaultSettings ++ src ++ Seq(
   }
 )
 
-lazy val implVersion = Seq(
-  packageOptions <<= version map {
-    scalatronVersion => Seq(Package.ManifestAttributes(
-      ("Implementation-Version", scalatronVersion)
-    ))
-  }
+lazy val lintingSettings = Seq(
+  addCompilerPlugin("org.psywerx.hairyfotr" %% "linter" % "0.1.15"),
+  scalacOptions += "-P:linter:disable:UnusedParameter"
 )
 
-lazy val all = Project(
-  id = "all",
-  base = file("."),
-  settings = standardSettings ++ Seq(distTask),
-  aggregate = Seq(main, cli, markdown, referenceBot, tagTeamBot)
-)
+lazy val all = project.
+  in(file(".")).
+  settings(commonSettings).
+  aggregate(Scalatron, ScalatronCLI, ScalaMarkdown, referenceBot, tagTeamBot)
 
-lazy val core = Project("ScalatronCore", file("ScalatronCore"),
-  settings = standardSettings ++ Seq(
-    libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-actor" % "2.4.10"
-    ),
+lazy val ScalatronCore = project.
+  in(file("ScalatronCore")).
+  settings(
+    commonSettings,
+    libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.4.10",
     assemblyJarName in assembly := "ScalatronCore.jar"
   )
-)
 
-lazy val botwar = Project("BotWar", file("BotWar"),
-  settings = standardSettings ++ Seq(
+lazy val BotWar = project.
+  in(file("BotWar")).
+  dependsOn(ScalatronCore).
+  settings(
+    commonSettings,
     libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.4.10",
     assemblyJarName in assembly := "BotWar.jar"
   )
-) dependsOn core
 
-lazy val main = Project("Scalatron", file("Scalatron"),
-  settings = standardSettings ++ Seq(
+lazy val Scalatron = project.
+  in(file("Scalatron")).
+  dependsOn(ScalatronCore, BotWar).
+  settings(
+    commonSettings,
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
       "com.typesafe.akka" %% "akka-actor" % "2.4.10",
@@ -58,25 +65,19 @@ lazy val main = Project("Scalatron", file("Scalatron"),
       "org.codehaus.jackson" % "jackson-jaxrs" % "1.9.2",
       "com.sun.jersey" % "jersey-bundle" % "1.12",
       "javax.servlet" % "servlet-api" % "2.5",
-      "org.eclipse.jgit" % "org.eclipse.jgit" % "1.3.0.201202151440-r",
-      "org.eclipse.jgit" % "org.eclipse.jgit.http.server" % "1.3.0.201202151440-r",
+      "org.eclipse.jgit" % "org.eclipse.jgit" % "4.5.0.201609210915-r",
+      "org.eclipse.jgit" % "org.eclipse.jgit.http.server" % "4.5.0.201609210915-r",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
 
-      "org.scalatest" %% "scalatest" % "2.2.5" % "test",
-      "org.testng" % "testng" % "6.5.1" % "test",
-      "org.specs2" %% "specs2-core" % "3.8.5-scalaz-7.1.10" % "test"
-      //                "org.specs2" %% "specs2-scalaz-core" % "7.1.0" % "test"
-    ),
-    resolvers ++= Seq(
-      "JGit Repository" at "http://download.eclipse.org/jgit/maven",
-      "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases"
+      "org.specs2" %% "specs2-core" % "3.8.5-scalaz-7.1.10" % Test
     ),
     assemblyJarName in assembly := "Scalatron.jar" // , logLevel in assembly := Level.Debug
   )
-) dependsOn botwar
 
-lazy val cli = Project("ScalatronCLI", file("ScalatronCLI"),
-  settings = standardSettings ++ Seq(
+lazy val ScalatronCLI = project.
+  in(file("ScalatronCLI")).
+  settings(
+    commonSettings,
     libraryDependencies ++= Seq(
       "org.apache.httpcomponents" % "httpclient" % "4.1.3",
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
@@ -84,35 +85,37 @@ lazy val cli = Project("ScalatronCLI", file("ScalatronCLI"),
     ),
     assemblyJarName in assembly := "ScalatronCLI.jar"
   )
-)
 
-lazy val markdown = Project("ScalaMarkdown", file("ScalaMarkdown"),
-  settings = standardSettings ++ Seq(
+lazy val ScalaMarkdown = project.
+  in(file("ScalaMarkdown")).
+  settings(
+    commonSettings,
     libraryDependencies ++= Seq(
-      "org.scala-tools.testing" % "specs_2.10" % "1.6.9",
-      "commons-io" % "commons-io" % "2.3",
-      "org.apache.commons" % "commons-lang3" % "3.1"
+      "org.scalatest" %% "scalatest" % "3.0.0" % Test
     ),
     assemblyJarName in assembly := "ScalaMarkdown.jar"
   )
-)
 
-lazy val samples = IO.listFiles(file("Scalatron") / "samples") filter (!_.isFile) map {
-  sample: File => sample.getName -> Project(sample.getName.replace(" ", ""), sample, settings = standardSettings ++ Seq(
-    scalaSource in Compile <<= baseDirectory / "src",
+lazy val samples = IO.listFiles(file("Scalatron") / "samples").filter(!_.isFile).map {
+  sample: File => sample.getName -> Project(sample.getName.replace(" ", ""), sample, settings = commonSettings ++ Seq(
     artifactName in packageBin := ((_, _, _) => "ScalatronBot.jar")
   ))
-} toMap
+}.toMap
 
 lazy val referenceBot = samples("Example Bot 01 - Reference")
 lazy val tagTeamBot = samples("Example Bot 02 - TagTeam")
 
-val dist = TaskKey[Unit]("dist", "Makes the distribution zip file")
-lazy val distTask = dist <<= (version, scalaVersion) map { (scalatronVersion, version) =>
+lazy val dist = taskKey[Unit]("Makes the distribution zip file")
+dist := {
+  (assembly in ScalatronCore).value
+  (assembly in BotWar).value
+  (assembly in Scalatron).value
+  (assembly in ScalatronCLI).value
+  (assembly in ScalaMarkdown).value
+  (packageBin in Compile in referenceBot).value
+  (packageBin in Compile in tagTeamBot).value
   println("Beginning distribution generation...")
   val distDir = file("dist")
-
-  println("with scalaVersion = " + version)
 
   // clean distribution directory
   println("Deleting /dist directory...")
@@ -134,48 +137,37 @@ lazy val distTask = dist <<= (version, scalaVersion) map { (scalatronVersion, ve
   }
 
   val distSamples = distDir / "samples"
-  val targetVersion = version.split("\\.").toList.take(2).mkString(".")
-  def sampleJar(sample: Project) = sample.base / ("target/scala-%s/ScalatronBot.jar" format targetVersion)
-  for (sample <- samples.values) {
-    if (sampleJar(sample).exists) {
-      println("Copying " + sample.base)
-      IO.copyDirectory(sample.base / "src", distSamples / sample.base.getName / "src")
-      IO.copyFile(sampleJar(sample), distSamples / sample.base.getName / "ScalatronBot.jar")
-    }
+  def sampleJar(sample: Project) = sample.base / "target/ScalatronBot.jar"
+  for (sample <- samples.values; if sampleJar(sample).exists) {
+    println("Copying " + sample.base)
+    IO.copyDirectory(sample.base / "src", distSamples / sample.base.getName / "src")
+    IO.copyFile(sampleJar(sample), distSamples / sample.base.getName / "ScalatronBot.jar")
   }
 
   println("Copying Reference bot to /bots directory...")
   IO.copyFile(sampleJar(referenceBot), distDir / "bots" / "Reference" / "ScalatronBot.jar")
 
-  def markdown(docDir: File, htmlDir: File) = {
-    Seq("java", "-Xmx1G", "-jar", "ScalaMarkdown/target/scala-%s/ScalaMarkdown.jar" format targetVersion, docDir.getPath, htmlDir.getPath).!
+  def runmarkdown(docDir: File, htmlDir: File) = {
+    Seq("java", "-Xmx1G", "-jar", "ScalaMarkdown/target/ScalaMarkdown.jar", docDir.getPath, htmlDir.getPath).!
   }
 
   // generate HTML from Markdown, for /doc and /devdoc
   println("Generating /dist/doc/html from /doc/markdown...")
-  markdown(scalatronDir / "doc/markdown", distDir / "doc/html")
+  runmarkdown(scalatronDir / "doc/markdown", distDir / "doc/html")
 
   println("Generating /webui/tutorial from /dev/tutorial...")
-  markdown(scalatronDir / "doc/tutorial", distDir / "webui/tutorial")
+  runmarkdown(scalatronDir / "doc/tutorial", distDir / "webui/tutorial")
 
-  for (jar <- List("Scalatron", "ScalatronCLI", "ScalatronCore", "BotWar")) {
-    IO.copyFile(file(jar) / "target" / ("scala-%s" format targetVersion) / (jar + ".jar"), distDir / "bin" / (jar + ".jar"))
+  for (jar <- Seq("Scalatron", "ScalatronCLI", "ScalatronCore", "BotWar")) {
+    IO.copyFile(file(jar) / "target" / (jar + ".jar"), distDir / "bin" / (jar + ".jar"))
   }
 
   // This is ridiculous, there has to be be an easier way to zip up a directory
-  val zipFileName = "scalatron-%s.zip" format scalatronVersion
+  val zipFileName = s"scalatron-${version.value}.zip"
   println("Zipping up /dist into " + zipFileName + "...")
   def zip(srcDir: File, destFile: File, prepend: String) = {
     val allDistFiles = (srcDir ** "*").get.filter(_.isFile).map { f => (f, prepend + IO.relativize(distDir, f).get) }
     IO.zip(allDistFiles, destFile)
   }
   zip(distDir, file("./" + zipFileName), "Scalatron/")
-} dependsOn (
-  assembly in core,
-  assembly in botwar,
-  assembly in main,
-  assembly in cli,
-  assembly in markdown,
-  packageBin in Compile in referenceBot,
-  packageBin in Compile in tagTeamBot
-  )
+}

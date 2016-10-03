@@ -5,12 +5,14 @@ package scalatron.scalatron.impl
   */
 
 
-import scala.tools.nsc.{Global, Settings}
-import tools.nsc.reporters.StoreReporter
-import scalatron.core.Scalatron
-import scala.tools.nsc.util.{BatchSourceFile, Position}
-import akka.actor.Actor
 import java.util.Locale
+
+import akka.actor.Actor
+
+import scala.tools.nsc.reporters.StoreReporter
+import scala.reflect.internal.util.BatchSourceFile
+import scala.tools.nsc.{Global, Settings}
+import scalatron.core.Scalatron
 
 
 /** Each compile actor holds a Scala compiler instance and uses it to process CompileJob messages
@@ -52,7 +54,7 @@ object CompileActor {
                 def extractJar(name: String) = {
                     var in = classOf[CompileActor].getResourceAsStream("/lib/" + name)
                     val file = java.io.File.createTempFile(name, ".jar")
-                    if( verbose ) println("  detected class path of Scala %s to be: %s" format (name, file))
+                    if( verbose ) println(s"  detected class path of Scala $name to be: $file")
                     file.deleteOnExit()
                     file.getParentFile.mkdirs()
                     sys.process.BasicIO.transferFully(in, new java.io.FileOutputStream(file))
@@ -99,11 +101,11 @@ object CompileActor {
 case class CompileActor(verbose: Boolean) extends Actor {
     var compilerGlobalOpt: Option[Global] = None
 
-    override def preStart() {
+    override def preStart(): Unit = {
         val detectedScalaClassPaths = CompileActor.detectScalaClassPaths(verbose)
 
         // called in the event of a compilation error
-        def error(message: String) {println(message)}
+        def error(message: String): Unit = {println(message)}
 
         val settings = new Settings(error)
         detectedScalaClassPaths.foreach(settings.classpath.append)
@@ -157,12 +159,12 @@ case class CompileActor(verbose: Boolean) extends Actor {
                 var javaCompilerWarnings = 0
                 val javaCompilerMessageBuilder = Vector.newBuilder[CompilerMessage]
                 val diagnosticListener = new DiagnosticListener[Any] {
-                    def report(diagnostic: Diagnostic[_]) {
+                    def report(diagnostic: Diagnostic[_]): Unit = {
                         val sourceFilePath = diagnostic.getSource match {
                             case t: Any => t.toString // TODO
                         }
 
-                        import CompileActor.Constants._
+                        import scalatron.scalatron.impl.CompileActor.Constants._
                         val severity = diagnostic.getKind match {
                             case Diagnostic.Kind.ERROR => javaCompilerErrors += 1; ScalaCompilerError
                             case Diagnostic.Kind.WARNING => javaCompilerWarnings += 1; ScalaCompilerWarning
@@ -212,7 +214,7 @@ case class CompileActor(verbose: Boolean) extends Actor {
                     // Uh, something went wrong with the Java compilation - maybe not working on this system?
                 System.err.println("error: exception during attempt to compile Java files: " + t)
                 CompileResult(
-                    false,
+                    compilationSuccessful = false,
                     scalaCompilationResult.duration,
                     scalaCompilationResult.errorCount,
                     scalaCompilationResult.warningCount,
@@ -278,7 +280,7 @@ case class CompileActor(verbose: Boolean) extends Actor {
                 throw new IllegalStateException("compiler not initialized")
 
             case Some(compilerGlobal) =>
-                if( verbose ) println("    starting compilation (%s)...".format(runDescription))
+                if( verbose ) println(s"    starting compilation ($runDescription)...")
                 val startTime = System.currentTimeMillis
 
                 // set the output directory (probably to a temporary directory somewhere)

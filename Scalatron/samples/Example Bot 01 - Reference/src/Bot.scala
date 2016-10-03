@@ -16,7 +16,7 @@
   */
 object ControlFunction
 {
-    def forMaster(bot: Bot) {
+    def forMaster(bot: Bot): Unit = {
         // demo: log the view of the master bot into the debug output (if running in the browser sandbox)
         // bot.log(bot.view.cells.grouped(31).mkString("\n"))
 
@@ -60,7 +60,7 @@ object ControlFunction
     }
 
 
-    def forSlave(bot: MiniBot) {
+    def forSlave(bot: MiniBot): Unit = {
         bot.inputOrElse("mood", "Lurking") match {
             case "Aggressive" => reactAsAggressiveMissile(bot)
             case "Defensive" => reactAsDefensiveMissile(bot)
@@ -69,7 +69,7 @@ object ControlFunction
     }
 
 
-    def reactAsAggressiveMissile(bot: MiniBot) {
+    def reactAsAggressiveMissile(bot: MiniBot): Unit = {
         bot.view.offsetToNearest('m') match {
             case Some(delta: XY) =>
                 // another master is visible at the given relative position (i.e. position delta)
@@ -106,7 +106,7 @@ object ControlFunction
     }
 
 
-    def reactAsDefensiveMissile(bot: MiniBot) {
+    def reactAsDefensiveMissile(bot: MiniBot): Unit = {
         bot.view.offsetToNearest('s') match {
             case Some(delta: XY) =>
                 // another slave is visible at the given relative position (i.e. position delta)
@@ -202,7 +202,7 @@ class ControlFunctionFactory {
         val (opcode, params) = CommandParser(input)
         opcode match {
             case "React" =>
-                val bot = new BotImpl(params)
+                val bot = BotImpl(params)
                 if( bot.generation == 0 ) {
                     ControlFunction.forMaster(bot)
                 } else {
@@ -271,7 +271,7 @@ case class BotImpl(inputParams: Map[String, String]) extends MiniBot {
     /** Renders commands and stateParams into a control function return string. */
     override def toString = {
         var result = commands
-        if(!stateParams.isEmpty) {
+        if(stateParams.nonEmpty) {
             if(!result.isEmpty) result += "|"
             result += stateParams.map(e => e._1 + "=" + e._2).mkString("Set(",",",")")
         }

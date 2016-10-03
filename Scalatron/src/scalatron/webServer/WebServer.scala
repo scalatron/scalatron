@@ -4,10 +4,10 @@ import org.eclipse.jetty
 import java.net.{UnknownHostException, InetAddress}
 import org.eclipse.jetty.servlet.{ServletContextHandler, ServletHolder}
 import javax.servlet.http.HttpServlet
-import rest.RestApplication
+import scalatron.webServer.rest.RestApplication
 import scalatron.core.Scalatron
 import com.sun.jersey.spi.container.servlet.ServletContainer
-import servelets.{AdminServlet, UserServlet, HomePageServlet, WebContext, GitServlet}
+import scalatron.webServer.servelets.{AdminServlet, UserServlet, HomePageServlet, WebContext, GitServlet}
 import akka.actor.ActorSystem
 
 
@@ -53,20 +53,20 @@ object WebServer {
 
         val browserUiUrl_Hostname = "http://" + hostname + ":" + webServerPort + "/"
         val browserUiUrl_IpAddress = "http://" + ipAddressString + ":" + webServerPort + "/"
-        println("Players should point their browsers to '%s' or '%s'".format(browserUiUrl_Hostname, browserUiUrl_IpAddress))
+        println(s"Players should point their browsers to '$browserUiUrl_Hostname' or '$browserUiUrl_IpAddress'")
 
 
 
         // extract the web UI base directory from the command line ("/webui")
         // construct the complete plug-in path and inform the user about it
         val webUiBaseDirectoryPathFallback = scalatron.installationDirectoryPath + "/" + "webui"
-        val webUiBaseDirectoryPathArg = argMap.get("-webui").getOrElse(webUiBaseDirectoryPathFallback)
+        val webUiBaseDirectoryPathArg = argMap.getOrElse("-webui", webUiBaseDirectoryPathFallback)
         val webUiBaseDirectoryPath = if (webUiBaseDirectoryPathArg.last == '/') webUiBaseDirectoryPathArg.dropRight(1) else webUiBaseDirectoryPathArg
         if (verbose) println("Will search for web UI files in: " + webUiBaseDirectoryPath)
 
         // extract the web user base directory from the command line ("/webuser")
         val webUserBaseDirectoryPathFallback = scalatron.installationDirectoryPath + "/" + "users"
-        val webUserBaseDirectoryPathArg = argMap.get("-users").getOrElse(webUserBaseDirectoryPathFallback)
+        val webUserBaseDirectoryPathArg = argMap.getOrElse("-users", webUserBaseDirectoryPathFallback)
         val webUserBaseDirectoryPath = if (webUserBaseDirectoryPathArg.last == '/') webUserBaseDirectoryPathArg.dropRight(1) else webUserBaseDirectoryPathArg
         if (verbose) println("Will maintain web user content in: " + webUserBaseDirectoryPath)
 
@@ -78,16 +78,16 @@ object WebServer {
         val jettyServer = new jetty.server.Server(webServerPort)
 
 
-        val context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+        val context = new ServletContextHandler(ServletContextHandler.SESSIONS)
         context.setContextPath("/")
         context.addServlet(holder(HomePageServlet(webCtx)), "/*")
         context.addServlet(holder(UserServlet(webCtx)), "/user/*")
         context.addServlet(holder(AdminServlet(webCtx)), "/admin/*")
         context.addServlet(holder(GitServlet(webCtx)), "/git/*")
 
-        val jerseyServlet: ServletContainer = new ServletContainer(new RestApplication(scalatron, verbose))
+        val jerseyServlet: ServletContainer = new ServletContainer(RestApplication(scalatron, verbose))
 
-        context.addServlet(holder(jerseyServlet), "/api/*");
+        context.addServlet(holder(jerseyServlet), "/api/*")
 
         jettyServer.setHandler(context)
 
@@ -95,11 +95,11 @@ object WebServer {
 
 
         // optionally: open a browser showing the browser UI
-        val openBrowser = argMap.get("-browser").getOrElse("yes") != "no"
+        val openBrowser = argMap.getOrElse("-browser", "yes") != "no"
         if(openBrowser && java.awt.Desktop.isDesktopSupported) {
             val desktop = java.awt.Desktop.getDesktop
             if( desktop.isSupported( java.awt.Desktop.Action.BROWSE ) ) {
-                new Thread(new Runnable { def run() {
+                new Thread(new Runnable { def run(): Unit = {
                     try {
                         val waitTimeBeforeLaunchingBrowser = 3000 // give web server some time to start up
                         Thread.sleep(waitTimeBeforeLaunchingBrowser)
@@ -115,13 +115,13 @@ object WebServer {
         webServer
     }
 
-    def holder(s: HttpServlet): ServletHolder = new ServletHolder(s);
+    def holder(s: HttpServlet): ServletHolder = new ServletHolder(s)
 
 }
 
 
 class WebServer(server: jetty.server.Server, verbose: Boolean) {
-    def start() {
+    def start(): Unit = {
         if (verbose) println("Starting browser front-end...")
         try {
             server.start()
@@ -130,7 +130,7 @@ class WebServer(server: jetty.server.Server, verbose: Boolean) {
         }
     }
 
-    def stop() {
+    def stop(): Unit = {
         if (verbose) println("Stopping browser front-end...")
         server.stop()
     }

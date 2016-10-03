@@ -4,13 +4,13 @@
 package scalatron.botwar
 
 import scalatron.core.{Simulation, EntityController}
-import Simulation.Time
+import scalatron.core.Simulation.Time
 import scala.util.Random
-import BoardParams.Perimeter
+import scalatron.botwar.BoardParams.Perimeter
 import scala.concurrent.{Await, Future, ExecutionContext}
 import scala.concurrent.duration._
 import java.util.concurrent.TimeoutException
-
+import scala.language.postfixOps
 
 /** Contains the temporally variable aspects of the game state.
   */
@@ -24,7 +24,7 @@ case class Board(
     def getBot(id: Entity.Id) : Option[Bot] = bots.get(id)
     def botsNear(center: XY, radius: Double) : Iterable[Bot] = bots.values.filter(_.pos.distanceTo(center) <= radius)
     def botsFiltered(p: Bot => Boolean) : Iterable[Bot] = bots.values.filter(p)
-    def botsForEach(f: Bot => Unit) { bots.values.foreach(f) }
+    def botsForEach(f: Bot => Unit): Unit = { bots.values.foreach(f) }
     def botsThatAreWallsAndNonWalls : (Iterable[Bot],Iterable[Bot]) = { bots.values.partition(_.variety == Bot.Wall) }
     lazy val botsThatArePlayers = bots.values.filter(bot => bot.variety.isInstanceOf[Bot.Player])       // Optimization 2012-02-27
     def botsThatAreMasters = bots.values.filter(bot => bot.isMaster)      // generation-0 player objects

@@ -15,7 +15,7 @@ object StatsPanelRenderer
     val BgColorTriple = ColorTriple(new Color(105, 105, 105), new Color(123, 120, 120), new Color(145, 145, 145))
     val frameTimeQueue = scala.collection.mutable.Queue.empty[Long]
 
-    def draw(state: State, scalatron: ScalatronInward, permanentConfig: PermanentConfig, interactivelyAdjustableSettings: InteractivelyAdjustableSettings)(implicit ctx: RenderContext) {
+    def draw(state: State, scalatron: ScalatronInward, permanentConfig: PermanentConfig, interactivelyAdjustableSettings: InteractivelyAdjustableSettings)(implicit ctx: RenderContext): Unit = {
         ctx.setColor(BgColorTriple.plain)
         ctx.fillRect(0, ctx.fieldSizeY + 1, ctx.fieldSizeX + 1, ctx.bottomPanelHeight)
 

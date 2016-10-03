@@ -2,8 +2,10 @@ package scalatron.scalatron.impl
 
 import scalatron.core.EntityController
 import java.util.concurrent.TimeoutException
-import scala.concurrent.{Await, Future, ExecutionContext}
+
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
+import scala.language.postfixOps
 
 case class EntityControllerImpl(name: String, controlFunction: String => String) extends EntityController {
     def respond(input: String) = controlFunction(input)

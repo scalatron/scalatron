@@ -24,7 +24,7 @@ class TournamentState
       * This can be streamed to a display client to render the tournament remotely.
       */
     private var mostRecentStateOpt: Option[Simulation.UntypedState] = None
-    def updateMostRecentState(mostRecentState: Simulation.UntypedState) { mostRecentStateOpt = Some(mostRecentState) }
+    def updateMostRecentState(mostRecentState: Simulation.UntypedState): Unit = { mostRecentStateOpt = Some(mostRecentState) }
     def getMostRecentStateOpt = mostRecentStateOpt
 
 
@@ -33,7 +33,7 @@ class TournamentState
 
 
     /** Adds the most recent result to the tournament result list, at the head. */
-    def addResult(result: TournamentRoundResult) {
+    def addResult(result: TournamentRoundResult): Unit = {
         roundsPlayed += 1
         results = result :: results
         assert(results.length == roundsPlayed)

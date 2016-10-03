@@ -16,7 +16,7 @@ object TournamentRoundResult
             (mapA /: mapB)((sum, add) => {
                 val name = add._1
                 val additionalScore = add._2
-                val existingTotalScoreAndCount = sum.get(name).getOrElse((0, 0))
+                val existingTotalScoreAndCount = sum.getOrElse(name, (0, 0))
                 val sumTotalScore = existingTotalScoreAndCount._1 + additionalScore
                 val sumTotalCount = existingTotalScoreAndCount._2 + 1
                 sum.updated(name, (sumTotalScore, sumTotalCount))
@@ -52,7 +52,7 @@ object TournamentRoundResult
                 (mapA /: mapB)((sum, add) => {
                     val name = add._1
                     val additionalScoreAndCount = add._2
-                    val existingTotalScoreAndCount = sum.get(name).getOrElse((0, 0))
+                    val existingTotalScoreAndCount = sum.getOrElse(name, (0, 0))
                     val sumTotalScore = existingTotalScoreAndCount._1 + additionalScoreAndCount._1
                     val sumTotalCount = existingTotalScoreAndCount._2 + additionalScoreAndCount._2
                     sum.updated(name, (sumTotalScore, sumTotalCount))

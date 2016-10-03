@@ -43,26 +43,26 @@ object ScalatronImpl
         // find out which game variant the server should host
         val binDirectoryPath = scalatronInstallationDirectoryPath + "/" + "bin"
         val game = {
-            val gameName = argMap.get("-game").getOrElse("BotWar")
+            val gameName = argMap.getOrElse("-game", "BotWar")
             val gamePluginJarFilePath = binDirectoryPath + "/" + gameName + ".jar"
             val gamePluginJarFile = new File(gamePluginJarFilePath)
             val factoryClassNameWithPackagePath = "scalatron.GameFactory"
             Plugin.loadClassAndMethodFromJar(gamePluginJarFile, Iterable(factoryClassNameWithPackagePath), "create", None, verbose) match {
                 case Right(throwable) =>
-                    System.err.println("error: failed to load game factory '%s' from plug-in '%s': %s".format(factoryClassNameWithPackagePath, gamePluginJarFilePath, throwable.toString))
+                    System.err.println(s"error: failed to load game factory '$factoryClassNameWithPackagePath' from plug-in '$gamePluginJarFilePath': ${throwable.toString}")
                     System.exit(-1)
                     throw throwable
 
                 case Left((extractedClass,methodOnExtractedClass)) =>
-                    if(verbose) println("info: class and method located in game plug-in '%s', will try to instantiate game factory...".format(gamePluginJarFilePath))
+                    if(verbose) println(s"info: class and method located in game plug-in '$gamePluginJarFilePath', will try to instantiate game factory...")
                     try {
                         val classInstance = extractedClass.newInstance()
                         val gameInstance = methodOnExtractedClass.invoke(classInstance).asInstanceOf[Game]
-                        if(verbose) println("info: successfully invoked game factory of game plug-in '%s'...".format(gamePluginJarFilePath))
+                        if(verbose) println(s"info: successfully invoked game factory of game plug-in '$gamePluginJarFilePath'...")
                         gameInstance
                     } catch {
                         case t: Throwable =>
-                            System.err.println("error: failed to load game factory '%s' from plug-in '%s': %s".format(factoryClassNameWithPackagePath, gamePluginJarFilePath, t.toString))
+                            System.err.println(s"error: failed to load game factory '$factoryClassNameWithPackagePath' from plug-in '$gamePluginJarFilePath': ${t.toString}")
                             System.exit(-1)
                             throw t
                     }
@@ -72,27 +72,27 @@ object ScalatronImpl
 
         // extract the web user base directory from the command line ("/users")
         val usersBaseDirectoryPathFallback = scalatronInstallationDirectoryPath + "/" + UsersDirectoryName
-        val usersBaseDirectoryPathArg = argMap.get("-users").getOrElse(usersBaseDirectoryPathFallback)
+        val usersBaseDirectoryPathArg = argMap.getOrElse("-users", usersBaseDirectoryPathFallback)
         val usersBaseDirectoryPath = if(usersBaseDirectoryPathArg.last == '/') usersBaseDirectoryPathArg.dropRight(1) else usersBaseDirectoryPathArg
         if(verbose) println("Will maintain user workspace in: " + usersBaseDirectoryPath)
 
         // extract the samples base directory from the command line ("/samples")
         val samplesBaseDirectoryPathFallback = scalatronInstallationDirectoryPath + "/" + SamplesDirectoryName
-        val samplesBaseDirectoryPathArg = argMap.get("-samples").getOrElse(samplesBaseDirectoryPathFallback)
+        val samplesBaseDirectoryPathArg = argMap.getOrElse("-samples", samplesBaseDirectoryPathFallback)
         val samplesBaseDirectoryPath = if(samplesBaseDirectoryPathArg.last == '/') samplesBaseDirectoryPathArg.dropRight(1) else samplesBaseDirectoryPathArg
         if(verbose) println("Will look for samples in: " + samplesBaseDirectoryPath)
 
         // extract the plugin base directory from the command line
         // construct the complete plug-in path and inform the user about it
         val pluginBaseDirectoryPathFallback = scalatronInstallationDirectoryPath + "/" + TournamentBotsDirectoryName
-        val pluginBaseDirectoryPathArg = argMap.get("-plugins").getOrElse(pluginBaseDirectoryPathFallback)
+        val pluginBaseDirectoryPathArg = argMap.getOrElse("-plugins", pluginBaseDirectoryPathFallback)
         val pluginBaseDirectoryPath = if(pluginBaseDirectoryPathArg.last == '/') pluginBaseDirectoryPathArg.dropRight(1) else pluginBaseDirectoryPathArg
         if(verbose) println("Will search for sub-directories containing bot plug-ins in: " + pluginBaseDirectoryPath)
 
 
         /** When running in secure mode, bot plug-ins are sandboxed, control functions are subject to timeouts
           * and slave counts are restricted. */
-        val secureMode = argMap.get("-secure").getOrElse("no") == "yes"
+        val secureMode = argMap.getOrElse("-secure", "no") == "yes"
         val scalatronJarFilePath = getClassPath(classOf[ScalatronImpl])
         implicit val executionContextForUntrustedCode = ExecutionContextForUntrustedCode.create(
             scalatronJarFilePath,
@@ -263,9 +263,9 @@ case class ScalatronImpl(
         EntityControllerImpl.fromPlugins(pluginCollection.plugins)(executionContextForUntrustedCode)
     }
 
-    def postStepCallback(mostRecentState: UntypedState) { tournamentState.updateMostRecentState(mostRecentState) }
+    def postStepCallback(mostRecentState: UntypedState): Unit = { tournamentState.updateMostRecentState(mostRecentState) }
 
-    def postRoundCallback(finalState: Simulation.UntypedState, result: TournamentRoundResult) {
+    def postRoundCallback(finalState: Simulation.UntypedState, result: TournamentRoundResult): Unit = {
         tournamentState.updateMostRecentState(finalState)
         tournamentState.addResult(result)
     }
@@ -275,7 +275,7 @@ case class ScalatronImpl(
     // start/run/stop
     //----------------------------------------------------------------------------------------------
 
-    def start() {
+    def start(): Unit = {
         val compileWorkerCount = 3
 
         // using a SmallestMailboxRouter has the advantage of only ever loading (and bloating) a single compile actor
@@ -284,7 +284,7 @@ case class ScalatronImpl(
         compileWorkerRouterOpt = Some(compileWorkerRouter)
     }
 
-    def run(argMap: Map[String, String]) {
+    def run(argMap: Map[String, String]): Unit = {
         val rounds = argMap.get("-rounds").map(_.toInt).getOrElse(Int.MaxValue)
         val headless = argMap.getOrElse("-headless", "no") == "yes"
         if(headless) {
@@ -294,7 +294,7 @@ case class ScalatronImpl(
         }
     }
 
-    def shutdown() {
+    def shutdown(): Unit = {
         // stop accepting compile jobs
         compileWorkerRouterOpt = None
 
@@ -320,7 +320,7 @@ case class ScalatronImpl(
     /** Makes sure that the '/users' directory exists.
       * @throws IOError if failed to create user base directory
       */
-    private def ensureUserBaseDirectoryExists() {
+    private def ensureUserBaseDirectoryExists(): Unit = {
         val usersBaseDirectory = new File(usersBaseDirectoryPath)
         try {
             if(!usersBaseDirectory.exists()) {
@@ -485,16 +485,16 @@ case class ScalatronImpl(
       * @param name the user name to verify.
       * @throws ScalatronException.IllegalUserName if the user name contained illegal characters
       */
-    def requireLegalUserName(name: String) {
+    def requireLegalUserName(name: String): Unit = {
         name.foreach(c => {
             if(".,|/\\\"'*?".contains(c))
-                throw new ScalatronException.IllegalUserName(name, "illegal character: '" + c + "'")
+                throw ScalatronException.IllegalUserName(name, "illegal character: '" + c + "'")
         })
     }
 
     // TODO: use a white list, not a black list
     // TODO: disallow leading numeric literals
-    def isUserNameValid(name: String): Boolean = name.forall(c => !(": -.,|/\\\"'*?".contains(c)))
+    def isUserNameValid(name: String): Boolean = name.forall(c => !": -.,|/\\\"'*?".contains(c))
 
 
     //----------------------------------------------------------------------------------------------

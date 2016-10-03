@@ -20,14 +20,14 @@ case class GitServlet(context: WebContext) extends org.eclipse.jgit.http.server.
 
     import context.scalatron
 
-    override def init(config: ServletConfig) {
-        setReceivePackFactory(new Receive());
-        setRepositoryResolver(new UserRepositoryResolver());
-        super.init(config);
+    override def init(config: ServletConfig): Unit = {
+        setReceivePackFactory(new Receive())
+        setRepositoryResolver(new UserRepositoryResolver())
+        super.init(config)
     }
 
-    override def service(req: HttpServletRequest, rsp: HttpServletResponse) {
-        if (!getUser(req).isDefined) {
+    override def service(req: HttpServletRequest, rsp: HttpServletResponse): Unit = {
+        if (getUser(req).isEmpty) {
             rsp.setHeader("WWW-Authenticate", "Basic realm=\"Scalatron git server\"")
             rsp.sendError(HttpServletResponse.SC_UNAUTHORIZED, "")
         }
@@ -42,7 +42,7 @@ case class GitServlet(context: WebContext) extends org.eclipse.jgit.http.server.
                 val decoded = new String(DatatypeConverter.parseBase64Binary(authorization.split(" ")(1))).split(":", 2)
                 val userName = decoded(0)
                 val password = decoded(1)
-                for (user <- scalatron.user(userName); if user.getPasswordOpt.exists(_ == password)) yield user
+                for (user <- scalatron.user(userName); if user.getPasswordOpt.contains(password)) yield user
         }
 
     class UserRepositoryResolver extends RepositoryResolver[HttpServletRequest] {
@@ -61,20 +61,20 @@ case class GitServlet(context: WebContext) extends org.eclipse.jgit.http.server.
 
         class ReceiveCommits(user: User) extends PostReceiveHook {
 
-            def onPostReceive(rp: ReceivePack, commands: JCollection[ReceiveCommand]) {
+            def onPostReceive(rp: ReceivePack, commands: JCollection[ReceiveCommand]): Unit = {
                 resetHead(rp)
                 val ok = commands.asScala.forall(_.getResult == ReceiveCommand.Result.OK)
                 if (ok && build(rp)) {
-                    List("", "Your Scalatron bot has been built successfully", "").map(rp.sendMessage)
+                    List("", "Your Scalatron bot has been built successfully", "").foreach(rp.sendMessage)
                 }
             }
 
             // TODO It would be nice to do this in preReceive to stop the push, but I'm not sure how to get the files
             def build(rp: ReceivePack) = {
                 val buildResult = user.buildSources()
-                def getMessages = buildResult.messages.map(message => "%s:%s %s" format(message.sourceFile, message.lineAndColumn, message.multiLineMessage))
+                def getMessages = buildResult.messages.map(message => s"${message.sourceFile}:${message.lineAndColumn} ${message.multiLineMessage}")
                 if (!buildResult.successful) {
-                    (List("") ++ getMessages ++ List("")).map(rp.sendMessage)
+                    (List("") ++ getMessages ++ List("")).foreach(rp.sendMessage)
                     // TODO: automatically publish the bot under certain circumstances, such as if the most recent commit message contained some code, such as '!'
                 }
                 buildResult.successful

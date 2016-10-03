@@ -1,9 +1,9 @@
 package scalatron.scalatron.impl
 
-import FileUtil.deleteRecursively
+import scalatron.scalatron.impl.FileUtil.deleteRecursively
 import scalatron.core.Scalatron
-import Scalatron.SourceFile
-import Scalatron.SourceFileCollection
+import scalatron.core.Scalatron.SourceFile
+import scalatron.core.Scalatron.SourceFileCollection
 
 
 
@@ -13,5 +13,5 @@ case class ScalatronSample(name: String, scalatron: ScalatronImpl) extends Scala
 
     def sourceFiles: Iterable[SourceFile] = SourceFileCollection.loadFrom(sampleSourceDirectoryPath)
 
-    def delete() { deleteRecursively(sampleDirectoryPath, atThisLevel = true, verbose = scalatron.verbose) }
+    def delete(): Unit = { deleteRecursively(sampleDirectoryPath, atThisLevel = true, verbose = scalatron.verbose) }
 }

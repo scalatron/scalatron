@@ -11,7 +11,7 @@ object FileUtil
       * @param block the closure to execute with the resource.
       * @tparam T the resource type.
       */
-    def use[T <: {def close()}](closable: T)(block: T => Unit) {
+    def use[T <: AutoCloseable](closable: T)(block: T => Unit): Unit = {
         try {
             block(closable)
         }
@@ -25,7 +25,7 @@ object FileUtil
       * Using a later Java version (1.7?) would make this neater.
       * @throws IOError if there is a problem reading/writing the files
       */
-    def copyFile(from: String, to: String) {
+    def copyFile(from: String, to: String): Unit = {
         use(new FileInputStream(from)) {
             in =>
                 use(new FileOutputStream(to)) {
@@ -45,7 +45,7 @@ object FileUtil
       * @param verbose if true, log verbosely to the console
       * @throws IllegalStateException if there is a problem deleting a file or directory
       */
-    def deleteRecursively(path: String, atThisLevel: Boolean, verbose: Boolean) {
+    def deleteRecursively(path: String, atThisLevel: Boolean, verbose: Boolean): Unit = {
         val itemAtPath = new File(path)
         if(itemAtPath.exists) {
             // caller handles exceptions
@@ -53,12 +53,12 @@ object FileUtil
                 if(verbose) println("  deleting contents of directory at: " + path)
                 val filesInsideUserDir = itemAtPath.listFiles()
                 if(filesInsideUserDir != null) {
-                    filesInsideUserDir.foreach(file => deleteRecursively(file.getAbsolutePath, true, verbose))
+                    filesInsideUserDir.foreach(file => deleteRecursively(file.getAbsolutePath, atThisLevel = true, verbose = verbose))
                 }
                 if(atThisLevel) {
                     if(verbose) println("  deleting directory: " + path)
                     if(!itemAtPath.delete()) {
-                        System.err.println("error: failed to delete directory: %s".format(itemAtPath.getAbsolutePath))
+                        System.err.println(s"error: failed to delete directory: ${itemAtPath.getAbsolutePath}")
                         throw new IllegalStateException("failed to delete directory at: " + itemAtPath.getAbsolutePath)
                     }
                 }
@@ -66,7 +66,7 @@ object FileUtil
                 if(atThisLevel) {
                     if(verbose) println("  deleting file at: " + path)
                     if(!itemAtPath.delete()) {
-                        System.err.println("error: failed to delete file: %s".format(itemAtPath.getAbsolutePath))
+                        System.err.println(s"error: failed to delete file: ${itemAtPath.getAbsolutePath}")
                         throw new IllegalStateException("failed to delete file: " + itemAtPath.getAbsolutePath)
                     }
                 }
@@ -79,7 +79,7 @@ object FileUtil
       * Closes the source when it's done.
       * @param path the path of the file whose contents are to be read.
       * @return the contents of the file
-      * @throws IOError if an IO error occurs while reading the file contents.
+      * @throws Exception if an IO error occurs while reading the file contents.
       */
     def loadTextFileContents(path: String): String = {
         val source = Source.fromFile(path)

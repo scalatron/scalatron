@@ -1,6 +1,6 @@
 package org.fusesource.scalamd
 
-import io.Source
+import scala.io.Source
 import java.io.{FileOutputStream, FileInputStream, FileWriter, File}
 
 
@@ -25,7 +25,7 @@ object Main {
     val CopyableExtensions = Iterable(".css", ".html", ".js", ".scala", ".java", ".png", ".gif", ".jpg")
 
 
-    def main(args: Array[String]) {
+    def main(args: Array[String]): Unit = {
 
         val (verbose: Boolean, inPath: String, outPath: String) = args.length match {
             case 1 =>
@@ -42,7 +42,7 @@ object Main {
                 if( args(0) == "-verbose" ) {
                     (true, args(1), args(2))
                 } else {
-                    System.err.println("unrecognized option: %s".format(args(0)))
+                    System.err.println(s"unrecognized option: ${args(0)}")
                     System.exit(-1)
                 }
 
@@ -102,8 +102,7 @@ object Main {
         outputDirectoryPath: String,
         inputBaseDirectoryPath: String,
         outputBaseDirectoryPath: String,
-        verbose: Boolean)
-    {
+        verbose: Boolean): Unit = {
         val inputDirectory = new File(inputDirectoryPath)
         if(inputDirectory.getName.startsWith("_")) {
             // skip
@@ -132,7 +131,7 @@ object Main {
         outputDirectoryPath: String,
         inputBaseDirectoryPath: String,
         outputBaseDirectoryPath: String,
-        verbose: Boolean) {
+        verbose: Boolean): Unit = {
         val inputFile = new File(inputFilePath)
         val inputFilename = inputFile.getName
 
@@ -165,7 +164,7 @@ object Main {
         if(inputFilename.endsWith(".markdown")) {
             inputFilename.dropRight(9) + ".html"
         } else
-        if(CopyableExtensions.find(inputFilename.endsWith).isDefined) {
+        if(CopyableExtensions.exists(inputFilename.endsWith)) {
             inputFilename
         } else {
             ""
@@ -182,8 +181,7 @@ object Main {
         inputFilePath: String,
         outputFilePath: String,
         inputBaseDirectoryPath: String,
-        outputBaseDirectoryPath: String)
-    {
+        outputBaseDirectoryPath: String): Unit = {
         // load
         val inputLines = Source.fromFile(inputFilePath).getLines().toIterable // load lines
 
@@ -193,11 +191,11 @@ object Main {
                 var linesTaken = 0
                 val map =
                     inputLines
-                    .tail   // drop starting "---"
-                    .takeWhile(line => { linesTaken += 1; (line.contains(':') && !line.startsWith(LiquidMarker)) })       // between Liquid markers ("---")
-                    .map(line => line.split(':'))                                                   // "key: value" => Array("key", " value")
-                    .map(array => if(array.length==2) Some((array(0).trim,array(1).trim)) else None)// Array => Option[Tuple2]
-                    .flatten                                                                        // remove None values
+                      .tail // drop starting "---"
+                      .takeWhile(line => {
+                        linesTaken += 1; line.contains(':') && !line.startsWith(LiquidMarker)
+                    }) // between Liquid markers ("---")
+                      .map(line => line.split(':')).flatMap(array => if (array.length == 2) Some((array(0).trim, array(1).trim)) else None)                                                                        // remove None values
                     .toMap
                 val remainingLines = inputLines.drop(linesTaken + 1) // start marker, lines, end marker
                 (map, remainingLines.mkString("\n"))
@@ -205,7 +203,7 @@ object Main {
                 (Map.empty, inputLines.mkString("\n"))
             }
 
-        val convertedHtml = new MarkdownText(inputText).toHtml() // convert
+        val convertedHtml = new MarkdownText(inputText).toHtml // convert
 
         /*
                 // TODO: check for the presence of a template file
@@ -239,7 +237,7 @@ object Main {
                             Some(Source.fromFile(templateFilePath).mkString)
                         } catch {
                             case t: Throwable =>
-                                System.err.println("error: template file not found: %s".format(templateFilePath))
+                                System.err.println(s"error: template file not found: $templateFilePath")
                                 None
                         }
                     case None => None
@@ -259,7 +257,7 @@ object Main {
     }
 
     // code from http://stackoverflow.com/a/3028853
-    def use[T <: {def close()}](closable: T)(block: T => Unit) {
+    def use[T <: AutoCloseable](closable: T)(block: T => Unit): Unit = {
         try {
             block(closable)
         }
@@ -269,7 +267,7 @@ object Main {
     }
 
 
-    def copyFile(from: String, to: String) {
+    def copyFile(from: String, to: String): Unit = {
         new File(to).getParentFile.mkdirs()
         use(new FileInputStream(from)) {
             in =>

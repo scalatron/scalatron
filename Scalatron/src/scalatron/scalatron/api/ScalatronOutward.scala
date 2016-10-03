@@ -13,7 +13,7 @@ trait ScalatronOutward extends Scalatron
     // ... everything in trait Scalatron, plus:
 
     /** Starts any background threads required by the Scalatron server (e.g., the compile server). */
-    def start()
+    def start(): Unit
 
     /** Passes control of the current thread to a loop that simulates tournament rounds in a
       * Scalatron game server, either until user exits (e.g. by closing the main window) or
@@ -22,10 +22,10 @@ trait ScalatronOutward extends Scalatron
       * map ("-headless" -> "yes").
       * @param argMap the command line argument map to use to configure the tournament run
       */
-    def run(argMap: Map[String, String] = Map.empty)
+    def run(argMap: Map[String, String] = Map.empty): Unit
 
     /** Shuts down any background threads created in start(). */
-    def shutdown()
+    def shutdown(): Unit
 }
 object ScalatronOutward {
     /** Creates an instance of a Scalatron server and returns a reference to the Scalatron API.

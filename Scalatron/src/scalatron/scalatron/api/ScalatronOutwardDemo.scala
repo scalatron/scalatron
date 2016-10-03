@@ -13,7 +13,7 @@ import scalatron.core.Scalatron
 
 object ScalatronOutwardDemo
 {
-    def demo(args: Array[String]) {
+    def demo(args: Array[String]): Unit = {
         //------------------------------------------------------------------------------------------
         // prepare environment, start server
         //------------------------------------------------------------------------------------------
@@ -40,9 +40,9 @@ object ScalatronOutwardDemo
             val scalatron =
                 ScalatronOutward(
                     Map(
-                        ( "-users" -> usersBaseDirPath ),
-                        ( "-samples" -> samplesBaseDirPath ),
-                        ( "-plugins" -> pluginBaseDirPath )
+                        "-users" -> usersBaseDirPath,
+                        "-samples" -> samplesBaseDirPath,
+                        "-plugins" -> pluginBaseDirPath
                     ),
                     actorSystem,
                     verbose = true
@@ -95,13 +95,13 @@ object ScalatronOutwardDemo
 
             user.updateSourceFiles(sourceFiles)
             val version0 = user.createVersion("testVersion0").get
-            assert(version0.id == 0)
+            assert(version0.id == "0")
             assert(version0.label == "testVersion0")
             assert(version0.user.name == "ExampleUser")
 
             user.updateSourceFiles(sourceFiles)
             val version1 = user.createVersion("testVersion1").get
-            assert(version1.id == 1)
+            assert(version1.id == "1")
             assert(version1.label == "testVersion1")
             assert(version1.user.name == "ExampleUser")
 
@@ -181,14 +181,14 @@ object ScalatronOutwardDemo
             // create a sandbox game
             val sandbox = user.createSandbox(
                 Map(
-                    ( "-x" -> "50" ),
-                    ( "-y" -> "50" ),
-                    ( "-perimeter" -> "open" ),
-                    ( "-walls" -> "20" ),
-                    ( "-snorgs" -> "20" ),
-                    ( "-fluppets" -> "20" ),
-                    ( "-toxifera" -> "20" ),
-                    ( "-zugars" -> "20" )
+                    "-x" -> "50",
+                    "-y" -> "50",
+                    "-perimeter" -> "open",
+                    "-walls" -> "20",
+                    "-snorgs" -> "20",
+                    "-fluppets" -> "20",
+                    "-toxifera" -> "20",
+                    "-zugars" -> "20"
                 )
             )
 
@@ -220,7 +220,7 @@ object ScalatronOutwardDemo
             user.delete()
             assert(scalatron.users().map(_.name).mkString(",") == "Administrator")
             assert(scalatron.user("ExampleUser").isEmpty)
-            assert(new File(usersBaseDirPath + "/" + "ExampleUser").exists() == false)
+            assert(!new File(usersBaseDirPath + "/" + "ExampleUser").exists())
 
             // shut down the server, terminating the background thread(s)
             scalatron.shutdown()

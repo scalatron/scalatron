@@ -49,10 +49,10 @@ case class PluginCollection(
           * recyclable Either.
           */
         def existingRecyclableLoadResult(pluginFilePath: String, fileTime: Long): Option[Either[Plugin.FromJarFile, Plugin.LoadFailure]] =
-            loadResults.find(_ match {
+            loadResults.find {
                 case Left(externalPlugin) => externalPlugin.filePath == pluginFilePath && externalPlugin.fileTime == fileTime
                 case Right(loadFailure) => loadFailure.filePath == pluginFilePath && loadFailure.fileTime == fileTime
-            })
+            }
 
         val pluginParentDirectory = new File(pluginDirectoryPath)
         val pluginDirectories = pluginParentDirectory.listFiles()

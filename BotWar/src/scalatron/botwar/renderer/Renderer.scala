@@ -58,7 +58,7 @@ object Renderer {
 case class Renderer(permanentConfig: PermanentConfig, scalatron: ScalatronInward) {
     val interactivelyAdjustableSettings = new InteractivelyAdjustableSettings
 
-    def keyPressed(c: Char) {
+    def keyPressed(c: Char): Unit = {
         c match {
             case ' ' =>
                 if( interactivelyAdjustableSettings.sleepTimeBetweenSteps == 0L )
@@ -90,8 +90,7 @@ case class Renderer(permanentConfig: PermanentConfig, scalatron: ScalatronInward
     var pendingRenderJobs : List[RenderJob] = Nil
     var availableRenderContexts : List[RenderContext] = Nil
 
-    def draw(renderTarget: RenderTarget, state: State)(implicit executionContextForTrustedCode: ExecutionContext)
-    {
+    def draw(renderTarget: RenderTarget, state: State)(implicit executionContextForTrustedCode: ExecutionContext): Unit = {
         if( state.time <= 1 ) {
             interactivelyAdjustableSettings.introStartTime = System.currentTimeMillis
             interactivelyAdjustableSettings.abortThisRound = false

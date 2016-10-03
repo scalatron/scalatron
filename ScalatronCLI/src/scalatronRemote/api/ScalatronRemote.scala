@@ -3,7 +3,7 @@
   */
 package scalatronRemote.api
 
-import ScalatronRemote._
+import scalatronRemote.api.ScalatronRemote._
 import scalatronRemote.impl.ScalatronRemoteImpl
 import scala.io.Source
 import java.io.{FileWriter, File}
@@ -127,9 +127,9 @@ object ScalatronRemote {
           * @throws ScalatronException.NotFound no user with this user name exists
           * @throws ScalatronException.InternalServerError if user configuration file could not be read
           */
-        def logOn(password: String)
+        def logOn(password: String): Unit
 
-        def logOff()
+        def logOff(): Unit
 
 
         //----------------------------------------------------------------------------------------------
@@ -147,7 +147,7 @@ object ScalatronRemote {
           * @throws ScalatronException.IllegalUsername if user name contained invalid characters
           * @throws ScalatronException.InternalServerError if user's workspace files could not be deleted
           */
-        def delete()
+        def delete(): Unit
 
         /** Updates the configuration attribute map of the user.
           * Values present in the given map but not in the config file are added.
@@ -158,7 +158,7 @@ object ScalatronRemote {
           * @throws ScalatronException.IllegalUsername if user name contained invalid characters
           * @throws ScalatronException.InternalServerError if user's configuration file could not be updated
           */
-        def updateAttributes(map: Map[String, String])
+        def updateAttributes(map: Map[String, String]): Unit
 
         /** Returns the configuration attribute map for this user or None if no such map exists.
           * Note: the 'password' key will be suppressed by the server and not returned to the client.
@@ -175,7 +175,7 @@ object ScalatronRemote {
           * @throws ScalatronException.IllegalUsername if user name contained invalid characters
           * @throws ScalatronException.InternalServerError if user's configuration file could not be updated
           */
-        def setPassword(password: String) {
+        def setPassword(password: String): Unit = {
             updateAttributes(Map(Constants.PasswordKey -> password))
         }
 
@@ -196,7 +196,7 @@ object ScalatronRemote {
           * @throws ScalatronException.NotFound if user does not exist on the server
           * @throws ScalatronException.InternalServerError if user's source files could not be written
           */
-        def updateSourceFiles(sourceFileCollection: SourceFileCollection)
+        def updateSourceFiles(sourceFileCollection: SourceFileCollection): Unit
 
         /** Builds a local (unpublished) .jar bot plug-in from the sources currently present in
           * the user's workspace.
@@ -243,7 +243,7 @@ object ScalatronRemote {
           * directory (e.g. to "/Scalatron/bots/{user}/ScalatronBot.jar"), where the tournament
           * game server will automatically pick it up once the next tournament round is started.
           */
-        def publish()
+        def publish(): Unit
 
 
         //----------------------------------------------------------------------------------------------
@@ -294,14 +294,14 @@ object ScalatronRemote {
         def loadFrom(directoryPath: String, verbose: Boolean = false): SourceFileCollection = {
             val directory = new File(directoryPath)
             if(!directory.exists) {
-                System.err.println("error: directory expected to contain source files does not exist: %s".format(directoryPath))
+                System.err.println(s"error: directory expected to contain source files does not exist: $directoryPath")
                 System.exit(-1)
             }
 
             val sourceFileList = directory.listFiles()
             if( sourceFileList == null || sourceFileList.isEmpty ) {
                 // no source files there!
-                System.err.println("error: local source directory is empty: '%s'".format(directoryPath))
+                System.err.println(s"error: local source directory is empty: '$directoryPath'")
                 System.exit(-1)
             }
 
@@ -311,7 +311,7 @@ object ScalatronRemote {
                 .map(file => {
                 val filename = file.getName
                 val code = Source.fromFile(file).mkString
-                if(verbose) println("loaded source code from file: '%s'".format(file.getAbsolutePath))
+                if(verbose) println(s"loaded source code from file: '${file.getAbsolutePath}'")
                 SourceFile(filename, code)
             })
         }
@@ -324,11 +324,11 @@ object ScalatronRemote {
           * @param verbose if true, information about the written files is logged to the console.
           * @throws IOError on IO errors encountered while writing source file contents to disk.
           */
-        def writeTo(directoryPath: String, sourceFileCollection: SourceFileCollection, verbose: Boolean = false) {
+        def writeTo(directoryPath: String, sourceFileCollection: SourceFileCollection, verbose: Boolean = false): Unit = {
             val targetDir = new File(directoryPath)
             if(!targetDir.exists()) {
                 if(!targetDir.mkdirs()) {
-                    System.err.println("error: cannot create local directory '%s'".format(directoryPath))
+                    System.err.println(s"error: cannot create local directory '$directoryPath'")
                     System.exit(-1)
                 }
             }
@@ -395,7 +395,7 @@ object ScalatronRemote {
         def sourceFiles: SourceFileCollection
 
         /** Deletes this sample, including all associated source code files. */
-        def delete()
+        def delete(): Unit
     }
 
 
@@ -439,7 +439,7 @@ object ScalatronRemote {
 
         /** Deletes this sandbox on the server. Note that the current implementation (0.9.8.4) calls the API
           * that deletes all sandboxes on the server - not a big issue, since there is only this one. */
-        def delete()
+        def delete(): Unit
     }
 
 

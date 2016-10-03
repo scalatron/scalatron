@@ -1,7 +1,7 @@
 package scalatron.webServer.rest.resources
 
 import javax.ws.rs.{PUT, Path, Consumes, Produces}
-import collection.mutable.ArrayBuffer
+import scala.collection.mutable.ArrayBuffer
 import java.util.concurrent.TimeoutException
 import javax.ws.rs.core.{Response, MediaType}
 import org.eclipse.jetty.http.HttpStatus

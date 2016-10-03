@@ -1,12 +1,12 @@
 package scalatron.webServer.rest.resources
 
 import javax.ws.rs._
-import core.{Response, MediaType}
+import javax.ws.rs.core.{Response, MediaType}
 import scalatron.core.Scalatron.SandboxState
-import collection.JavaConversions
-import collection.convert.decorateAll._
+import scala.collection.JavaConversions
+import scala.collection.convert.decorateAll._
 import scalatron.webServer.rest.UserSession
-import UserSession.SandboxAttributeKey
+import scalatron.webServer.rest.UserSession.SandboxAttributeKey
 import org.eclipse.jetty.http.HttpStatus
 import scalatron.core.Scalatron
 import scalatron.webServer.rest.resources.SandboxesResource.CommandParser
@@ -46,7 +46,7 @@ class SandboxesResource extends ResourceWithUser {
     }
 
     @DELETE
-    def deleteAll() {
+    def deleteAll(): Unit = {
         if(!userSession.isLoggedOnAsUserOrAdministrator(userName)) {
             Response.status(CustomStatusType(HttpStatus.UNAUTHORIZED_401, "must be logged on as '" + userName + "' or '" + Scalatron.Constants.AdminUserName + "'")).build()
         } else {
@@ -63,7 +63,7 @@ class SandboxesResource extends ResourceWithUser {
 
     @DELETE
     @Path("{id}")
-    def deleteSingle() {
+    def deleteSingle(): Unit = {
         if(!userSession.isLoggedOnAsUserOrAdministrator(userName)) {
             Response.status(CustomStatusType(HttpStatus.UNAUTHORIZED_401, "must be logged on as '" + userName + "' or '" + Scalatron.Constants.AdminUserName + "'")).build()
         } else {
@@ -89,12 +89,12 @@ class SandboxesResource extends ResourceWithUser {
                     userSession.get(SandboxAttributeKey) match {
                         case None =>
                             // Ok no sandbox found - client must create one.
-                            Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, "sandbox id=%d at time=%d for user '%s' does not exist".format(id, time, userName))).build()
+                            Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, s"sandbox id=$id at time=$time for user '$userName' does not exist")).build()
 
                         case Some(currentSandboxState: SandboxState) =>
                             val currentId = currentSandboxState.sandbox.id
                             if(currentId != id) {
-                                Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, "sandbox with id=%d does not exist for user '%s'".format(id, userName))).build()
+                                Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, s"sandbox with id=$id does not exist for user '$userName'")).build()
                             } else {
                                 val currentTime = currentSandboxState.time
                                 val timeDelta = time - currentTime
@@ -102,7 +102,7 @@ class SandboxesResource extends ResourceWithUser {
                                     Response.ok(SandboxesResource.createSandboxResult(userName, currentSandboxState)).build()
                                 } else
                                 if(timeDelta < 0) {
-                                    Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, "cannot step sandbox with id=%d for user '%s' backwards in time %d".format(id, userName, timeDelta))).build()
+                                    Response.status(CustomStatusType(HttpStatus.NOT_FOUND_404, s"cannot step sandbox with id=$id for user '$userName' backwards in time $timeDelta")).build()
                                 } else {
                                     val updatedSandboxState = currentSandboxState.step(timeDelta)
                                     userSession += SandboxAttributeKey -> updatedSandboxState
@@ -192,10 +192,10 @@ object SandboxesResource {
         val sandboxId = state.sandbox.id
         val sandboxTime = state.time
 
-        val timePlus0 = "/api/users/%s/sandboxes/%d/%d".format(userName, sandboxId, sandboxTime)
-        val timePlus1 = "/api/users/%s/sandboxes/%d/%d".format(userName, sandboxId, sandboxTime+1)
-        val timePlus2 = "/api/users/%s/sandboxes/%d/%d".format(userName, sandboxId, sandboxTime+2)
-        val timePlus10 = "/api/users/%s/sandboxes/%d/%d".format(userName, sandboxId, sandboxTime+10)
+        val timePlus0 = s"/api/users/$userName/sandboxes/$sandboxId/$sandboxTime"
+        val timePlus1 = s"/api/users/$userName/sandboxes/$sandboxId/${sandboxTime + 1}"
+        val timePlus2 = s"/api/users/$userName/sandboxes/$sandboxId/${sandboxTime + 2}"
+        val timePlus10 = s"/api/users/$userName/sandboxes/$sandboxId/${sandboxTime + 10}"
 
         val mappedEntities = state.entities.map(e => {
             val inputString = e.mostRecentControlFunctionInput
@@ -236,7 +236,7 @@ object SandboxesResource {
     case class StartConfig(var config: java.util.HashMap[String, String]) {
         def this() = this(null)
         def getConfig = config
-        def setConfig(config: java.util.HashMap[String, String]) { this.config = config }
+        def setConfig(config: java.util.HashMap[String, String]): Unit = { this.config = config }
     }
 
     // outgoing from PUT
@@ -284,5 +284,5 @@ case class SandboxResult(entities: Array[SandboxesResource.EntityDto]) {
 class Steps(var i: Int) {
     def this() = this(0)
     def getSteps = i
-    def setSteps(s: Int) { i = s }
+    def setSteps(s: Int): Unit = { i = s }
 }

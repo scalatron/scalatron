@@ -1,7 +1,7 @@
 package scalatron.scalatron.impl
 
 import scalatron.core.Scalatron._
-import FileUtil.use
+import scalatron.scalatron.impl.FileUtil.use
 import java.io.{FileWriter, File}
 
 /** Utility methods for working with collections of source files. */
@@ -42,20 +42,20 @@ object SourceFileCollection
                                 println("   file contents different")
 
                                 if(b.code.length != a.code.length) {
-                                    println("   file sizes are different: a %d vs b %d".format(a.code.length, b.code.length))
+                                    println(s"   file sizes are different: a ${a.code.length} vs b ${b.code.length}")
                                 }
 
                                 val aLineCount = a.code.lines.length
                                 val bLineCount = b.code.lines.length
                                 if(bLineCount > aLineCount) {
-                                    println("   file b contains more lines: b %d vs a %d".format(bLineCount, aLineCount))
+                                    println(s"   file b contains more lines: b $bLineCount vs a $aLineCount")
                                     val bLines = b.code.lines
                                     val aLines = a.code.lines
-                                    val linesWithIndex = bLines.zip(aLines).zipWithIndex.map(l => "%04d: %60s %60s".format(l._2, l._1._1, l._1._2))
+                                    val linesWithIndex = bLines.zip(aLines).zipWithIndex.map(l => f"${l._2}%04d: ${l._1._1}%60s ${l._1._2}%60s")
                                     println(linesWithIndex.mkString("\n"))
                                 } else
                                 if(bLineCount < aLineCount) {
-                                    println("   file a contains more lines: b %d vs a %d".format(bLineCount, aLineCount))
+                                    println(s"   file a contains more lines: b $bLineCount vs a $aLineCount")
                                 } else {
                                     println("   files a and b contain same number of lines")
                                 }
@@ -77,7 +77,7 @@ object SourceFileCollection
     def loadFrom(directoryPath: String, verbose: Boolean = false): SourceFileCollection = {
         val directory = new File(directoryPath)
         if(!directory.exists) {
-            System.err.println("warning: directory expected to contain source files does not exist: %s".format(directoryPath))
+            System.err.println(s"warning: directory expected to contain source files does not exist: $directoryPath")
             Iterable.empty
         }
         else {
@@ -93,7 +93,7 @@ object SourceFileCollection
                     val filename = file.getName
                     val filePath = file.getAbsolutePath
                     val code = FileUtil.loadTextFileContents(filePath)
-                    if(verbose) println("loaded source code from file: '%s'".format(filePath))
+                    if(verbose) println(s"loaded source code from file: '$filePath'")
                     SourceFile(filename, code)
                 })
             }
@@ -108,7 +108,7 @@ object SourceFileCollection
       * @param verbose if true, information about the written files is logged to the console.
       * @throws IOError on IO errors encountered while writing source file contents to disk.
       */
-    def writeTo(directoryPath: String, sourceFileCollection: SourceFileCollection, verbose: Boolean = false) {
+    def writeTo(directoryPath: String, sourceFileCollection: SourceFileCollection, verbose: Boolean = false): Unit = {
         sourceFileCollection.foreach(sf => {
             val path = directoryPath + "/" + sf.filename
             use(new FileWriter(path)) {_.append(sf.code)}

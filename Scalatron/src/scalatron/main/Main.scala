@@ -6,6 +6,10 @@ package scalatron.main
 import scalatron.Version
 import scalatron.webServer.WebServer
 import akka.actor._
+
+import scala.concurrent.Await
+import scala.concurrent.duration._
+import scala.language.postfixOps
 import scalatron.scalatron.api.ScalatronOutward
 
 
@@ -17,7 +21,7 @@ object Main {
       * background threads: a background compile server and a web server that manages the
       * browser UI.
       */
-    def main(args: Array[String]) {
+    def main(args: Array[String]): Unit = {
         System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Scalatron")
         println("Welcome to Scalatron " + Version.VersionString)
         if(args.length == 0) {
@@ -25,13 +29,13 @@ object Main {
             println("e.g. java -jar Scalatron.jar -help")
             println("")
         } else
-        if(args.find(_ == "-help").isDefined) {
+        if(args.contains("-help")) {
             // print list of available command line parameters to the console
             println("java -jar Scalatron.jar [-key value] [-key value] [...]")
             println("  with the following parameter key/value pairs:")
 
             val completeArgList = cmdArgList ++ ScalatronOutward.cmdArgList ++ WebServer.cmdArgList
-            completeArgList.foreach(p => println("   -%-22s  %s" format(p._1, p._2)))
+            completeArgList.foreach(p => println(f"   -${p._1}%-22s  ${p._2}"))
             System.exit(0)
         }
 
@@ -39,7 +43,7 @@ object Main {
         val argMap = args.grouped(2).filter(_.length==2).map(a => (a(0),a(1))).toMap    // Map["-key" -> "value"]
 
         // find out if we should provide verbose output
-        val verbose = (argMap.get("-verbose").getOrElse("no") == "yes")
+        val verbose = argMap.getOrElse("-verbose", "no") == "yes"
 
 
         // prepare the Akka actor system to be used by the various servers of the application
@@ -63,7 +67,8 @@ object Main {
         scalatron.shutdown()
 
         // shut down the Akka actor system
-        actorSystem.shutdown()
+        Await.result(actorSystem.terminate(), 10 seconds)
+//        actorSystem.shutdown()
     }
 
     val cmdArgList = Iterable(

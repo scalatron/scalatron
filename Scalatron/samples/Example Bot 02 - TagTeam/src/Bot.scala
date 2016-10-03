@@ -4,7 +4,7 @@ object ControlFunction
 {
     val RotationDelay = 16  // wait this many simulation steps before turning
 
-    def forMaster(bot: Bot) {
+    def forMaster(bot: Bot): Unit = {
         val heading = bot.inputAsXYOrElse("heading", XY(0,1))
         bot.move(heading)
 
@@ -33,7 +33,7 @@ object ControlFunction
         }
     }
 
-    def forSlave(bot: MiniBot) {
+    def forSlave(bot: MiniBot): Unit = {
         val actualOffset = bot.offsetToMaster.negate                    // as seen from master
         val desiredOffset = bot.inputAsXYOrElse("offset", XY(10,10))    // as seen from master
         bot.move((desiredOffset - actualOffset).signum)
@@ -52,7 +52,7 @@ class ControlFunctionFactory {
         val (opcode, params) = CommandParser(input)
         opcode match {
             case "React" =>
-                val bot = new BotImpl(params)
+                val bot = BotImpl(params)
                 if( bot.generation == 0 ) {
                     ControlFunction.forMaster(bot)
                 } else {
@@ -121,7 +121,7 @@ case class BotImpl(inputParams: Map[String, String]) extends MiniBot {
     /** Renders commands and stateParams into a control function return string. */
     override def toString = {
         var result = commands
-        if(!stateParams.isEmpty) {
+        if(stateParams.nonEmpty) {
             if(!result.isEmpty) result += "|"
             result += stateParams.map(e => e._1 + "=" + e._2).mkString("Set(",",",")")
         }

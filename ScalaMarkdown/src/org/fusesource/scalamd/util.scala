@@ -5,7 +5,7 @@ package org.fusesource.scalamd
 
 import java.lang.StringBuilder
 import java.util.regex.{Pattern, Matcher}
-import Markdown._
+import org.fusesource.scalamd.Markdown._
 
 // # Character protector
 
@@ -62,25 +62,25 @@ class StringEx(protected var text: StringBuilder) {
    * (without interpreting $1, $2, etc.) by calling specified `replacementFunction`
    * on each match.
    */
-  def replaceAll(pattern: Pattern, replacementFunction: Matcher => CharSequence): this.type = {
-    var lastIndex = 0;
-    val m = pattern.matcher(text);
-    val sb = new StringBuilder();
+  def replaceAll(pattern: Pattern, replacementFunction: Matcher => CharSequence): StringEx = {
+    var lastIndex = 0
+    val m = pattern.matcher(text)
+    val sb = new StringBuilder()
     while (m.find()) {
       sb.append(text.subSequence(lastIndex, m.start))
       sb.append(replacementFunction(m))
       lastIndex = m.end
     }
     sb.append(text.subSequence(lastIndex, text.length))
-    text = sb;
-    return this
+    text = sb
+    this
   }
 
   /**
    * Replaces all occurences of specified `string` with specified `replacement`
    * without using regular expressions.
    */
-  def replaceAll(string: String, replacement: CharSequence): this.type = {
+  def replaceAll(string: String, replacement: CharSequence): StringEx = {
     val result = new StringBuilder
     var startIdx = 0
     var oldIdx = 0
@@ -93,44 +93,44 @@ class StringEx(protected var text: StringBuilder) {
     }
     result.append(text.substring(startIdx))
     text = result
-    return this
+    this
   }
 
-  def replaceAllFunc(pattern: Pattern, replacementFunction: Matcher => CharSequence, literally: Boolean = true): this.type =
+  def replaceAllFunc(pattern: Pattern, replacementFunction: Matcher => CharSequence, literally: Boolean = true): StringEx =
     if (literally)
       replaceAll(pattern, replacementFunction)
     else {
       text = new StringBuilder(pattern.matcher(text).replaceAll(replacementFunction(null).toString))
-      return this
+      this
     }
 
-  def replaceAll(pattern: Pattern, replacement: CharSequence, literally: Boolean = true): this.type =
+  def replaceAll(pattern: Pattern, replacement: CharSequence, literally: Boolean = true): StringEx =
     if (literally) replaceAll(pattern, m => replacement)
     else {
       text = new StringBuilder(pattern.matcher(text).replaceAll(replacement.toString))
-      return this
+      this
     }
 
   /**
    * Appends the specified character sequence.
    */
-  def append(s: CharSequence): this.type = {
+  def append(s: CharSequence): StringEx = {
     text.append(s)
-    return this
+    this
   }
 
   /**
    * Prepends the specified character sequence.
    */
-  def prepend(s: CharSequence): this.type = {
+  def prepend(s: CharSequence): StringEx = {
     text = new StringBuilder(s).append(text)
-    return this
+    this
   }
 
   /**
    * Removes at most 4 leading spaces at the beginning of every line.
    */
-  def outdent(): this.type = replaceAll(rOutdent, "")
+  def outdent(): StringEx = replaceAll(rOutdent, "")
 
   /**
    * Provides the length of the underlying buffer.

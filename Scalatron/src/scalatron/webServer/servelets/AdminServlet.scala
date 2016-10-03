@@ -6,7 +6,7 @@ import scalatron.scalatron.impl.SourceFileCollection
 
 
 case class AdminServlet(context: WebContext) extends BaseServlet {
-    override def doGet(request: HttpServletRequest, response: HttpServletResponse) {
+    override def doGet(request: HttpServletRequest, response: HttpServletResponse): Unit = {
         val target = request.getRequestURI
         if(!target.startsWith("/admin/")) {
             serveErrorPage("unexpected admin url: '" + target + "'", request, response)
@@ -17,7 +17,7 @@ case class AdminServlet(context: WebContext) extends BaseServlet {
 
         // Make sure that our user is an admin. If not redirect to the login prompt.
         if(request.getSession.getAttribute("user") != AdminUserName) {
-            response.sendRedirect("/user/%s/loginprompt".format(AdminUserName));
+            response.sendRedirect(s"/user/$AdminUserName/loginprompt")
             return
         }
 
@@ -40,7 +40,7 @@ case class AdminServlet(context: WebContext) extends BaseServlet {
     }
 
     // "/admin/list"
-    private def handleAdminListPage(request: HttpServletRequest, response: HttpServletResponse) {
+    private def handleAdminListPage(request: HttpServletRequest, response: HttpServletResponse): Unit = {
         val webUsers = context.scalatron.users()
         val webUserListHtml = {
             "<table>" + // <tr><td width=180px><strong>user name</strong></td><td><strong>options</strong></td></tr>" +
@@ -71,7 +71,7 @@ case class AdminServlet(context: WebContext) extends BaseServlet {
 
 
     // "/admin/createUser?username=xxx"
-    private def handleAdminCreateUserPage(request: HttpServletRequest, response: HttpServletResponse) {
+    private def handleAdminCreateUserPage(request: HttpServletRequest, response: HttpServletResponse): Unit = {
         val userName = request.getParameter("username")
         if(userName == null || userName.isEmpty) {
             serveErrorPage("user name must not be empty", "/admin/list", "return to administration main page", request, response)
@@ -132,7 +132,7 @@ case class AdminServlet(context: WebContext) extends BaseServlet {
 
 
     // "/admin/deleteUser?username=xxx"
-    private def handleAdminDeleteUserPage(request: HttpServletRequest, response: HttpServletResponse) {
+    private def handleAdminDeleteUserPage(request: HttpServletRequest, response: HttpServletResponse): Unit = {
         val userName = request.getParameter("username")
         if(userName == null || userName.isEmpty || !context.scalatron.isUserNameValid(userName)) {
             serveErrorPage("invalid user name: '" + userName + "'", "/admin/list", "return to administration main page", request, response)
@@ -145,7 +145,6 @@ case class AdminServlet(context: WebContext) extends BaseServlet {
             case None =>
                 serveErrorPage("the user account for '" + userName + "' does not exist", "/admin/list", "return to administration main page", request, response)
                 System.err.println("error: the user account for '" + userName + "' does not exist")
-                return
 
             case Some(user) =>
                 if(user.isAdministrator) {
@@ -172,7 +171,7 @@ case class AdminServlet(context: WebContext) extends BaseServlet {
 
 
     // "/admin/setPassword?username=xxx"
-    private def handleAdminSetPasswordPage(request: HttpServletRequest, response: HttpServletResponse) {
+    private def handleAdminSetPasswordPage(request: HttpServletRequest, response: HttpServletResponse): Unit = {
         val userName = request.getParameter("username")
         if(userName == null || userName.isEmpty || !context.scalatron.isUserNameValid(userName)) {
             serveErrorPage("invalid user name: '" + userName + "'", "/admin/list", "return to administration main page", request, response)
@@ -186,7 +185,7 @@ case class AdminServlet(context: WebContext) extends BaseServlet {
 
 
     // "/admin/updatePassword?username=xxx&password1=xxx&password2=xxx"
-    private def handleAdminUpdatePasswordPage(request: HttpServletRequest, response: HttpServletResponse) {
+    private def handleAdminUpdatePasswordPage(request: HttpServletRequest, response: HttpServletResponse): Unit = {
         val userName = request.getParameter("username")
         if(userName == null || userName.isEmpty || !context.scalatron.isUserNameValid(userName)) {
             serveErrorPage("invalid user name: '" + userName + "'", "/admin/list", "return to administration main page", request, response)

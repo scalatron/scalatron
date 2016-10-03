@@ -8,13 +8,13 @@ case class JSonOpt(opt: Option[Any]) {
     /** { "a" : "1", "b" : "2" } => Map("a" -> "1", "b" -> "2") */
     def asMap: JSonMap = opt match {
         case None => throw new IllegalStateException("invalid data (no JSON found)")
-        case Some(map: Map[String, Any]) => JSonMap(map, this)
+        case Some(map: Map[_, _]) => JSonMap(map.asInstanceOf[Map[String, Any]], this)
         case _ => throw new IllegalStateException("invalid data (expected Map): " + opt)
     }
 }
 
 /** Wrapper for Map in JSon. Retains 'outer' for error output. */
-case class JSonMap(map: Map[String, Any], outer: JSonOpt) {
+case class JSonMap(map: Map[String, _], outer: JSonOpt) {
     /** Retrieves a String value for the given key. Throws if not present or not a String. */
     def asString(key: String): String = map.get(key) match {
         case None => throw new IllegalStateException("invalid data (key not found: '" + key + "'): " + outer)
@@ -40,7 +40,7 @@ case class JSonMap(map: Map[String, Any], outer: JSonOpt) {
     /** Retrieves a List value (JSON Array) for the given key. Throws if not present or not a List. */
     def asList[A](key: String): List[A] = map.get(key) match {
         case None => throw new IllegalStateException("invalid data (key not found: '" + key + "'): " + outer)
-        case Some(list: List[A]) => list
+        case Some(list: List[_]) => list.asInstanceOf[List[A]]
         case _ => throw new IllegalStateException("invalid data (value is not a List for key: '" + key + "'): " + outer)
     }
 
@@ -51,7 +51,7 @@ case class JSonMap(map: Map[String, Any], outer: JSonOpt) {
       */
     def asStringMap(key: String): Map[String, String] = map.get(key) match {
         case None => throw new IllegalStateException("invalid data (key not found: '" + key + "'): " + outer)
-        case Some(innerMap: Map[String,Any]) => innerMap.map(entry => { (entry._1, entry._2.asInstanceOf[String]) }).toMap
+        case Some(innerMap: Map[_, _]) => innerMap.map(entry => { (entry._1.toString, entry._2.asInstanceOf[String]) })
         case _ => throw new IllegalStateException("invalid data (value is not a Map for key: '" + key + "'): " + outer)
     }
 
@@ -63,13 +63,13 @@ case class JSonMap(map: Map[String, Any], outer: JSonOpt) {
       */
     def asKVStrings(listKey: String, nameKey: String, valueKey: String): Map[String, String] =
         asList[Map[String, String]](listKey)
-        .map(item => item match {
-            case map: Map[String, Any] =>
-                val name = map(nameKey).asInstanceOf[String] // CBB: use match / case
-                val url = map(valueKey).asInstanceOf[String] // CBB: use match / case
-                (name, url)
-            case _ => throw new IllegalStateException("invalid data (expected Map): " + outer)
-        }).toMap
+          .map {
+              case map: Map[String, Any] =>
+                  val name = map(nameKey) // CBB: use match / case
+              val url = map(valueKey) // CBB: use match / case
+                  (name, url)
+              case _ => throw new IllegalStateException("invalid data (expected Map): " + outer)
+          }.toMap
 
     /** Retrieves a List value (JSON Array) for the given key that is expected to contain a
       * key/value Map. Throws if not present or not a List. Example:
@@ -78,12 +78,12 @@ case class JSonMap(map: Map[String, Any], outer: JSonOpt) {
       */
     def asKVVStrings(listKey: String, nameKey: String, value1Key: String, value2Key: String): Map[String, (String,String)] =
         asList[Map[String, String]](listKey)
-        .map(item => item match {
-            case map: Map[String, Any] =>
-                val name = map(nameKey).asInstanceOf[String]        // CBB: use match / case
-                val value1 = map(value1Key).asInstanceOf[String]    // CBB: use match / case
-                val value2 = map(value2Key).asInstanceOf[String]    // CBB: use match / case
-                (name, (value1,value2))
-            case _ => throw new IllegalStateException("invalid data (expected Map): " + outer)
-        }).toMap
+          .map {
+              case map: Map[String, Any] =>
+                  val name = map(nameKey) // CBB: use match / case
+              val value1 = map(value1Key) // CBB: use match / case
+              val value2 = map(value2Key) // CBB: use match / case
+                  (name, (value1, value2))
+              case _ => throw new IllegalStateException("invalid data (expected Map): " + outer)
+          }.toMap
 }

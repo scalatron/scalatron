@@ -41,7 +41,7 @@ case class FlattenedBoard(boardSize: XY, cells: Array[Option[Bot]]) {
     /** Performs an in-situ occlusion of the view. Works by, for each edge cell, walking outward
       * to it from the center (the bot's position) and labeling cells encountered after hitting
       * a wall as 'occluded'. */
-    def occlude() {
+    def occlude(): Unit = {
 
         /*
         function line(x0, y0, x1, y1)
@@ -65,7 +65,7 @@ case class FlattenedBoard(boardSize: XY, cells: Array[Option[Bot]]) {
              end if
            end loop
          */
-        def walkOutwardTo(targetRelPos: XY) {
+        def walkOutwardTo(targetRelPos: XY): Unit = {
             // see http://en.wikipedia.org/wiki/Bresenham's_line_algorithm
             var x0 = 0; var y0 = 0
             var x1 = targetRelPos.x; var y1 = targetRelPos.y

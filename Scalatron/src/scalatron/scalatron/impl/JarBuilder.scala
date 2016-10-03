@@ -55,7 +55,7 @@ object JarBuilder {
         }
         else {
             val rootPath = rootDirectory.getAbsolutePath
-            val canonicalRootPath = canonizeSlashesInPath(rootPath, true)
+            val canonicalRootPath = canonizeSlashesInPath(rootPath, asDirectory = true)
 
             val fileOutputStream =
                 try {
@@ -114,7 +114,7 @@ object JarBuilder {
 
 
     /** Recursively add a directory or file to the given jar output stream. */
-    private def add(source: File, relativeTo: String, jarOutputStream: JarOutputStream, verbose: Boolean) {
+    private def add(source: File, relativeTo: String, jarOutputStream: JarOutputStream, verbose: Boolean): Unit = {
         // .jar (and .zip) file specification calls for unix-style slashes. Convert if on Windows:
         val name = source.getPath.replace("\\", "/")
         val relativeName = name.drop(relativeTo.length)

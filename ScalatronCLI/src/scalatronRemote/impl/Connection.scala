@@ -7,12 +7,12 @@ import org.apache.http.client.HttpClient
 import org.apache.http.client.utils.URIUtils
 
 import org.apache.http.util.EntityUtils
-import util.parsing.json.JSON
+import scala.util.parsing.json.JSON
 import org.apache.http.entity.StringEntity
 import org.apache.http.HttpStatus
 import scalatronRemote.impl.Connection.{HttpFailureCodeException, JsonMimeType}
 import org.apache.http.client.methods.{HttpPut, HttpDelete, HttpPost, HttpGet}
-import Connection.synchronizedJsonParser
+import scalatronRemote.impl.Connection.synchronizedJsonParser
 
 
 object Connection {
@@ -39,9 +39,9 @@ case class Connection(httpClient: HttpClient, hostname: String, port: Int, verbo
       * @throws HttpFailureCodeException if an HTTP code other than SC_OK is received
       */
     def GET_json(resource: String): JSonOpt = {
-        val uri = URIUtils.createURI("http", hostname, port, resource, "", null);
+        val uri = URIUtils.createURI("http", hostname, port, resource, "", null)
 
-        val request = new HttpGet(uri)
+      val request = new HttpGet(uri)
 
         val response = httpClient.execute(request)
         val statusCode = response.getStatusLine.getStatusCode
@@ -67,9 +67,9 @@ case class Connection(httpClient: HttpClient, hostname: String, port: Int, verbo
       * Throws on error.
       */
     def POST_json_json(resource: String, jsonString: String): JSonOpt = {
-        val uri = URIUtils.createURI("http", hostname, port, resource, "", null);
+        val uri = URIUtils.createURI("http", hostname, port, resource, "", null)
 
-        val request = new HttpPost(uri)
+      val request = new HttpPost(uri)
         val requestEntity = new StringEntity(jsonString, JsonMimeType, null)
         request.setEntity(requestEntity)
 
@@ -95,9 +95,9 @@ case class Connection(httpClient: HttpClient, hostname: String, port: Int, verbo
       * from the result. Throws on error.
       */
     def POST_json_url(resource: String, jsonString: String): String = {
-        val uri = URIUtils.createURI("http", hostname, port, resource, "", null);
+        val uri = URIUtils.createURI("http", hostname, port, resource, "", null)
 
-        val request = new HttpPost(uri)
+      val request = new HttpPost(uri)
         val requestEntity = new StringEntity(jsonString, JsonMimeType, null)
         request.setEntity(requestEntity)
 
@@ -122,9 +122,9 @@ case class Connection(httpClient: HttpClient, hostname: String, port: Int, verbo
     /** Sends an HTTP PUT to the server with no input data but JSON output data. Throws on error.
       */
     def PUT_nothing_json(resource: String): JSonOpt = {
-        val uri = URIUtils.createURI("http", hostname, port, resource, "", null);
+        val uri = URIUtils.createURI("http", hostname, port, resource, "", null)
 
-        val request = new HttpPut(uri)
+      val request = new HttpPut(uri)
 
         val response = httpClient.execute(request)
         val statusCode = response.getStatusLine.getStatusCode
@@ -146,10 +146,10 @@ case class Connection(httpClient: HttpClient, hostname: String, port: Int, verbo
 
     /** Sends an HTTP PUT to the server with the given JSON payload and no result value. Throws on error.
       */
-    def PUT_json_nothing(resource: String, jsonString: String) {
-        val uri = URIUtils.createURI("http", hostname, port, resource, "", null);
+    def PUT_json_nothing(resource: String, jsonString: String): Unit = {
+        val uri = URIUtils.createURI("http", hostname, port, resource, "", null)
 
-        val request = new HttpPut(uri)
+      val request = new HttpPut(uri)
         val requestEntity = new StringEntity(jsonString, JsonMimeType, null)
         request.setEntity(requestEntity)
 
@@ -162,10 +162,10 @@ case class Connection(httpClient: HttpClient, hostname: String, port: Int, verbo
 
     /** Sends an HTTP PUT to the server with the given JSON payload and no result value. Throws on error.
       */
-    def PUT_nothing_nothing(resource: String) {
-        val uri = URIUtils.createURI("http", hostname, port, resource, "", null);
+    def PUT_nothing_nothing(resource: String): Unit = {
+        val uri = URIUtils.createURI("http", hostname, port, resource, "", null)
 
-        val request = new HttpPut(uri)
+      val request = new HttpPut(uri)
 
         val response = httpClient.execute(request)
         val statusCode = response.getStatusLine.getStatusCode
@@ -176,10 +176,10 @@ case class Connection(httpClient: HttpClient, hostname: String, port: Int, verbo
 
     /** Sends an HTTP DELETE to the server. Throws on error.
       * */
-    def DELETE(resource: String) {
-        val uri = URIUtils.createURI("http", hostname, port, resource, "", null);
+    def DELETE(resource: String): Unit = {
+        val uri = URIUtils.createURI("http", hostname, port, resource, "", null)
 
-        val request = new HttpDelete(uri)
+      val request = new HttpDelete(uri)
 
         val response = httpClient.execute(request)
         val statusCode = response.getStatusLine.getStatusCode

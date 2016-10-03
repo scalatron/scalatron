@@ -10,7 +10,7 @@ class InteractivelyAdjustableSettings {
     var playerOfInterestOpt: Option[(Int, String)] = None // (rank,name) of bot of interest
 
     /** Steps the "player of interest" indicator to the next player (called by keyboard handler). */
-    def nextPlayerOfInterest() {
+    def nextPlayerOfInterest(): Unit = {
         playerOfInterestOpt match {
             case None => playerOfInterestOpt = Some((0, ""))
             case Some((rank, name)) => playerOfInterestOpt = Some((rank + 1, ""))
@@ -18,7 +18,7 @@ class InteractivelyAdjustableSettings {
     }
 
     /** Steps the "player of interest" indicator to the previous player (called by keyboard handler). */
-    def prevPlayerOfInterest() {
+    def prevPlayerOfInterest(): Unit = {
         playerOfInterestOpt match {
             case None => // OK
             case Some((rank, name)) =>

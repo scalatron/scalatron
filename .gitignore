@@ -2,7 +2,7 @@
 *~
 .idea
 .idea_modules
-target
+target/
 *.iml
 *.xml
 *.zip

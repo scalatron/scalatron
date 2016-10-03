@@ -54,11 +54,11 @@ trait ScalatronInward extends Scalatron
     /** The tournament loop should invoke this callback at the end of each simulation step.
       * This will record the state and make it accessible via the "outward" API, e.g. to remote requesters via the web.
       */
-    def postStepCallback(mostRecentState: Simulation.UntypedState)
+    def postStepCallback(mostRecentState: Simulation.UntypedState): Unit
 
     /** The tournament loop should invoke this callback at the end of each game round.
       * This will record the final state and the game result and make it accessible via the "outward" API,
       * e.g. to remote requesters via the web.
       */
-    def postRoundCallback(finalState: Simulation.UntypedState, result: TournamentRoundResult)
+    def postRoundCallback(finalState: Simulation.UntypedState, result: TournamentRoundResult): Unit
 }

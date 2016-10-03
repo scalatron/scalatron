@@ -21,7 +21,7 @@ case class ScalatronVersion(commit: RevCommit, user: ScalatronUser) extends Scal
       * We don't want to reset because that will change the branch as well.
       * @throws IOError if the repository is in a corrupt state.
       */
-    def restore() {
+    def restore(): Unit = {
         try {
             val dc = user.gitRepository.lockDirCache()
             try {

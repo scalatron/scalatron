@@ -9,10 +9,10 @@ import scalatron.webServer.rest.{Verbosity, UserSession}
 
 trait Resource {
     /** Injected by JAX-RS */
-    @Context protected[this] var s: ContextResolver[Scalatron] = null
-    @Context protected[this] var v: ContextResolver[Verbosity] = null
-    @Context protected[this] var req: HttpServletRequest = null
-    @Context var uriInfo: UriInfo = null
+    @Context protected[this] var s: ContextResolver[Scalatron] = _
+    @Context protected[this] var v: ContextResolver[Verbosity] = _
+    @Context protected[this] var req: HttpServletRequest = _
+    @Context var uriInfo: UriInfo = _
 
     /** Get scalatron from the application context. */
     def scalatron = s.getContext(classOf[Scalatron])

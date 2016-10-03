@@ -8,7 +8,7 @@ import scala.util.Random
 import scala.concurrent.duration._
 import akka.actor.ActorSystem
 import scalatron.core.TournamentRoundResult
-
+import scala.language.postfixOps
 
 /** Game dynamics. Function that, when applied to a game state, returns either a successor
   *  game state or a game result.
@@ -191,7 +191,7 @@ case object Dynamics extends ((State, Random, ActorSystem, ExecutionContext) => 
                 Some((bot.id,(0L,"",Iterable[Command](Command.Log("error: class not found: " + t.getMessage)))))
 
             case t: Throwable =>
-                System.err.println("Bot '" + bot.name + "' caused an error: " + t);
+                System.err.println("Bot '" + bot.name + "' caused an error: " + t)
 
                 // we fake a Log() command issued by the bot to report the error into the browser UI:
                 Some((bot.id,(0L,"",Iterable[Command](Command.Log(t.getMessage)))))

@@ -44,7 +44,7 @@ object ExecutionContextForUntrustedCode
         val threadSet = new java.util.concurrent.ConcurrentSkipListSet[Long]
 
         class PluginThread(target: Runnable) extends Thread(target) {
-            override def run() {
+            override def run(): Unit = {
                 threadSet.add(getId)
                 // System.err.println("Launching untrusted thread: " + getName)
                 super.run()
@@ -77,10 +77,10 @@ object ExecutionContextForUntrustedCode
             applicationJarDirectoryPath: String,
             applicationOutDirectoryPath: String,
             pluginDirectoryPath: String) extends SecurityManager {
-            override def checkPermission(perm: Permission) { check(perm) }
-            override def checkPermission(perm: Permission, context: Any) { check(perm) }
+            override def checkPermission(perm: Permission): Unit = { check(perm) }
+            override def checkPermission(perm: Permission, context: Any): Unit = { check(perm) }
 
-            private def check(permission: Permission) {
+            private def check(permission: Permission): Unit = {
                 val currentThread = Thread.currentThread()
 
                 val isPluginThread = threadSet.contains(currentThread.getId)
@@ -132,7 +132,7 @@ object ExecutionContextForUntrustedCode
                         case _ => // denied
                     }
 
-                    System.err.println("warning: untrusted code was denied permission: '%s'".format(permission))
+                    System.err.println(s"warning: untrusted code was denied permission: '$permission'")
                     throw new SecurityException("Permission denied: " + permission)
                 }
             }
@@ -141,7 +141,7 @@ object ExecutionContextForUntrustedCode
 
         if(secureMode) {
             val pluginSecurityManager =
-                new PluginSecurityManager(
+                 PluginSecurityManager(
                     "/Users/dev/Scalatron/Scalatron/bin/Scalatron.jar",
                     "/Users/dev/Scalatron/Scalatron/out/",
                     "/Users/dev/ScalatronPrivate/_testing/bots/"

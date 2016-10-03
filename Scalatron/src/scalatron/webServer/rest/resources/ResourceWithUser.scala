@@ -8,9 +8,9 @@ import javax.ws.rs.PathParam
   */
 trait ResourceWithUser extends Resource {
     /** Injected by each request. The user only needs to check the permissions. */
-    @PathParam("user") var userName: String = null
+    @PathParam("user") var userName: String = _
 
-    def requireLoggedInAsOwningUser() {userSession.requireLoggedOnAsOwningUser(userName)}
+    def requireLoggedInAsOwningUser(): Unit = {userSession.requireLoggedOnAsOwningUser(userName)}
 
-    def requireLoggedInAsOwningUserOrAdministrator() {userSession.requireLoggedOnAsOwningUserOrAdministrator(userName)}
+    def requireLoggedInAsOwningUserOrAdministrator(): Unit = {userSession.requireLoggedOnAsOwningUserOrAdministrator(userName)}
 }

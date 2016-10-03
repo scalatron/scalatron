@@ -4,7 +4,7 @@
 package scalatronRemote.impl
 
 import scalatronRemote.api.ScalatronRemote
-import util.parsing.json.JSONFormat
+import scala.util.parsing.json.JSONFormat
 import scalatronRemote.api.ScalatronRemote._
 import scalatronRemote.impl.Connection.HttpFailureCodeException
 import org.apache.http.HttpStatus
@@ -36,7 +36,7 @@ case class ScalatronUser(
     // authentication
     //----------------------------------------------------------------------------------------------
 
-    def logOn(password: String) {
+    def logOn(password: String): Unit = {
         try {
             val jsonOpt = scalatron.connection.POST_json_json(sessionUrl, "{\"password\":\"" + password + "\"}")
             val jsonMap = jsonOpt.asMap
@@ -59,7 +59,7 @@ case class ScalatronUser(
         }
     }
 
-    def logOff() {
+    def logOff(): Unit = {
         try {
             scalatron.connection.DELETE(sessionUrl)
             resourceMap = None
@@ -80,7 +80,7 @@ case class ScalatronUser(
     // account management
     //----------------------------------------------------------------------------------------------
 
-    def delete() {
+    def delete(): Unit = {
         try {
             scalatron.connection.DELETE(resourceUrl)
             resourceMap = None
@@ -109,7 +109,7 @@ case class ScalatronUser(
     }
 
 
-    def updateAttributes(map: Map[String, String]) {
+    def updateAttributes(map: Map[String, String]): Unit = {
         try {
             val attributesJson =
                 "{ \"attributes\" : [ " +
@@ -204,7 +204,7 @@ case class ScalatronUser(
         }
     }
 
-    def updateSourceFiles(sourceFileCollection: SourceFileCollection) {
+    def updateSourceFiles(sourceFileCollection: SourceFileCollection): Unit = {
         try {
             val sourcesResource = resource("Sources")
             val sourceFilesJson =
@@ -380,7 +380,7 @@ case class ScalatronUser(
     // tournament management
     //----------------------------------------------------------------------------------------------
 
-    def publish() {
+    def publish(): Unit = {
         try {
             val publishResource = resource("Publish")
             scalatron.connection.PUT_nothing_nothing(publishResource)

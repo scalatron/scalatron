@@ -6,21 +6,21 @@ package scalatron.scalatron.impl
 
 
 import java.io._
-import scala.collection.JavaConverters._
 
+import scala.collection.JavaConverters._
 import akka.pattern.ask
 import akka.util.Timeout
 
-import scala.concurrent.{Await, Future, ExecutionContext}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
-
 import scalatron.scalatron.impl.FileUtil._
-import ConfigFile.loadConfigFile
-import ConfigFile.updateConfigFileMulti
-import ScalatronUser.buildSourceFilesIntoJar
+import scalatron.scalatron.impl.ConfigFile.loadConfigFile
+import scalatron.scalatron.impl.ConfigFile.updateConfigFileMulti
+import scalatron.scalatron.impl.ScalatronUser.buildSourceFilesIntoJar
 import scalatron.core.Scalatron.Constants._
 import scalatron.core.Scalatron._
 import java.util.concurrent.TimeoutException
+
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors._
 import org.eclipse.jgit.errors._
@@ -29,6 +29,8 @@ import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.RepositoryCache
 import org.eclipse.jgit.lib.RepositoryCache.FileKey
 import org.eclipse.jgit.util.FS
+
+import scala.language.postfixOps
 import scalatron.core._
 
 
@@ -64,7 +66,7 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
 
 
     /** Releases the cached git repository instance. */
-    def release() {
+    def release(): Unit = {
         gitRepository.close()
     }
 
@@ -73,10 +75,10 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
     // account management
     //----------------------------------------------------------------------------------------------
 
-    def isAdministrator = ( name == AdminUserName )
+    def isAdministrator = name == AdminUserName
 
 
-    def delete() {
+    def delete(): Unit = {
         if( isAdministrator ) {
             throw ScalatronException.Forbidden("deleting '" + Scalatron.Constants.AdminUserName + "' account is not permitted")
         } else {
@@ -91,7 +93,7 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
     }
 
 
-    def updateAttributes(map: Map[String, String]) {
+    def updateAttributes(map: Map[String, String]): Unit = {
         // update the password setting in the user config file
         updateConfigFileMulti(userConfigFilePath, map)
         if( scalatron.verbose ) println("updated configuration attributes (" + map.keys.mkString(",") + ") in config file: " + userConfigFilePath)
@@ -117,14 +119,14 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
     def sourceFiles = {
         val sourceFileCollection = SourceFileCollection.loadFrom(sourceDirectoryPath)
         if(sourceFileCollection.isEmpty) {
-            System.err.println("error: user '" + name + "' has no source files in: '%s'".format(sourceDirectoryPath))
-            throw new IllegalStateException("no source files found for user '%s'".format(name))
+            System.err.println("error: user '" + name + s"' has no source files in: '$sourceDirectoryPath'")
+            throw new IllegalStateException(s"no source files found for user '$name'")
         }
         sourceFileCollection
     }
 
 
-    def updateSourceFiles(transientSourceFiles: SourceFileCollection) {
+    def updateSourceFiles(transientSourceFiles: SourceFileCollection): Unit = {
         new File(sourceDirectoryPath).mkdirs()
 
         // write source files to disk
@@ -155,7 +157,7 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
                 } else {
                     packageStatement + "\n" + localCode
                 }
-            if(scalatron.verbose) println("  patching '%s' with 'package %s'".format(sf.filename, packagePath))
+            if(scalatron.verbose) println(s"  patching '${sf.filename}' with 'package $packagePath'")
             SourceFile(sf.filename, patchedCode)
         })
         val messageLineAdjustment = -1
@@ -294,14 +296,14 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
     // tournament management
     //----------------------------------------------------------------------------------------------
 
-    def publish() {
+    def publish(): Unit = {
         // delete the old backup.jar file
         val backupJarFile = new File(backupJarFilePath)
         if( backupJarFile.exists ) {
             if( scalatron.verbose ) println("      deleting backup .jar file: " + backupJarFilePath)
             if( !backupJarFile.delete() ) {
-                System.err.println("failed to delete backup .jar file at: %s" format backupJarFilePath)
-                throw new IllegalStateException("failed to delete backup .jar file at: %s" format backupJarFilePath)
+                System.err.println(s"failed to delete backup .jar file at: $backupJarFilePath")
+                throw new IllegalStateException(s"failed to delete backup .jar file at: $backupJarFilePath")
             }
         }
 
@@ -310,8 +312,8 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
         if( publishedJarFile.exists ) {
             if( scalatron.verbose ) println("      backing up current .jar file: " + publishedJarFilePath + " => " + backupJarFilePath)
             if( !publishedJarFile.renameTo(backupJarFile) ) {
-                System.err.println("failed to rename .jar file to backup: %s" format backupJarFilePath)
-                throw new IllegalStateException("failed to rename .jar file to backup: %s" format backupJarFilePath)
+                System.err.println(s"failed to rename .jar file to backup: $backupJarFilePath")
+                throw new IllegalStateException(s"failed to rename .jar file to backup: $backupJarFilePath")
             }
         }
 
@@ -324,8 +326,8 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
             val userPluginDirectory = new File(userPluginDirectoryPath)
             if( !userPluginDirectory.exists() ) {
                 if( !userPluginDirectory.mkdirs() ) {
-                    System.err.println("failed to create user plug-in directory: %s" format userPluginDirectoryPath)
-                    throw new IllegalStateException("failed to create user plug-in directory: %s" format userPluginDirectoryPath)
+                    System.err.println(s"failed to create user plug-in directory: $userPluginDirectoryPath")
+                    throw new IllegalStateException(s"failed to create user plug-in directory: $userPluginDirectoryPath")
                 }
                 if( scalatron.verbose ) println("created user plug-in directory for '" + name + "' at: " + userPluginDirectoryPath)
             }
@@ -333,12 +335,12 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
                 copyFile(localJarFilePath, publishedJarFilePath)
             } catch {
                 case t: Throwable =>
-                    System.err.println("failed to copy .jar file '%s' to '%s': %s" format(localJarFilePath, publishedJarFilePath, t.toString))
-                    throw new IllegalStateException("failed to copy .jar file '%s' to '%s': %s" format(localJarFilePath, publishedJarFilePath, t.toString))
+                    System.err.println(s"failed to copy .jar file '$localJarFilePath' to '$publishedJarFilePath': ${t.toString}")
+                    throw new IllegalStateException(s"failed to copy .jar file '$localJarFilePath' to '$publishedJarFilePath': ${t.toString}")
             }
         } else {
-            System.err.println(".jar file intended for publication does not exist: %s" format localJarFilePath)
-            throw new IllegalStateException(".jar file intended for publication does not exist: %s" format localJarFilePath)
+            System.err.println(s".jar file intended for publication does not exist: $localJarFilePath")
+            throw new IllegalStateException(s".jar file intended for publication does not exist: $localJarFilePath")
         }
     }
 
