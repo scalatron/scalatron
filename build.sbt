@@ -13,6 +13,7 @@ lazy val commonSettings = Seq( //Defaults.defaultSettings ++ src ++ Seq(
   scalaVersion := "2.11.8",
   crossPaths := false,
   targetJvm := "1.8",
+  publishMavenStyle := false,
   parallelExecution in Test := false,
   scalacOptions ++= Seq("-target:jvm-" + targetJvm.value, "-feature", "-deprecation", "-unchecked", "-Xlint", "-Xfatal-warnings"),
   javacOptions ++= Seq("-source", targetJvm.value, "-target", targetJvm.value),

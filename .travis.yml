@@ -7,7 +7,7 @@ jdk:
   - oraclejdk8
 
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION clean coverage test examples/compile
+  - sbt ++$TRAVIS_SCALA_VERSION clean coverage test
 
 branches:
   only:
