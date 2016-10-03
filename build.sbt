@@ -1,3 +1,11 @@
+
+val Versions = new {
+  val Akka = "2.4.10"
+  val Scalatest = "3.0.0"
+  val JGit = "4.5.0.201609210915-r"
+  val ScalaXml = "1.0.6"
+}
+
 organization := "Scalatron"
 
 name := "Scalatron"
@@ -42,7 +50,7 @@ lazy val ScalatronCore = project.
   settings(
     commonSettings,
     lintingSettings,
-    libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.4.10",
+    libraryDependencies += "com.typesafe.akka" %% "akka-actor" % Versions.Akka,
     assemblyJarName in assembly := "ScalatronCore.jar"
   )
 
@@ -52,7 +60,7 @@ lazy val BotWar = project.
   settings(
     commonSettings,
     lintingSettings,
-    libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.4.10",
+    libraryDependencies += "com.typesafe.akka" %% "akka-actor" % Versions.Akka,
     assemblyJarName in assembly := "BotWar.jar"
   )
 
@@ -64,16 +72,15 @@ lazy val Scalatron = project.
     lintingSettings,
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "com.typesafe.akka" %% "akka-actor" % "2.4.10",
+      "com.typesafe.akka" %% "akka-actor" % Versions.Akka,
       "org.eclipse.jetty.aggregate" % "jetty-webapp" % "7.6.2.v20120308" intransitive(),
-      "org.codehaus.jackson" % "jackson-jaxrs" % "1.9.2",
-      "com.sun.jersey" % "jersey-bundle" % "1.12",
+      "com.fasterxml.jackson.jaxrs" % "jackson-jaxrs-json-provider" % "2.8.3",
+      "com.sun.jersey" % "jersey-bundle" % "1.19.2",
       "javax.servlet" % "servlet-api" % "2.5",
-      "org.eclipse.jgit" % "org.eclipse.jgit" % "4.5.0.201609210915-r",
-      "org.eclipse.jgit" % "org.eclipse.jgit.http.server" % "4.5.0.201609210915-r",
-      "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
+      "org.eclipse.jgit" % "org.eclipse.jgit" % Versions.JGit,
+      "org.eclipse.jgit" % "org.eclipse.jgit.http.server" % Versions.JGit,
 
-      "org.specs2" %% "specs2-core" % "3.8.5-scalaz-7.1.10" % Test
+      "org.scalatest" %% "scalatest" % Versions.Scalatest % Test
     ),
     assemblyJarName in assembly := "Scalatron.jar" // , logLevel in assembly := Level.Debug
   )
@@ -85,8 +92,7 @@ lazy val ScalatronCLI = project.
     lintingSettings,
     libraryDependencies ++= Seq(
       "org.apache.httpcomponents" % "httpclient" % "4.1.3",
-      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
-      "org.scala-lang.modules" %% "scala-xml" % "1.0.6"
+      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4"
     ),
     assemblyJarName in assembly := "ScalatronCLI.jar"
   )
@@ -96,7 +102,7 @@ lazy val ScalaMarkdown = project.
   settings(
     commonSettings,
     libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % "3.0.0" % Test
+      "org.scalatest" %% "scalatest" % Versions.Scalatest % Test
     ),
     assemblyJarName in assembly := "ScalaMarkdown.jar"
   )

@@ -3,16 +3,15 @@
   */
 package scalatronRemote.impl
 
-import org.apache.http.client.HttpClient
-import org.apache.http.client.utils.URIUtils
-
-import org.apache.http.util.EntityUtils
-import scala.util.parsing.json.JSON
-import org.apache.http.entity.StringEntity
 import org.apache.http.HttpStatus
-import scalatronRemote.impl.Connection.{HttpFailureCodeException, JsonMimeType}
-import org.apache.http.client.methods.{HttpPut, HttpDelete, HttpPost, HttpGet}
-import scalatronRemote.impl.Connection.synchronizedJsonParser
+import org.apache.http.client.HttpClient
+import org.apache.http.client.methods.{HttpDelete, HttpGet, HttpPost, HttpPut}
+import org.apache.http.client.utils.URIUtils
+import org.apache.http.entity.StringEntity
+import org.apache.http.util.EntityUtils
+
+import scala.util.parsing.json.JSON
+import scalatronRemote.impl.Connection.{HttpFailureCodeException, JsonMimeType, synchronizedJsonParser}
 
 
 object Connection {
