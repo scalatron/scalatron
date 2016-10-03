@@ -225,8 +225,8 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
 
 
     def version(id: String): Option[Version] = try {
-        // Get the
-        git.log().add(ObjectId.fromString(id)).setMaxCount(1).call().asScala.headOption.map(ScalatronVersion(_, this))
+        git.log().add(ObjectId.fromString(id)).setMaxCount(1).call().
+          asScala.toList.headOption.map(ScalatronVersion(_, this))
     } catch {
         // Git isn't initialised - just ignore
         case _: NoHeadException => None
