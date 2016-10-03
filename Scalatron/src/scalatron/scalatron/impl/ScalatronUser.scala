@@ -226,7 +226,7 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
 
     def version(id: String): Option[Version] = try {
         // Get the
-        git.log().add(ObjectId.fromString(id)).setMaxCount(1).call().asScala.map(ScalatronVersion(_, this)).headOption
+        git.log().add(ObjectId.fromString(id)).setMaxCount(1).call().asScala.headOption.map(ScalatronVersion(_, this))
     } catch {
         // Git isn't initialised - just ignore
         case _: NoHeadException => None
@@ -445,7 +445,7 @@ object ScalatronUser {
                     val timeoutInSeconds = 200      // Note: UI has a 60-second timeout
                     implicit val timeout = Timeout(timeoutInSeconds seconds)
                     val future = compileWorkerRouter ? compileJob
-                    val result = Await.result(future, timeout.duration)
+                    val result: Any = Await.result(future, timeout.duration)
                     val compileResult = result.asInstanceOf[CompileResult]
 
                     if( compileResult.compilationSuccessful ) {

@@ -102,19 +102,22 @@ object ExecutionContextForUntrustedCode
 
                         case runtimePermission: RuntimePermission =>
                             permission.getName match {
-                                case "createClassLoader" =>
-                                    // TODO: this is triggered by the control function factory invocation - without it, plug-ins fail to load :-(
-                                    // System.err.println("warning: granting permission to untrusted code: '%s'".format(permission))
-                                    return // granted
-
-                                case "accessClassInPackage.sun.reflect" =>
-                                    // TODO: this is triggered by the control function factory invocation - without it, plug-ins fail to load :-(
-                                    // System.err.println("warning: granting permission to untrusted code: '%s'".format(permission))
-                                    return // granted
-
-                                case "accessDeclaredMembers" =>
-                                  // this is triggered by Enumeration$$populateNameMap
-                                  return // granted
+                                case "accessClassInPackage.sun.reflect" |
+                                    "createClassLoader" |
+                                    "accessDeclaredMembers" => return
+//                                case "createClassLoader" =>
+//                                    // this is triggered by the control function factory invocation - without it, plug-ins fail to load :-(
+//                                    // System.err.println("warning: granting permission to untrusted code: '%s'".format(permission))
+//                                    return // granted
+//
+//                                case "accessClassInPackage.sun.reflect" =>
+//                                    // this is triggered by the control function factory invocation - without it, plug-ins fail to load :-(
+//                                    // System.err.println("warning: granting permission to untrusted code: '%s'".format(permission))
+//                                    return // granted
+//
+//                                case "accessDeclaredMembers" =>
+//                                  // this is triggered by Enumeration$$populateNameMap
+//                                  return // granted
 
                                 case _ => // denied
                             }
@@ -122,7 +125,7 @@ object ExecutionContextForUntrustedCode
                         case reflectPermission: ReflectPermission =>
                             permission.getName match {
                                 case "suppressAccessChecks" =>
-                                    // TODO: this is triggered by the control function factory invocation - without it, plug-ins fail to load :-(
+                                    // this is triggered by the control function factory invocation - without it, plug-ins fail to load :-(
                                     // System.err.println("warning: granting permission to untrusted code: '%s'".format(permission))
                                     return // granted
 

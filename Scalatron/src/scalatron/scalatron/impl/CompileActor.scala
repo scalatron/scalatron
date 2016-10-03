@@ -167,8 +167,8 @@ case class CompileActor(verbose: Boolean) extends Actor {
                         import scalatron.scalatron.impl.CompileActor.Constants._
                         val severity = diagnostic.getKind match {
                             case Diagnostic.Kind.ERROR => javaCompilerErrors += 1; ScalaCompilerError
-                            case Diagnostic.Kind.WARNING => javaCompilerWarnings += 1; ScalaCompilerWarning
-                            case Diagnostic.Kind.MANDATORY_WARNING => javaCompilerWarnings += 1; ScalaCompilerWarning
+                            case Diagnostic.Kind.WARNING | Diagnostic.Kind.MANDATORY_WARNING =>
+                                javaCompilerWarnings += 1; ScalaCompilerWarning
                             case _ => ScalaCompilerInfo
                         }
 

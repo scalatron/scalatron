@@ -102,12 +102,10 @@ case class AdminServlet(context: WebContext) extends BaseServlet {
         // does that user already exist?
         try {
             val userOpt = context.scalatron.user(userName)
-            userOpt match {
-                case Some(user) =>
-                    serveErrorPage("user already exists: '" + userName + "'", "/admin/list", "return to administration main page", request, response)
-                    System.err.println("error: user already exists: '" + userName + "'")
-                    return
-                case None => // OK -- user does not yet exist
+            userOpt.foreach { user =>
+                serveErrorPage("user already exists: '" + userName + "'", "/admin/list", "return to administration main page", request, response)
+                System.err.println("error: user already exists: '" + userName + "'")
+                return
             }
         } catch {
             case t: Throwable =>

@@ -79,33 +79,27 @@ case class PluginCollection(
 
                             // does this plug-in already exist?
                             val eitherPluginOrLoadFailure =
-                                existingRecyclableLoadResult(pluginJarFilePath, fileTime) match {
-                                    case None =>
-                                        // there is no recyclable existing plug-in
-                                        val userName = pluginDirectory.getName
-                                        val eitherFactoryOrException =
-                                            Plugin.loadBotControlFunctionFrom(
-                                                pluginJarFile,
-                                                userName,
-                                                gameSpecificPackagePath,
-                                                Plugin.ControlFunctionFactoryClassName,
-                                                verbose)
+                                existingRecyclableLoadResult(pluginJarFilePath, fileTime).getOrElse {
+                                    // there is no recyclable existing plug-in
+                                    val userName = pluginDirectory.getName
+                                    val eitherFactoryOrException =
+                                        Plugin.loadBotControlFunctionFrom(
+                                            pluginJarFile,
+                                            userName,
+                                            gameSpecificPackagePath,
+                                            Plugin.ControlFunctionFactoryClassName,
+                                            verbose)
 
-                                        eitherFactoryOrException match {
-                                            case Left(controlFunctionFactory) =>
-                                                val externalPlugin = Plugin.FromJarFile(pluginDirectoryPath, pluginJarFilePath, fileTime, pluginDirectory.getName, controlFunctionFactory)
-                                                println("plugin loaded: " + externalPlugin)
-                                                Left(externalPlugin)
-                                            case Right(exception) =>
-                                                val loadFailure = Plugin.LoadFailure(pluginDirectoryPath, pluginJarFilePath, fileTime, exception)
-                                                println("plugin load failure: " + loadFailure)
-                                                Right(loadFailure)
-                                        }
-
-                                    case Some(existingEither) =>
-                                        // there is a recyclable existing plug-in
-                                        // println("recycling already-loaded plugin: " + existingEither.merge)
-                                        existingEither
+                                    eitherFactoryOrException match {
+                                        case Left(controlFunctionFactory) =>
+                                            val externalPlugin = Plugin.FromJarFile(pluginDirectoryPath, pluginJarFilePath, fileTime, pluginDirectory.getName, controlFunctionFactory)
+                                            println("plugin loaded: " + externalPlugin)
+                                            Left(externalPlugin)
+                                        case Right(exception) =>
+                                            val loadFailure = Plugin.LoadFailure(pluginDirectoryPath, pluginJarFilePath, fileTime, exception)
+                                            println("plugin load failure: " + loadFailure)
+                                            Right(loadFailure)
+                                    }
                                 }
 
                             Some(eitherPluginOrLoadFailure)

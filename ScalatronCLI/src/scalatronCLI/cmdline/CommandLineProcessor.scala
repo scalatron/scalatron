@@ -247,10 +247,8 @@ object CommandLineProcessor {
       * -value name             the value of the attribute to set
       */
     def cmd_setUserAttribute(connectionConfig: ConnectionConfig, argMap: Map[String, String]): Unit = {
-        val targetUserName: String = argMap.get("-targetUser") match {
-            case None => argMap.getOrElse("-user", "")
-            case Some(value) => value
-        }
+        val targetUserName: String = argMap.getOrElse("-targetUser", argMap.getOrElse("-user", ""))
+
         if(targetUserName.isEmpty) {
             System.err.println("error: command 'setUserAttribute' requires option '-user' or '-targetUser'")
             System.exit(-1)
@@ -294,10 +292,8 @@ object CommandLineProcessor {
       * -key name               the key of the attribute to set
       */
     def cmd_getUserAttribute(connectionConfig: ConnectionConfig, argMap: Map[String, String]): Unit = {
-        val targetUserName: String = argMap.get("-targetUser") match {
-            case None => argMap.getOrElse("-user", "")
-            case Some(value) => value
-        }
+        val targetUserName: String = argMap.getOrElse("-targetUser", argMap.getOrElse("-user", ""))
+
         if(targetUserName.isEmpty) {
             System.err.println("error: command 'getUserAttribute' requires option '-user' or '-targetUser'")
             System.exit(-1)

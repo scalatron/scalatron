@@ -211,13 +211,7 @@ object Bot {
                             sourceBot.variety match {
                                 case sourcePlayer: Bot.Player =>    // source is a player (master or slave)
                                     val siblings = sourcePlayer.entityController == targetPlayer.entityController
-                                    if(sourcePlayer.isMaster) {
-                                        // source is a master, target is a master
-                                        if(siblings) 'M' else 'm'
-                                    } else {
-                                        // source is a slave, target is a master
-                                        if(siblings) 'M' else 'm'
-                                    }
+                                    if(siblings) 'M' else 'm'
                                 case _ => assert(false); 'X'        // source is not a player (?!?)
                             }
                         } else {
@@ -225,13 +219,7 @@ object Bot {
                             sourceBot.variety match {
                                 case sourcePlayer: Bot.Player =>    // source is a player (master or slave)
                                     val siblings = sourcePlayer.entityController == targetPlayer.entityController
-                                    if(sourcePlayer.isMaster) {
-                                        // source is a master, target is a slave
-                                        if(siblings) 'S' else 's'
-                                    } else {
-                                        // source is a slave, target is a slave
-                                        if(siblings) 'S' else 's'
-                                    }
+                                    if(siblings) 'S' else 's'
                                 case _ => assert(false); 'X'        // source is not a player (?!?)
                             }
                         }

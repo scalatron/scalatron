@@ -118,9 +118,8 @@ object GameStateRenderer {
                         drawSlave(left, top, playerColorPair)
                     }
 
-                    player.stateMap.get(Protocol.PropertyName.Status) match {
-                        case None => // OK - no status text
-                        case Some(status) => // has status text - display it
+                    player.stateMap.get(Protocol.PropertyName.Status).foreach {
+                        status => // has status text - display it
                             val clippedStatus = if(status.length<=20) status else status.substring(0,20)
                             ctx.setColor(Color.white)
                             ctx.setFont(StatusBubbleFont)

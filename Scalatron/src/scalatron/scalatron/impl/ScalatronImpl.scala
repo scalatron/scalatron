@@ -56,7 +56,7 @@ object ScalatronImpl
                 case Left((extractedClass,methodOnExtractedClass)) =>
                     if(verbose) println(s"info: class and method located in game plug-in '$gamePluginJarFilePath', will try to instantiate game factory...")
                     try {
-                        val classInstance = extractedClass.newInstance()
+                        val classInstance: Any = extractedClass.newInstance()
                         val gameInstance = methodOnExtractedClass.invoke(classInstance).asInstanceOf[Game]
                         if(verbose) println(s"info: successfully invoked game factory of game plug-in '$gamePluginJarFilePath'...")
                         gameInstance

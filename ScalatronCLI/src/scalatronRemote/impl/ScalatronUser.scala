@@ -26,10 +26,7 @@ case class ScalatronUser(
 
     def resource(key: String): String = resourceMap match {
         case None => throw new IllegalStateException("not logged on")
-        case Some(map) => map.get(key) match {
-            case None => throw new IllegalStateException("unknown resource: " + key)
-            case Some(url) => url
-        }
+        case Some(map) => map.getOrElse(key, throw new IllegalStateException("unknown resource: " + key))
     }
 
     //----------------------------------------------------------------------------------------------

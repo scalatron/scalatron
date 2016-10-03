@@ -196,10 +196,7 @@ object Scalatron
           * Caution: do not return the 'password' value through a remote connection.
           * Does not throw any exceptions (IO errors are mapped to None). */
         def getAttributeOpt(key: String): Option[String] =
-            getAttributeMapOpt match {
-                case None => None
-                case Some(attibuteMap) => attibuteMap.get(key)
-            }
+            getAttributeMapOpt.flatMap(_.get(key))
 
         /** Returns the configuration attribute map for this user or None if no such map exists.
           * Caution: do not return the 'password' value through a remote connection.

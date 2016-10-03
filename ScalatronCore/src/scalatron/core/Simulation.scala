@@ -130,10 +130,7 @@ object Simulation
 
                 // process callback (usually rendering) on prior state, returns true if to continue simulating, false if not
                 val callbackFuture = Future({
-                    priorStateOpt match {
-                        case None => true // there is no state to call back about (e.g. nothing to render)
-                        case Some(priorState) => stepCallback(priorState)
-                    }
+                    priorStateOpt.forall(stepCallback)
                 })(executionContextForTrustedCode)
 
                 // let the processing complete

@@ -6,7 +6,9 @@ package scalatronRemote.api
 import scalatronRemote.api.ScalatronRemote._
 import scalatronRemote.impl.ScalatronRemoteImpl
 import scala.io.Source
-import java.io.{FileWriter, File}
+import java.io.{File, FileWriter}
+
+import scala.util.Try
 
 
 /** Client-side interface for the Scalatron RESTful web API.
@@ -310,7 +312,10 @@ object ScalatronRemote {
                 .filter(file => file.isFile)
                 .map(file => {
                 val filename = file.getName
-                val code = Source.fromFile(file).mkString
+                val code = Try {
+                    val b = Source.fromFile(file)
+                    try { b.mkString } finally b.close()
+                }.get
                 if(verbose) println(s"loaded source code from file: '${file.getAbsolutePath}'")
                 SourceFile(filename, code)
             })
@@ -326,11 +331,9 @@ object ScalatronRemote {
           */
         def writeTo(directoryPath: String, sourceFileCollection: SourceFileCollection, verbose: Boolean = false): Unit = {
             val targetDir = new File(directoryPath)
-            if(!targetDir.exists()) {
-                if(!targetDir.mkdirs()) {
-                    System.err.println(s"error: cannot create local directory '$directoryPath'")
-                    System.exit(-1)
-                }
+            if (!targetDir.exists && !targetDir.mkdirs()) {
+                System.err.println(s"error: cannot create local directory '$directoryPath'")
+                System.exit(-1)
             }
 
             sourceFileCollection.foreach(sf => {

@@ -29,9 +29,8 @@ case object Dynamics extends ((State, Random, ActorSystem, ExecutionContext) => 
             val commands = tuple._2._3
 
             // if it is a player, update its CPU time and input string
-            updatedBoard.getBot(id) match {
-                case None => // ?!?
-                case Some(bot) => bot.variety match {
+            updatedBoard.getBot(id).foreach { bot =>
+                bot.variety match {
                     case player: Bot.Player =>
                         val nanoSeconds = tuple._2._1
 
@@ -51,9 +50,8 @@ case object Dynamics extends ((State, Random, ActorSystem, ExecutionContext) => 
                         if(!player.isMaster) {
                             // for slaves, update master's CPU time
                             val masterId = player.masterId
-                            updatedBoard.getBot(masterId) match {
-                                case None => // ?!?
-                                case Some(masterBot) => masterBot.variety match {
+                            updatedBoard.getBot(masterId).foreach { masterBot =>
+                                masterBot.variety match {
                                     case masterPlayer: Bot.Player =>
                                         assert(masterPlayer.isMaster)
                                         val updatedPlayer = masterPlayer.copy(cpuTime = masterPlayer.cpuTime + nanoSeconds)

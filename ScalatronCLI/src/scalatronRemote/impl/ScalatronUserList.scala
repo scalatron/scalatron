@@ -14,8 +14,5 @@ case class ScalatronUserList(users: Iterable[ScalatronUser], scalatron: Scalatro
     def get(name: String): Option[ScalatronUser] = users.find(_.name == name)
 
     def adminUser =
-        get(ScalatronRemote.Constants.AdminUserName) match {
-            case Some(user) => user
-            case None => throw new IllegalStateException("server does not contain an Administrator user account")
-        }
+        get(ScalatronRemote.Constants.AdminUserName).getOrElse(throw new IllegalStateException("server does not contain an Administrator user account"))
 }

@@ -307,12 +307,13 @@ object Board
                 if(validCount >= 1) {
                     // ensure positive extent
                     val fullStepX = step.x * validCount
+                    updatedBoard =
                     if(fullStepX < 0) {
-                        updatedBoard = updatedBoard.addBot(
+                        updatedBoard.addBot(
                             XY(wallStartPos.x + fullStepX + 1, wallStartPos.y),
                             XY(-fullStepX, 1), time, Bot.Wall)
                     } else {
-                        updatedBoard = updatedBoard.addBot(
+                        updatedBoard.addBot(
                             XY(wallStartPos.x, wallStartPos.y),
                             XY(fullStepX, 1), time, Bot.Wall)
                     }
@@ -326,12 +327,13 @@ object Board
                 if(validCount >= 1) {
                     // ensure positive extent
                     val fullStepY = step.y * validCount
+                    updatedBoard =
                     if(fullStepY < 0) {
-                        updatedBoard = updatedBoard.addBot(
+                        updatedBoard.addBot(
                             XY(wallStartPos.x, wallStartPos.y + fullStepY + 1),
                             XY(1, -fullStepY), time, Bot.Wall)
                     } else {
-                        updatedBoard = updatedBoard.addBot(
+                        updatedBoard.addBot(
                             XY(wallStartPos.x, wallStartPos.y),
                             XY(1, fullStepY), time, Bot.Wall)
                     }

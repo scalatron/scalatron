@@ -83,10 +83,7 @@ case class FlattenedBoard(boardSize: XY, cells: Array[Option[Bot]]) {
                 val cellIndex = indexFromAbsPos(centerAbsPos.x + x0, centerAbsPos.y + y0)
                 if(occluded) {
                     if(traversingWall) {
-                        val cellIsWall = cells(cellIndex) match {
-                            case None => false
-                            case Some(bot) => bot.isWall
-                        }
+                        val cellIsWall = cells(cellIndex).exists(_.isWall)
                         if(!cellIsWall) {
                             cells(cellIndex) = Bot.OccludedOpt
                             traversingWall = false
@@ -95,13 +92,11 @@ case class FlattenedBoard(boardSize: XY, cells: Array[Option[Bot]]) {
                         cells(cellIndex) = Bot.OccludedOpt
                     }
                 } else {
-                    cells(cellIndex) match {
-                        case None =>
-                        case Some(bot) =>
-                            if(bot.isWall) {
-                                traversingWall = true
-                                occluded = true
-                            }
+                    cells(cellIndex).foreach { bot =>
+                        if(bot.isWall) {
+                            traversingWall = true
+                            occluded = true
+                        }
                     }
                 }
 

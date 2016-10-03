@@ -40,10 +40,7 @@ case object AugmentedDynamics extends ((State,Random,Iterable[(Entity.Id,Iterabl
         commands.foreach(idAndCommand => {
             val botId = idAndCommand._1
             idAndCommand._2.foreach(command => {
-                updatedBoard.getBot(botId) match {
-                    case None => // entity with this ID was deleted in the meantime
-                    case Some(bot) => updatedBoard = processCommand(bot, command, state, updatedBoard)
-                }
+                updatedBoard.getBot(botId).foreach(bot => updatedBoard = processCommand(bot, command, state, updatedBoard))
             })
         })
 

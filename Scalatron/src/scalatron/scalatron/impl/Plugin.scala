@@ -141,7 +141,7 @@ object Plugin
                         // a "ControlFunction" class was present in the plug-in => try to load it
                         if(verbose) println(s"    info: ControlFunction class and method located in bot plug-in '${jarFile.getAbsolutePath}', will try to instantiate control function...")
                         try {
-                            val classInstance = extractedClass.newInstance()
+                            val classInstance: Any = extractedClass.newInstance()
                             val controlFunction: String => String = (input: String) => methodOnExtractedClass.invoke(classInstance, input).asInstanceOf[String]
                             val controlFunctionFactory: () => (String => String) = () => controlFunction
                             if(verbose) println(s"    info: successfully extracted control function from bot plug-in '${jarFile.getAbsolutePath}'...")
@@ -158,7 +158,7 @@ object Plugin
                 // a "ControlFunctionFactory" class was present in the plug-in => try to load it
                 if(verbose) println(s"    info: ControlFunctionFactory class and method located in bot plug-in '${jarFile.getAbsolutePath}', will try to instantiate control function factory...")
                 try {
-                    val classInstance = extractedClass.newInstance()
+                    val classInstance: Any = extractedClass.newInstance()
                     val factoryFunction: () => (String => String) = () => methodOnExtractedClass.invoke(classInstance).asInstanceOf[(String => String)]
                     if(verbose) println(s"    info: successfully extracted control function factory from bot plug-in '${jarFile.getAbsolutePath}'...")
                     Left(factoryFunction)

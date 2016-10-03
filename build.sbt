@@ -40,6 +40,7 @@ lazy val ScalatronCore = project.
   in(file("ScalatronCore")).
   settings(
     commonSettings,
+    lintingSettings,
     libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.4.10",
     assemblyJarName in assembly := "ScalatronCore.jar"
   )
@@ -49,6 +50,7 @@ lazy val BotWar = project.
   dependsOn(ScalatronCore).
   settings(
     commonSettings,
+    lintingSettings,
     libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.4.10",
     assemblyJarName in assembly := "BotWar.jar"
   )
@@ -58,6 +60,7 @@ lazy val Scalatron = project.
   dependsOn(ScalatronCore, BotWar).
   settings(
     commonSettings,
+    lintingSettings,
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
       "com.typesafe.akka" %% "akka-actor" % "2.4.10",
@@ -78,6 +81,7 @@ lazy val ScalatronCLI = project.
   in(file("ScalatronCLI")).
   settings(
     commonSettings,
+    lintingSettings,
     libraryDependencies ++= Seq(
       "org.apache.httpcomponents" % "httpclient" % "4.1.3",
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",

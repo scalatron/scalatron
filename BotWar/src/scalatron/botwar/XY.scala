@@ -28,7 +28,7 @@ case class XY(x: Int, y: Int) {
     def *(factor: Double) = XY(( x * factor ).intValue, ( y * factor ).intValue)
 
     def distanceTo(pos: XY): Double = ( this - pos ).length // Phythagorean
-    def length: Double = math.sqrt(x * x + y * y) // Phythagorean
+    def length: Double = math.hypot(x, y) // Phythagorean
 
     def stepsTo(pos: XY): Int = ( this - pos ).stepCount // steps to reach pos: max delta X or Y
     def stepCount: Int = x.abs.max(y.abs) // steps from (0,0) to get here: max X or Y
