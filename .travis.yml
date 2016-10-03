@@ -1,0 +1,32 @@
+language: scala
+
+scala:
+  - 2.11.8
+
+jdk:
+  - oraclejdk8
+
+script:
+  - sbt ++$TRAVIS_SCALA_VERSION clean coverage test examples/compile
+
+branches:
+  only:
+    - master
+
+sudo: false
+
+cache:
+  directories:
+    - $HOME/.ivy2/cache
+    - $HOME/.sbt/boot/
+
+notifications:
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/6203ce45ae60b39eb737
+    on_success: always  # options: [always|never|change] default: always
+    on_failure: always  # options: [always|never|change] default: always
+    on_start: never     # options: [always|never|change] default: always
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
