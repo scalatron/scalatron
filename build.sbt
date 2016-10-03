@@ -3,7 +3,6 @@ val Versions = new {
   val Akka = "2.4.10"
   val Scalatest = "3.0.0"
   val JGit = "4.5.0.201609210915-r"
-  val ScalaXml = "1.0.6"
 }
 
 organization := "Scalatron"
