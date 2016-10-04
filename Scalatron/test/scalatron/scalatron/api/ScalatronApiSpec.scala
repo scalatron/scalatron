@@ -18,8 +18,6 @@ class ScalatronApiSpec extends FlatSpec with Matchers {
     """
   val sourceFiles = Iterable(Scalatron.SourceFile("Bot.scala", sourceCode))
 
-
-  // see http://stackoverflow.com/questions/617414/create-a-temporary-directory-in-java
   private def createTempDirectory(): String = {
     val temp = File.createTempFile("temp", System.nanoTime().toString)
     if (!temp.delete()) throw new IOException("Could not delete temp file: " + temp.getAbsolutePath)
@@ -27,12 +25,12 @@ class ScalatronApiSpec extends FlatSpec with Matchers {
     temp.getAbsolutePath
   }
 
-
   /** Creates a temporary directory, starts a Scalatron server, then runs the given test
     * method, invoking it with (scalatron, usersBaseDirPath, samplesBaseDirPath, pluginBaseDirPath),
     * then shuts down the Scalatron server and deletes the temp directory.
     */
-  def runScalatron(test: (Scalatron, String, String, String) => Unit, verbose: Boolean = false): Unit = {
+  def runScalatron[T](test: (Scalatron, String, String, String) => T): Unit = {
+    val verbose = false
     val tmpDirPath = createTempDirectory() // serves as "/Scalatron"
 
     try {
@@ -40,12 +38,9 @@ class ScalatronApiSpec extends FlatSpec with Matchers {
       val samplesBaseDirPath = tmpDirPath + "/" + SamplesDirectoryName
       val pluginBaseDirPath = tmpDirPath + "/" + TournamentBotsDirectoryName
 
-      // prepare the Akka actor system to be used by the various servers of the application
       val actorSystem = ActorSystem("Scalatron")
 
-      // create a Scalatron server instance - this is the main API entry point
-      val scalatron =
-      ScalatronOutward(
+      val scalatron = ScalatronOutward(
         Map(
           "-users" -> usersBaseDirPath,
           "-samples" -> samplesBaseDirPath,
@@ -55,16 +50,11 @@ class ScalatronApiSpec extends FlatSpec with Matchers {
         verbose
       )
 
-      // start the server, launching the background thread(s) (e.g., compile server)
       scalatron.start()
-
       test(scalatron, usersBaseDirPath, samplesBaseDirPath, pluginBaseDirPath)
-
-      // shut down the server, terminating the background thread(s)
       scalatron.shutdown()
 
     } finally {
-      // delete the temporary directory
       FileUtil.deleteRecursively(tmpDirPath, atThisLevel = true, verbose = verbose)
     }
   }
@@ -74,32 +64,32 @@ class ScalatronApiSpec extends FlatSpec with Matchers {
   //------------------------------------------------------------------------------------------
 
   "Scalatron API running against a temporary /users directory" should "initially contain only the Administrator user" in {
-    runScalatron((scalatron: Scalatron, usersBaseDirPath: String, samplesBaseDirPath: String, pluginBaseDirPath: String) => {
+    runScalatron { (scalatron, usersBaseDirPath, samplesBaseDirPath, pluginBaseDirPath) =>
       scalatron.users().map(_.name).mkString(",") shouldBe "Administrator"
       scalatron.user("ExampleUser") shouldBe None
-    })
+    }
   }
 
   it should "be able to create a new user" in {
-    runScalatron((scalatron: Scalatron, usersBaseDirPath: String, samplesBaseDirPath: String, pluginBaseDirPath: String) => {
+    runScalatron { (scalatron, usersBaseDirPath, samplesBaseDirPath, pluginBaseDirPath) =>
       scalatron.createUser(name = "ExampleUser", password = "", initialSourceFiles = sourceFiles)
 
       scalatron.users() should have size 2
       new File(usersBaseDirPath + "/" + "ExampleUser").exists shouldBe true
       scalatron.user("ExampleUser").isDefined shouldBe true
       new File(usersBaseDirPath + "/ExampleUser/src/Bot.scala").exists shouldBe true
-    })
+    }
   }
 
   it should "be able to delete a newly created user" in {
-    runScalatron((scalatron: Scalatron, usersBaseDirPath: String, samplesBaseDirPath: String, pluginBaseDirPath: String) => {
+    runScalatron { (scalatron, usersBaseDirPath, samplesBaseDirPath, pluginBaseDirPath) =>
       val user = scalatron.createUser("ExampleUser", "", sourceFiles)
       user.delete()
 
       scalatron.users().map(_.name).mkString(",") shouldBe "Administrator"
       scalatron.user("ExampleUser") shouldBe None
       new File(usersBaseDirPath + "/ExampleUser").exists shouldBe false
-    })
+    }
   }
 
   //------------------------------------------------------------------------------------------
@@ -107,15 +97,15 @@ class ScalatronApiSpec extends FlatSpec with Matchers {
   //------------------------------------------------------------------------------------------
 
   "Scalatron API running against a temporary /users directory with a newly created user" should "initially contain one version" in {
-    runScalatron((scalatron: Scalatron, usersBaseDirPath: String, samplesBaseDirPath: String, pluginBaseDirPath: String) => {
+    runScalatron { (scalatron, usersBaseDirPath, samplesBaseDirPath, pluginBaseDirPath) =>
       val user = scalatron.createUser("ExampleUser", "", sourceFiles)
       assert(new File(usersBaseDirPath + "/ExampleUser/src/.git").exists())
       user.versions.size shouldBe 1
-    })
+    }
   }
 
   it should "be able to create a new version" in {
-    runScalatron((scalatron: Scalatron, usersBaseDirPath: String, samplesBaseDirPath: String, pluginBaseDirPath: String) => {
+    runScalatron { (scalatron, usersBaseDirPath, samplesBaseDirPath, pluginBaseDirPath) =>
       val user = scalatron.createUser("ExampleUser", "", sourceFiles)
       assert(new File(usersBaseDirPath + "/ExampleUser/src/.git").exists())
 
@@ -148,7 +138,7 @@ class ScalatronApiSpec extends FlatSpec with Matchers {
       // TODO: don't update the files, then verify that no version is generated
       // TODO: verify that latestVersion returns the latest version
       // TODO: test restoring an older version
-    })
+    }
   }
 
   //------------------------------------------------------------------------------------------
@@ -156,7 +146,7 @@ class ScalatronApiSpec extends FlatSpec with Matchers {
   //------------------------------------------------------------------------------------------
 
   it should "be able to build from sources from disk containing no errors" in {
-    runScalatron((scalatron: Scalatron, usersBaseDirPath: String, samplesBaseDirPath: String, pluginBaseDirPath: String) => {
+    runScalatron { (scalatron, usersBaseDirPath, samplesBaseDirPath, pluginBaseDirPath) =>
       val user = scalatron.createUser("ExampleUser", "", sourceFiles)
 
       // build a local bot .jar
@@ -166,12 +156,12 @@ class ScalatronApiSpec extends FlatSpec with Matchers {
       compileResult.warningCount shouldBe 0
       compileResult.messages.isEmpty shouldBe true
       new File(usersBaseDirPath + "/ExampleUser/bot/ScalatronBot.jar").exists() shouldBe true
-    })
+    }
   }
 
 
   it should "be able to report errors when building invalid sources" in {
-    runScalatron((scalatron: Scalatron, usersBaseDirPath: String, samplesBaseDirPath: String, pluginBaseDirPath: String) => {
+    runScalatron { (scalatron, usersBaseDirPath, samplesBaseDirPath, pluginBaseDirPath) =>
       val user = scalatron.createUser("ExampleUser", "", sourceFiles)
 
       // create some source files with errors
@@ -205,7 +195,7 @@ class ScalatronApiSpec extends FlatSpec with Matchers {
       msg1.lineAndColumn shouldBe ((1, 12))
       msg1.severity shouldBe 2
       msg1.multiLineMessage shouldBe "expected class or object definition"
-    })
+    }
   }
 
 
@@ -215,7 +205,7 @@ class ScalatronApiSpec extends FlatSpec with Matchers {
 
 
   it should "be able to publish a jar built from sources into the tournament" in {
-    runScalatron((scalatron: Scalatron, usersBaseDirPath: String, samplesBaseDirPath: String, pluginBaseDirPath: String) => {
+    runScalatron { (scalatron, usersBaseDirPath, samplesBaseDirPath, pluginBaseDirPath) =>
       val user = scalatron.createUser("ExampleUser", "", sourceFiles)
       user.buildSources()
 
@@ -224,7 +214,7 @@ class ScalatronApiSpec extends FlatSpec with Matchers {
       new File(pluginBaseDirPath + "/ExampleUser/ScalatronBot.jar").exists() shouldBe true
 
       // ... if we now called scalatron.run, the tournament should pick up the plug-in
-    })
+    }
   }
 
 
@@ -234,7 +224,7 @@ class ScalatronApiSpec extends FlatSpec with Matchers {
 
 
   it should "be able to run a sandboxed game using a jar built from sources" in {
-    runScalatron((scalatron: Scalatron, usersBaseDirPath: String, samplesBaseDirPath: String, pluginBaseDirPath: String) => {
+    runScalatron { (scalatron, usersBaseDirPath, samplesBaseDirPath, pluginBaseDirPath) =>
       val user = scalatron.createUser("ExampleUser", "", sourceFiles)
       user.buildSources()
 
@@ -270,7 +260,7 @@ class ScalatronApiSpec extends FlatSpec with Matchers {
 
       // extract bot's most recent log output
       // entities.foreach(e => println(e.debugOutput))
-    })
+    }
   }
 
 
@@ -281,14 +271,14 @@ class ScalatronApiSpec extends FlatSpec with Matchers {
   //------------------------------------------------------------------------------------------
 
   "Scalatron API running against a temporary /samples directory" should "initially find no samples" in {
-    runScalatron((scalatron: Scalatron, usersBaseDirPath: String, samplesBaseDirPath: String, pluginBaseDirPath: String) => {
+    runScalatron { (scalatron, usersBaseDirPath, samplesBaseDirPath, pluginBaseDirPath) =>
       scalatron.samples.isEmpty shouldBe true
       scalatron.sample("SampleA").isEmpty shouldBe true
-    })
+    }
   }
 
   it should "be able to create a new sample from given sources" in {
-    runScalatron((scalatron: Scalatron, usersBaseDirPath: String, samplesBaseDirPath: String, pluginBaseDirPath: String) => {
+    runScalatron { (scalatron, usersBaseDirPath, samplesBaseDirPath, pluginBaseDirPath) =>
       // create a sample
       val createdSample = scalatron.createSample("SampleA", sourceFiles)
       createdSample.name shouldBe "SampleA"
@@ -307,16 +297,16 @@ class ScalatronApiSpec extends FlatSpec with Matchers {
       sampleFiles.head.filename shouldBe "Bot.scala"
 
       // we could now push the sample code into the user's workspace with user.updateSources()
-    })
+    }
   }
 
   it should "be able to delete a newly created sample" in {
-    runScalatron((scalatron: Scalatron, usersBaseDirPath: String, samplesBaseDirPath: String, pluginBaseDirPath: String) => {
+    runScalatron { (scalatron, usersBaseDirPath, samplesBaseDirPath, pluginBaseDirPath) =>
       val createdSample = scalatron.createSample("SampleA", sourceFiles)
       scalatron.samples.size shouldBe 1
 
       createdSample.delete()
       scalatron.samples.isEmpty shouldBe true
-    })
+    }
   }
 }
