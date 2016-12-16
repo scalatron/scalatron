@@ -6,8 +6,8 @@ package scalatronRemote.impl
 import org.apache.http.HttpStatus
 import org.apache.http.client.HttpClient
 import org.apache.http.client.methods.{HttpDelete, HttpGet, HttpPost, HttpPut}
-import org.apache.http.client.utils.URIUtils
-import org.apache.http.entity.StringEntity
+import org.apache.http.client.utils.{URIBuilder, URIUtils}
+import org.apache.http.entity.{ContentType, StringEntity}
 import org.apache.http.util.EntityUtils
 
 import scala.util.parsing.json.JSON
@@ -38,7 +38,7 @@ case class Connection(httpClient: HttpClient, hostname: String, port: Int, verbo
       * @throws HttpFailureCodeException if an HTTP code other than SC_OK is received
       */
     def GET_json(resource: String): JSonOpt = {
-        val uri = URIUtils.createURI("http", hostname, port, resource, "", null)
+      val uri = new URIBuilder().setScheme("http").setHost(hostname).setPort(port).setPath(resource).setCustomQuery("").build()
 
       val request = new HttpGet(uri)
 
@@ -49,7 +49,7 @@ case class Connection(httpClient: HttpClient, hostname: String, port: Int, verbo
         }
 
         val responseEntity = response.getEntity
-        val mimeType = EntityUtils.getContentMimeType(responseEntity)
+        val mimeType = ContentType.getOrDefault(responseEntity).getMimeType
         val jsonMimeType = "application/json"
         if (mimeType != jsonMimeType) {
             throw new IllegalStateException("mime type error; expected: " + jsonMimeType + ", received: " + mimeType)
@@ -66,10 +66,10 @@ case class Connection(httpClient: HttpClient, hostname: String, port: Int, verbo
       * Throws on error.
       */
     def POST_json_json(resource: String, jsonString: String): JSonOpt = {
-        val uri = URIUtils.createURI("http", hostname, port, resource, "", null)
+      val uri = new URIBuilder().setScheme("http").setHost(hostname).setPort(port).setPath(resource).setCustomQuery("").build()
 
       val request = new HttpPost(uri)
-        val requestEntity = new StringEntity(jsonString, JsonMimeType, null)
+        val requestEntity = new StringEntity(jsonString, JsonMimeType)
         request.setEntity(requestEntity)
 
         val response = httpClient.execute(request)
@@ -79,7 +79,7 @@ case class Connection(httpClient: HttpClient, hostname: String, port: Int, verbo
         }
 
         val entity = response.getEntity
-        val mimeType = EntityUtils.getContentMimeType(entity)
+        val mimeType = ContentType.getOrDefault(entity).getMimeType
         if (mimeType != JsonMimeType) {
             throw new IllegalStateException("mime type error; expected: " + JsonMimeType + ", received: " + mimeType)
         }
@@ -94,10 +94,10 @@ case class Connection(httpClient: HttpClient, hostname: String, port: Int, verbo
       * from the result. Throws on error.
       */
     def POST_json_url(resource: String, jsonString: String): String = {
-        val uri = URIUtils.createURI("http", hostname, port, resource, "", null)
+      val uri = new URIBuilder().setScheme("http").setHost(hostname).setPort(port).setPath(resource).setCustomQuery("").build()
 
       val request = new HttpPost(uri)
-        val requestEntity = new StringEntity(jsonString, JsonMimeType, null)
+        val requestEntity = new StringEntity(jsonString, JsonMimeType)
         request.setEntity(requestEntity)
 
         val response = httpClient.execute(request)
@@ -107,7 +107,7 @@ case class Connection(httpClient: HttpClient, hostname: String, port: Int, verbo
         }
 
         val entity = response.getEntity
-        val mimeType = EntityUtils.getContentMimeType(entity)
+        val mimeType = ContentType.getOrDefault(entity).getMimeType
         if (mimeType != JsonMimeType) {
             throw new IllegalStateException("mime type error; expected: " + JsonMimeType + ", received: " + mimeType)
         }
@@ -121,7 +121,7 @@ case class Connection(httpClient: HttpClient, hostname: String, port: Int, verbo
     /** Sends an HTTP PUT to the server with no input data but JSON output data. Throws on error.
       */
     def PUT_nothing_json(resource: String): JSonOpt = {
-        val uri = URIUtils.createURI("http", hostname, port, resource, "", null)
+      val uri = new URIBuilder().setScheme("http").setHost(hostname).setPort(port).setPath(resource).setCustomQuery("").build()
 
       val request = new HttpPut(uri)
 
@@ -132,7 +132,7 @@ case class Connection(httpClient: HttpClient, hostname: String, port: Int, verbo
         }
 
         val entity = response.getEntity
-        val mimeType = EntityUtils.getContentMimeType(entity)
+        val mimeType = ContentType.getOrDefault(entity).getMimeType
         if (mimeType != JsonMimeType) {
             throw new IllegalStateException("mime type error; expected: " + JsonMimeType + ", received: " + mimeType)
         }
@@ -146,10 +146,10 @@ case class Connection(httpClient: HttpClient, hostname: String, port: Int, verbo
     /** Sends an HTTP PUT to the server with the given JSON payload and no result value. Throws on error.
       */
     def PUT_json_nothing(resource: String, jsonString: String): Unit = {
-        val uri = URIUtils.createURI("http", hostname, port, resource, "", null)
+      val uri = new URIBuilder().setScheme("http").setHost(hostname).setPort(port).setPath(resource).setCustomQuery("").build()
 
       val request = new HttpPut(uri)
-        val requestEntity = new StringEntity(jsonString, JsonMimeType, null)
+        val requestEntity = new StringEntity(jsonString, JsonMimeType)
         request.setEntity(requestEntity)
 
         val response = httpClient.execute(request)
@@ -162,7 +162,7 @@ case class Connection(httpClient: HttpClient, hostname: String, port: Int, verbo
     /** Sends an HTTP PUT to the server with the given JSON payload and no result value. Throws on error.
       */
     def PUT_nothing_nothing(resource: String): Unit = {
-        val uri = URIUtils.createURI("http", hostname, port, resource, "", null)
+      val uri = new URIBuilder().setScheme("http").setHost(hostname).setPort(port).setPath(resource).setCustomQuery("").build()
 
       val request = new HttpPut(uri)
 
@@ -176,7 +176,7 @@ case class Connection(httpClient: HttpClient, hostname: String, port: Int, verbo
     /** Sends an HTTP DELETE to the server. Throws on error.
       * */
     def DELETE(resource: String): Unit = {
-        val uri = URIUtils.createURI("http", hostname, port, resource, "", null)
+      val uri = new URIBuilder().setScheme("http").setHost(hostname).setPort(port).setPath(resource).setCustomQuery("").build()
 
       val request = new HttpDelete(uri)
 

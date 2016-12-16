@@ -1,7 +1,7 @@
 
 val Versions = new {
-  val Akka = "2.4.10"
-  val Scalatest = "3.0.0"
+  val Akka = "2.4.14"
+  val Scalatest = "3.0.1"
   val JGit = "4.5.0.201609210915-r"
 }
 
@@ -9,7 +9,7 @@ organization := "Scalatron"
 
 name := "Scalatron"
 
-version := "1.3.0"
+version := "1.4.0"
 
 lazy val targetJvm = SettingKey[String]("jvm-version", "The version of the JVM the build targets")
 
@@ -17,7 +17,7 @@ lazy val commonSettings = Seq( //Defaults.defaultSettings ++ src ++ Seq(
   scalaSource in Compile := baseDirectory.value / "src",
   scalaSource in Test := baseDirectory.value / "test",
   resourceDirectory in Test := baseDirectory.value / "test/resources",
-  scalaVersion := "2.11.8",
+  scalaVersion := "2.12.1",
   crossPaths := false,
   targetJvm := "1.8",
   publishMavenStyle := false,
@@ -35,7 +35,7 @@ lazy val commonSettings = Seq( //Defaults.defaultSettings ++ src ++ Seq(
 )
 
 lazy val lintingSettings = Seq(
-  addCompilerPlugin("org.psywerx.hairyfotr" %% "linter" % "0.1.15"),
+  addCompilerPlugin("org.psywerx.hairyfotr" %% "linter" % "0.1.17"),
   scalacOptions += "-P:linter:disable:UnusedParameter"
 )
 
@@ -72,9 +72,9 @@ lazy val Scalatron = project.
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
       "com.typesafe.akka" %% "akka-actor" % Versions.Akka,
-      "org.eclipse.jetty.aggregate" % "jetty-webapp" % "7.6.2.v20120308" intransitive(),
-      "com.fasterxml.jackson.jaxrs" % "jackson-jaxrs-json-provider" % "2.8.3",
-      "com.sun.jersey" % "jersey-bundle" % "1.19.2",
+      "org.eclipse.jetty.aggregate" % "jetty-webapp" % "7.6.21.v20160908" intransitive(),
+      "com.fasterxml.jackson.jaxrs" % "jackson-jaxrs-json-provider" % "2.8.5",
+      "com.sun.jersey" % "jersey-bundle" % "1.19.3",
       "javax.servlet" % "servlet-api" % "2.5",
       "org.eclipse.jgit" % "org.eclipse.jgit" % Versions.JGit,
       "org.eclipse.jgit" % "org.eclipse.jgit.http.server" % Versions.JGit,
@@ -90,7 +90,7 @@ lazy val ScalatronCLI = project.
     commonSettings,
     lintingSettings,
     libraryDependencies ++= Seq(
-      "org.apache.httpcomponents" % "httpclient" % "4.1.3",
+      "org.apache.httpcomponents" % "httpclient" % "4.5.2",
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4"
     ),
     assemblyJarName in assembly := "ScalatronCLI.jar"

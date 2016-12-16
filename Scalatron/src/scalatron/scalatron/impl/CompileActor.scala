@@ -4,7 +4,6 @@ package scalatron.scalatron.impl
   * Creative Commons Attribution 3.0 Unported License. Feel free to use, modify and share it.
   */
 
-
 import java.util.Locale
 
 import akka.actor.Actor
@@ -88,7 +87,6 @@ object CompileActor {
 
         classPaths
     }
-
 
     // constants
     object Constants {
@@ -183,13 +181,13 @@ case class CompileActor(verbose: Boolean) extends Actor {
 
                 // Prepare the compilation options to be used during Java compilation
                 // We are asking the compiler to place the output files under the /out folder.
-                val compileOptions = scala.collection.JavaConversions.asJavaIterable(Iterable("-d", outputDirectoryPath))
+                val compileOptions = scala.collection.JavaConverters.asJavaIterable(Iterable("-d", outputDirectoryPath))
 
                 val compiler = ToolProvider.getSystemJavaCompiler
                 if(compiler==null) throw new IllegalStateException("Java Compiler not available (on this platform)")
 
                 val fileManager  = compiler.getStandardFileManager(diagnosticListener, null, null)
-                val fileObjects = fileManager.getJavaFileObjectsFromStrings(scala.collection.JavaConversions.asJavaIterable(javaFilePathList))
+                val fileObjects = fileManager.getJavaFileObjectsFromStrings(scala.collection.JavaConverters.asJavaIterable(javaFilePathList))
                 val task = compiler.getTask(null, fileManager, diagnosticListener, compileOptions, null, fileObjects)
                 val javaCompilationSuccessful = task.call()
 

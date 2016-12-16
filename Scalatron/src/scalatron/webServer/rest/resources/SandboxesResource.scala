@@ -1,16 +1,17 @@
 package scalatron.webServer.rest.resources
 
 import javax.ws.rs._
-import javax.ws.rs.core.{Response, MediaType}
+import javax.ws.rs.core.{MediaType, Response}
+
 import scalatron.core.Scalatron.SandboxState
-import scala.collection.JavaConversions
-import scala.collection.convert.decorateAll._
+import scala.collection.JavaConverters._
 import scalatron.webServer.rest.UserSession
 import scalatron.webServer.rest.UserSession.SandboxAttributeKey
 import org.eclipse.jetty.http.HttpStatus
+
+import scala.collection.JavaConverters
 import scalatron.core.Scalatron
 import scalatron.webServer.rest.resources.SandboxesResource.CommandParser
-
 
 @Produces(Array(MediaType.APPLICATION_JSON))
 @Consumes(Array(MediaType.APPLICATION_JSON))
@@ -148,7 +149,7 @@ class SandboxesResource extends ResourceWithUser {
                         e.id,
                         e.name,
                         e.isMaster,
-                        SandboxesResource.InputCommand(opcode, JavaConversions.mapAsJavaMap(params)),
+                        SandboxesResource.InputCommand(opcode, JavaConverters.mapAsJavaMap(params)),
                         SandboxesResource.extractOutput(e.mostRecentControlFunctionOutput),
                         e.debugOutput)
                 }).toArray
@@ -210,7 +211,7 @@ object SandboxesResource {
                 e.id,
                 e.name,
                 e.isMaster,
-                SandboxesResource.InputCommand(opcode, JavaConversions.mapAsJavaMap(params)),
+                SandboxesResource.InputCommand(opcode, JavaConverters.mapAsJavaMap(params)),
                 extractOutput(e.mostRecentControlFunctionOutput),
                 e.debugOutput)
         }).toArray
@@ -227,7 +228,7 @@ object SandboxesResource {
         in.map(e => {
             val op = e._1
             val params = e._2
-            SandboxesResource.InputCommand(op, JavaConversions.mapAsJavaMap(params.toMap))
+            SandboxesResource.InputCommand(op, JavaConverters.mapAsJavaMap(params.toMap))
         }).toArray
 
 

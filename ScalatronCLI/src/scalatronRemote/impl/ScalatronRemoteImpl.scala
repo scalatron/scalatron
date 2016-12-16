@@ -3,16 +3,18 @@
   */
 package scalatronRemote.impl
 
-import org.apache.http.impl.client.DefaultHttpClient
+import org.apache.http.impl.client.{DefaultHttpClient, HttpClientBuilder}
+
 import scalatronRemote.api.ScalatronRemote
 import scalatronRemote.impl.Connection.HttpFailureCodeException
 import org.apache.http.HttpStatus
-import scalatronRemote.api.ScalatronRemote.{ScalatronException, ConnectionConfig, User}
+
+import scalatronRemote.api.ScalatronRemote.{ConnectionConfig, ScalatronException, User}
 
 
 object ScalatronRemoteImpl {
     def apply(connectionConfig : ConnectionConfig) : ScalatronRemoteImpl = {
-        val httpClient = new DefaultHttpClient()
+        val httpClient = HttpClientBuilder.create().build()
 
         val verbose = connectionConfig.verbose
         val hostname = connectionConfig.hostname
