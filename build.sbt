@@ -74,7 +74,7 @@ lazy val Scalatron = project.
       "com.typesafe.akka" %% "akka-actor" % Versions.Akka,
       "org.eclipse.jetty.aggregate" % "jetty-webapp" % "7.6.21.v20160908" intransitive(),
       "com.fasterxml.jackson.jaxrs" % "jackson-jaxrs-json-provider" % "2.8.5",
-      "com.sun.jersey" % "jersey-bundle" % "1.19.3",
+      "com.sun.jersey" % "jersey-bundle" % "1.19.3" exclude("javax.ws.rs", "jsr311-api"),
       "javax.servlet" % "servlet-api" % "2.5",
       "org.eclipse.jgit" % "org.eclipse.jgit" % Versions.JGit,
       "org.eclipse.jgit" % "org.eclipse.jgit.http.server" % Versions.JGit,
