@@ -15,7 +15,8 @@ object Dependencies {
     "javax.servlet"               % "servlet-api"                  % ServletApi,
     "org.eclipse.jgit"            % "org.eclipse.jgit"             % JGit,
     "org.eclipse.jgit"            % "org.eclipse.jgit.http.server" % JGit,
-    "org.scalatest"               %% "scalatest"                   % Scalatest % Test
+    "org.scalatest"               %% "scalatest"                   % Scalatest % Test,
+    "org.specs2"                  %% "specs2-core"                 % Specs2    % Test
   )
 
   val markdown = Seq(

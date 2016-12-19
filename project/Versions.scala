@@ -8,4 +8,5 @@ object Versions {
   val ParserCombinators = "1.0.4"
   val Scalatest         = "3.0.1"
   val ServletApi        = "2.5"
+  val Specs2            = "3.8.6"
 }
