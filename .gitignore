@@ -2,7 +2,7 @@
 *~
 .idea
 .idea_modules
-target
+target/
 *.iml
 *.xml
 *.zip
@@ -25,3 +25,4 @@ ScalaMarkdown/lib/
 ScalaMarkdown/out/
 ScalaMarkdown/src/META-INF/
 __MACOSX
+/.history

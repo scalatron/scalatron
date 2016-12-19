@@ -6,9 +6,9 @@ package scalatron.botwar.renderer
 import java.awt.{Graphics2D, Color, Font}
 import java.awt.image.BufferedImage
 
-import RenderUtil.makeTransparent
-import RenderContext.minBottomPanelHeight
-import RenderContext.minRightPanelWidth
+import scalatron.botwar.renderer.RenderUtil.makeTransparent
+import scalatron.botwar.renderer.RenderContext.minBottomPanelHeight
+import scalatron.botwar.renderer.RenderContext.minRightPanelWidth
 import scalatron.botwar.Display.RenderTarget
 import scalatron.botwar.{State, XY}
 
@@ -53,32 +53,32 @@ case class RenderContext(boardSize: XY, canvasSizeX: Int, canvasSizeY: Int)
     val image = new BufferedImage(canvasSizeX, canvasSizeY, BufferedImage.TYPE_INT_ARGB)
     private val graphics = image.getGraphics // indicates the currently active graphics context for drawing
 
-    def flipBuffer(frameGraphics: Graphics2D) {
+    def flipBuffer(frameGraphics: Graphics2D): Unit = {
         frameGraphics.drawImage(image, 0, 0, null)
     }
 
-    def setColor(color: Color) {graphics.setColor(color)}
+    def setColor(color: Color): Unit = {graphics.setColor(color)}
 
-    def setFont(font: Font) {graphics.setFont(font)}
+    def setFont(font: Font): Unit = {graphics.setFont(font)}
 
-    def fillRect(x: Int, y: Int, width: Int, height: Int) {graphics.fillRect(x, y, width, height)}
+    def fillRect(x: Int, y: Int, width: Int, height: Int): Unit = {graphics.fillRect(x, y, width, height)}
 
-    def drawRect(x: Int, y: Int, width: Int, height: Int) {graphics.drawRect(x, y, width, height)}
+    def drawRect(x: Int, y: Int, width: Int, height: Int): Unit = {graphics.drawRect(x, y, width, height)}
 
-    def fillOval(x: Int, y: Int, width: Int, height: Int) {graphics.fillOval(x, y, width, height)}
+    def fillOval(x: Int, y: Int, width: Int, height: Int): Unit = {graphics.fillOval(x, y, width, height)}
 
-    def drawOval(x: Int, y: Int, width: Int, height: Int) {graphics.drawOval(x, y, width, height)}
+    def drawOval(x: Int, y: Int, width: Int, height: Int): Unit = {graphics.drawOval(x, y, width, height)}
 
-    def drawLine(x1: Int, y1: Int, x2: Int, y2: Int) {graphics.drawLine(x1, y1, x2, y2)}
+    def drawLine(x1: Int, y1: Int, x2: Int, y2: Int): Unit = {graphics.drawLine(x1, y1, x2, y2)}
 
-    def drawString(s: String, x: Int, y: Int) {graphics.drawString(s, x, y)}
+    def drawString(s: String, x: Int, y: Int): Unit = {graphics.drawString(s, x, y)}
 
-    def fillCenteredCircle(centerX: Int, centerY: Int, radius: Int) {fillOval(centerX - radius, centerY - radius, radius * 2, radius * 2)}
+    def fillCenteredCircle(centerX: Int, centerY: Int, radius: Int): Unit = {fillOval(centerX - radius, centerY - radius, radius * 2, radius * 2)}
 
-    def drawCenteredCircle(centerX: Int, centerY: Int, radius: Int) {drawOval(centerX - radius, centerY - radius, radius * 2, radius * 2)}
+    def drawCenteredCircle(centerX: Int, centerY: Int, radius: Int): Unit = {drawOval(centerX - radius, centerY - radius, radius * 2, radius * 2)}
 
 
-    def drawBeveledRect(left: Int, top: Int, width: Int, height: Int, colorTriple: ColorTriple) {
+    def drawBeveledRect(left: Int, top: Int, width: Int, height: Int, colorTriple: ColorTriple): Unit = {
         val right = left + width - 1
         val bottom = top + height - 1
 
@@ -94,7 +94,7 @@ case class RenderContext(boardSize: XY, canvasSizeX: Int, canvasSizeY: Int)
         drawLine(right, top + 1, right, bottom - 1) // right
     }
 
-    def drawEmbossedRect(left: Int, top: Int, width: Int, height: Int, colorTriple: ColorTriple) {
+    def drawEmbossedRect(left: Int, top: Int, width: Int, height: Int, colorTriple: ColorTriple): Unit = {
         val right = left + width - 1
         val bottom = top + height - 1
 
@@ -110,17 +110,17 @@ case class RenderContext(boardSize: XY, canvasSizeX: Int, canvasSizeY: Int)
         drawLine(right, top + 1, right, bottom - 1) // right
     }
 
-    def drawEmbossedText(text: String, left: Int, top: Int, colorTriple: ColorTriple, alpha: Int) {
-        setColor(makeTransparent(colorTriple.bright, alpha));
-        drawString(text, left - 1, top - 1)
-        setColor(makeTransparent(colorTriple.dark, alpha));
-        drawString(text, left + 1, top + 1)
-        setColor(makeTransparent(colorTriple.plain, alpha));
-        drawString(text, left, top)
+    def drawEmbossedText(text: String, left: Int, top: Int, colorTriple: ColorTriple, alpha: Int): Unit = {
+        setColor(makeTransparent(colorTriple.bright, alpha))
+      drawString(text, left - 1, top - 1)
+        setColor(makeTransparent(colorTriple.dark, alpha))
+      drawString(text, left + 1, top + 1)
+        setColor(makeTransparent(colorTriple.plain, alpha))
+      drawString(text, left, top)
     }
 
 
-    def drawMaster(left: Int, top: Int, playerColorPair: (ColorTriple, ColorTriple), rankAndQuartile: (Int, Int)) {
+    def drawMaster(left: Int, top: Int, playerColorPair: (ColorTriple, ColorTriple), rankAndQuartile: (Int, Int)): Unit = {
         val centerX = left + halfPixelsPerCell
         val centerY = top + halfPixelsPerCell
 

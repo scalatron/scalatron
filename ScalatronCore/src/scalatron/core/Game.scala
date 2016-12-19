@@ -4,7 +4,7 @@
 
 package scalatron.core
 
-import akka.dispatch.ExecutionContext
+import scala.concurrent.ExecutionContext
 
 /** This is the API that game plug-ins implement and expose toward the managing Scalatron server. */
 trait Game
@@ -22,7 +22,7 @@ trait Game
       * @param rounds the number of rounds to play in the tournament loop before returning
       * @param scalatron reference to the Scalatron core, the container managing the game plug-in
       */
-    def runVisually(rounds: Int, scalatron: ScalatronInward)
+    def runVisually(rounds: Int, scalatron: ScalatronInward): Unit
 
 
     /** Run a loop that simulates tournament rounds until the given number of rounds has been
@@ -31,7 +31,7 @@ trait Game
       * @param rounds the number of rounds to play in the tournament loop before returning
       * @param scalatron reference to the Scalatron core, the container managing the game plug-in
       */
-    def runHeadless(rounds: Int, scalatron: ScalatronInward)
+    def runHeadless(rounds: Int, scalatron: ScalatronInward): Unit
 
 
     /** Starts a headless, private game instance and returns the associated initial simulation state.

@@ -4,9 +4,10 @@ package scalatron.core
   * Creative Commons Attribution 3.0 Unported License. Feel free to use, modify and share it.
   */
 
-import akka.util.Duration
-import akka.dispatch.{ExecutionContext, Future, Await}
 import akka.actor.ActorSystem
+
+import scala.concurrent.{Await, Future, ExecutionContext}
+import scala.concurrent.duration.Duration
 
 
 /** Traits for generic simulations, of which a game like BotWar is an example.
@@ -129,10 +130,7 @@ object Simulation
 
                 // process callback (usually rendering) on prior state, returns true if to continue simulating, false if not
                 val callbackFuture = Future({
-                    priorStateOpt match {
-                        case None => true // there is no state to call back about (e.g. nothing to render)
-                        case Some(priorState) => stepCallback(priorState)
-                    }
+                    priorStateOpt.forall(stepCallback)
                 })(executionContextForTrustedCode)
 
                 // let the processing complete

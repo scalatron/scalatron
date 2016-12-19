@@ -63,7 +63,7 @@ Hr's:
 
 <hr class="foo" id="bar" />
 
-<hr class="foo" id="bar"/>
+<hr class="foo" id="bar2"/>
 
-<hr class="foo" id="bar" >
+<hr class="foo" id="bar3" >
 

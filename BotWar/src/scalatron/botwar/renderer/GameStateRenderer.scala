@@ -6,11 +6,11 @@ package scalatron.botwar.renderer
 import java.awt.Font
 import java.awt.Color
 
-import RenderUtil.makeTransparent
+import scalatron.botwar.renderer.RenderUtil.makeTransparent
 import scalatron.botwar._
 
 object GameStateRenderer {
-    def drawGameState(state: State, drawBotHorizon: Boolean)(implicit ctx: RenderContext) {
+    def drawGameState(state: State, drawBotHorizon: Boolean)(implicit ctx: RenderContext): Unit = {
         val (back, front) = state.board.decorations.values.partition(decoration =>
             decoration.variety.isInstanceOf[Decoration.Explosion] ||
                 decoration.variety.isInstanceOf[Decoration.Bonk.type]
@@ -26,7 +26,7 @@ object GameStateRenderer {
     val ShadowColor = new Color(76, 75, 75)
     val BotViewColor = new Color(180, 180, 180, 25)
 
-    def drawShadowLayer(state: State, drawBotHorizon: Boolean)(implicit ctx: RenderContext) {
+    def drawShadowLayer(state: State, drawBotHorizon: Boolean)(implicit ctx: RenderContext): Unit = {
         state.board.botsForEach(bot => {
             val (left, top) = ctx.leftTop(bot.pos)
             bot.variety match {
@@ -67,10 +67,10 @@ object GameStateRenderer {
 
     val StatusBubbleFont = new Font("SansSerif", Font.PLAIN, 10)
 
-    def drawObjectLayer(state: State)(implicit ctx: RenderContext) {
+    def drawObjectLayer(state: State)(implicit ctx: RenderContext): Unit = {
         val (walls, nonWalls) = state.board.botsThatAreWallsAndNonWalls
 
-        def drawWalls() {
+        def drawWalls(): Unit = {
             ctx.setColor(WallColorTriple.bright)
             walls.foreach(bot => {
                 val (left, top) = ctx.leftTop(bot.pos)
@@ -109,7 +109,6 @@ object GameStateRenderer {
                     if( player.isMaster ) {
                         val playerColorPair = Renderer.playerColors(bot.name)
                         ctx.drawMaster(left, top, playerColorPair, player.rankAndQuartile)
-                        playerColorPair
                     } else {
                         val playerColorPair =
                             state.board.getBot(player.masterId) match {
@@ -117,12 +116,10 @@ object GameStateRenderer {
                                 case Some(master) => Renderer.playerColors(master.name)
                             }
                         drawSlave(left, top, playerColorPair)
-                        playerColorPair
                     }
 
-                    player.stateMap.get(Protocol.PropertyName.Status) match {
-                        case None => // OK - no status text
-                        case Some(status) => // has status text - display it
+                    player.stateMap.get(Protocol.PropertyName.Status).foreach {
+                        status => // has status text - display it
                             val clippedStatus = if(status.length<=20) status else status.substring(0,20)
                             ctx.setColor(Color.white)
                             ctx.setFont(StatusBubbleFont)
@@ -143,18 +140,18 @@ object GameStateRenderer {
         })
     }
 
-    def drawSlave(left: Int, top: Int, playerColorPair: (ColorTriple, ColorTriple))(implicit ctx: RenderContext) {
+    def drawSlave(left: Int, top: Int, playerColorPair: (ColorTriple, ColorTriple))(implicit ctx: RenderContext): Unit = {
         val outerColor = playerColorPair._1
-        ctx.setColor(outerColor.bright);
-        ctx.fillOval(left - 1, top - 1, ctx.pixelsPerCell, ctx.pixelsPerCell)
-        ctx.setColor(outerColor.dark);
-        ctx.fillOval(left + 1, top + 1, ctx.pixelsPerCell, ctx.pixelsPerCell)
-        ctx.setColor(outerColor.plain);
-        ctx.fillOval(left, top, ctx.pixelsPerCell, ctx.pixelsPerCell)
+        ctx.setColor(outerColor.bright)
+      ctx.fillOval(left - 1, top - 1, ctx.pixelsPerCell, ctx.pixelsPerCell)
+        ctx.setColor(outerColor.dark)
+      ctx.fillOval(left + 1, top + 1, ctx.pixelsPerCell, ctx.pixelsPerCell)
+        ctx.setColor(outerColor.plain)
+      ctx.fillOval(left, top, ctx.pixelsPerCell, ctx.pixelsPerCell)
 
         val innerColor = playerColorPair._2
-        ctx.setColor(innerColor.plain);
-        ctx.fillOval(left + ctx.halfPixelsPerCell/2, top + ctx.halfPixelsPerCell/2, ctx.halfPixelsPerCell, ctx.halfPixelsPerCell)
+        ctx.setColor(innerColor.plain)
+      ctx.fillOval(left + ctx.halfPixelsPerCell/2, top + ctx.halfPixelsPerCell/2, ctx.halfPixelsPerCell, ctx.halfPixelsPerCell)
     }
 
 
@@ -174,7 +171,7 @@ object GameStateRenderer {
 
     val AnnihilationColor = Color.magenta
 
-    def drawDecorations(state: State, decorations: Iterable[Decoration])(implicit ctx: RenderContext) {
+    def drawDecorations(state: State, decorations: Iterable[Decoration])(implicit ctx: RenderContext): Unit = {
         decorations.foreach(decoration => {
             val (centerX, centerY) = ctx.center(decoration.pos)
             val age: Int = ( state.time - decoration.creationTime ).intValue
@@ -189,7 +186,7 @@ object GameStateRenderer {
                     ctx.drawOval(centerX - blastRadiusX, centerY - blastRadiusY, blastRadiusX * 2, blastRadiusY * 2)
 
                     // explosion first grows, then shrinks
-                    val radiusFactor = if( lifeFraction <= 0.25 ) lifeFraction * 4 else ( 1.0 - lifeFraction )
+                    val radiusFactor = if( lifeFraction <= 0.25 ) lifeFraction * 4 else 1.0 - lifeFraction
                     val radiusX = ( blastRadiusX * radiusFactor ).intValue
                     val radiusY = ( blastRadiusY * radiusFactor ).intValue
                     val color = makeTransparent(ExplosionColor, ( 255 * radiusFactor ).intValue)

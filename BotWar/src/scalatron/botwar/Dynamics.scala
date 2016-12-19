@@ -3,14 +3,12 @@
   */
 package scalatron.botwar
 
+import scala.concurrent.{Await, Future, ExecutionContext}
 import scala.util.Random
-import akka.util.duration._
-import akka.dispatch._
-import java.util.concurrent.TimeoutException
+import scala.concurrent.duration._
 import akka.actor.ActorSystem
-import akka.util.Duration
 import scalatron.core.TournamentRoundResult
-
+import scala.language.postfixOps
 
 /** Game dynamics. Function that, when applied to a game state, returns either a successor
   *  game state or a game result.
@@ -31,9 +29,8 @@ case object Dynamics extends ((State, Random, ActorSystem, ExecutionContext) => 
             val commands = tuple._2._3
 
             // if it is a player, update its CPU time and input string
-            updatedBoard.getBot(id) match {
-                case None => // ?!?
-                case Some(bot) => bot.variety match {
+            updatedBoard.getBot(id).foreach { bot =>
+                bot.variety match {
                     case player: Bot.Player =>
                         val nanoSeconds = tuple._2._1
 
@@ -53,9 +50,8 @@ case object Dynamics extends ((State, Random, ActorSystem, ExecutionContext) => 
                         if(!player.isMaster) {
                             // for slaves, update master's CPU time
                             val masterId = player.masterId
-                            updatedBoard.getBot(masterId) match {
-                                case None => // ?!?
-                                case Some(masterBot) => masterBot.variety match {
+                            updatedBoard.getBot(masterId).foreach { masterBot =>
+                                masterBot.variety match {
                                     case masterPlayer: Bot.Player =>
                                         assert(masterPlayer.isMaster)
                                         val updatedPlayer = masterPlayer.copy(cpuTime = masterPlayer.cpuTime + nanoSeconds)
@@ -193,7 +189,7 @@ case object Dynamics extends ((State, Random, ActorSystem, ExecutionContext) => 
                 Some((bot.id,(0L,"",Iterable[Command](Command.Log("error: class not found: " + t.getMessage)))))
 
             case t: Throwable =>
-                System.err.println("Bot '" + bot.name + "' caused an error: " + t);
+                System.err.println("Bot '" + bot.name + "' caused an error: " + t)
 
                 // we fake a Log() command issued by the bot to report the error into the browser UI:
                 Some((bot.id,(0L,"",Iterable[Command](Command.Log(t.getMessage)))))

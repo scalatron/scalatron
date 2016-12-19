@@ -19,7 +19,7 @@ object ScorePanelRenderer
     val ScorePanelColorTriple = ColorTriple(new Color(105, 105, 105), new Color(123, 120, 120), new Color(145, 145, 145))
     val ScorePanelHiliteColorTriple = ColorTriple(new Color(125, 125, 125), new Color(143, 140, 140), new Color(165, 165, 165))
 
-    def draw(state: State, interactivelyAdjustableSettings: InteractivelyAdjustableSettings)(implicit ctx: RenderContext) {
+    def draw(state: State, interactivelyAdjustableSettings: InteractivelyAdjustableSettings)(implicit ctx: RenderContext): Unit = {
         ctx.setFont(ScoreFont)
         ctx.setColor(ScorePanelColorTriple.plain)
         ctx.fillRect(ctx.fieldSizeX + 1, 0, ctx.rightPanelWidth, ctx.canvasSizeY)
@@ -29,7 +29,7 @@ object ScorePanelRenderer
 
         // handle the case where the user stepped the POI beyond the last player -> clear it
         interactivelyAdjustableSettings.playerOfInterestOpt match {
-            case None => false
+            case None =>
             case Some((rankOfInterest, nameOfInterest)) =>
                 if( rankOfInterest >= rankedPlayerCount ) interactivelyAdjustableSettings.playerOfInterestOpt = None
         }
@@ -50,7 +50,7 @@ object ScorePanelRenderer
             val scorePanelHeight = upperBlockHeight + lowerBlockHeight
 
 
-            def drawScorePanel(bot: Bot) {
+            def drawScorePanel(bot: Bot): Unit = {
                 bot.variety match {
                     case player: Bot.Player =>
                         val rankAndQuartile = player.rankAndQuartile

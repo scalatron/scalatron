@@ -3,10 +3,10 @@
   */
 package scalatron.botwar
 
-import renderer.Renderer
+import scalatron.botwar.renderer.Renderer
+import scala.concurrent.ExecutionContext
 import scalatron.botwar.BotWarSimulation.SimState
 import java.awt.event.{WindowEvent, WindowAdapter, KeyEvent, KeyListener}
-import akka.dispatch.ExecutionContext
 import scalatron.core._
 
 
@@ -18,7 +18,7 @@ case object Game extends scalatron.core.Game
 {
     def gameSpecificPackagePath = "scalatron.botwar.botPlugin"
 
-    def runVisually(rounds: Int, scalatron: ScalatronInward) {
+    def runVisually(rounds: Int, scalatron: ScalatronInward): Unit = {
         val argMap = scalatron.argMap
 
         // determine the permanent configuration for the game
@@ -33,9 +33,9 @@ case object Game extends scalatron.core.Game
 
         // add a keyboard listener to allow the user to configure the app while it runs
         val keyListener = new KeyListener {
-            def keyTyped(e: KeyEvent) {}
-            def keyPressed(e: KeyEvent) { renderer.keyPressed(e.getKeyChar) }
-            def keyReleased(e: KeyEvent) {}
+            def keyTyped(e: KeyEvent): Unit = {}
+            def keyPressed(e: KeyEvent): Unit = { renderer.keyPressed(e.getKeyChar) }
+            def keyReleased(e: KeyEvent): Unit = {}
         }
         display.frame.addKeyListener(keyListener)
 
@@ -43,7 +43,7 @@ case object Game extends scalatron.core.Game
         var appShouldExit = false
         display.frame.addWindowListener(
             new WindowAdapter() {
-                override def windowClosing(e: WindowEvent) {
+                override def windowClosing(e: WindowEvent): Unit = {
                     appShouldExit = true
                 }
             }
@@ -104,8 +104,7 @@ case object Game extends scalatron.core.Game
     def runHeadless(
         rounds: Int,
         scalatron: ScalatronInward
-    )
-    {
+    ): Unit = {
         val argMap = scalatron.argMap
 
         // determine the permanent configuration for the game

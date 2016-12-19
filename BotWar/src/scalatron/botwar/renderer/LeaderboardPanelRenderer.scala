@@ -18,11 +18,11 @@ object LeaderboardPanelRenderer
     val NameColor = new Color(200, 200, 255)
 
     val LineHeight = FontSize + 5
-    val panelHeight = 4 * LineHeight + 2 * panelInnerMargin + 5
     val panelOuterMargin = 2
     val panelInnerMargin = 4
+    val panelHeight = 4 * LineHeight + 2 * panelInnerMargin + 5
 
-    def draw(leaderBoard: LeaderBoard)(implicit ctx: RenderContext) {
+    def draw(leaderBoard: LeaderBoard)(implicit ctx: RenderContext): Unit = {
         val panelOuterTop = ctx.canvasSizeY - panelHeight
         val panelOuterLeft = ctx.fieldSizeX + panelOuterMargin
         ctx.drawBeveledRect(panelOuterLeft, panelOuterTop, ctx.rightPanelWidth - 2 * panelOuterMargin, panelHeight, BgColorTriple)
@@ -43,7 +43,7 @@ object LeaderboardPanelRenderer
 
         ctx.setColor(NameColor)
         val x2 = panelInnerLeft + 50
-        for(i <- 0 until leaderBoard.length) {
+        for(i <- leaderBoard.indices) {
             ctx.drawString(leaderBoard(i)._2.take(3).map(t => t._1 + ":" + t._2).mkString(", "), x2, y0 + i * LineHeight)
         }
     }

@@ -53,8 +53,8 @@ object Display {
 }
 
 case class Display(frame: Frame) {
-    def show() { frame.setVisible(true) }
-    def hide() { frame.setVisible(false)}
+    def show(): Unit = { frame.setVisible(true) }
+    def hide(): Unit = { frame.setVisible(false)}
 
     def renderTarget: RenderTarget = {
         val frameGraphics = frame.getGraphics.asInstanceOf[Graphics2D]

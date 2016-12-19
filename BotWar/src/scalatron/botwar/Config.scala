@@ -46,7 +46,7 @@ object Config {
         val cellCountY = argMap.get("-y").map(_.toInt).getOrElse(defaultArenaSize.y).max(40)
         val boardSize = XY(cellCountX, cellCountY)
 
-        val perimeterWallArg = argMap.get("-perimeter").getOrElse("open")
+        val perimeterWallArg = argMap.getOrElse("-perimeter", "open")
         val perimeter = perimeterWallArg match {
             case "none" => BoardParams.Perimeter.None
             case "open" => BoardParams.Perimeter.Open

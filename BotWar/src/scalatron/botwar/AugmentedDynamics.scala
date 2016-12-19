@@ -40,10 +40,7 @@ case object AugmentedDynamics extends ((State,Random,Iterable[(Entity.Id,Iterabl
         commands.foreach(idAndCommand => {
             val botId = idAndCommand._1
             idAndCommand._2.foreach(command => {
-                updatedBoard.getBot(botId) match {
-                    case None => // entity with this ID was deleted in the meantime
-                    case Some(bot) => updatedBoard = processCommand(bot, command, state, updatedBoard)
-                }
+                updatedBoard.getBot(botId).foreach(bot => updatedBoard = processCommand(bot, command, state, updatedBoard))
             })
         })
 
@@ -64,7 +61,7 @@ case object AugmentedDynamics extends ((State,Random,Iterable[(Entity.Id,Iterabl
 
         // eliminate expired bots and decorations
         // updatedBoard = updatedBoard.copy(bots = updatedBoard.bots.filter(entry => (entry._2.creationTime + entry._2.lifeTime) <= state.time) )
-        updatedBoard = updatedBoard.copy(decorations = updatedBoard.decorations.filter(entry => (entry._2.creationTime + entry._2.lifeTime > state.time)))
+        updatedBoard = updatedBoard.copy(decorations = updatedBoard.decorations.filter(entry => entry._2.creationTime + entry._2.lifeTime > state.time))
 
 
 
@@ -164,7 +161,7 @@ case object AugmentedDynamics extends ((State,Random,Iterable[(Entity.Id,Iterabl
                                     }
                                 })
 
-                                val slaveName = spawn.map.get("name").getOrElse("Slave_" + time)
+                                val slaveName = spawn.map.getOrElse("name", "Slave_" + time)
                                 slaveStateMap += Protocol.PropertyName.Name -> slaveName
 
                                 // update spawnee
@@ -270,7 +267,7 @@ case object AugmentedDynamics extends ((State,Random,Iterable[(Entity.Id,Iterabl
                                 val energyPerArea = energy / blastArea
                                 val damageAtCenter = - Constants.Energy.ExplosionDamageFactor * energyPerArea // negative!
                                 def damage(distance: Double) : Int = {
-                                    val distanceFactor = (1 - (distance / blastRadius))
+                                    val distanceFactor = 1 - (distance / blastRadius)
                                     (damageAtCenter * distanceFactor).intValue
                                 }
 
@@ -384,10 +381,10 @@ case object AugmentedDynamics extends ((State,Random,Iterable[(Entity.Id,Iterabl
             case movingPlayer: Bot.Player =>
 
                 /** Update an entity's state map */
-                def updateStateMap(extension: (String, String)) { updatedBoard = updatedBoard.updateBot(movingBot.updateVariety(movingPlayer.updatedStateMap(extension))) }
+                def updateStateMap(extension: (String, String)): Unit = { updatedBoard = updatedBoard.updateBot(movingBot.updateVariety(movingPlayer.updatedStateMap(extension))) }
 
                 /** Record the collision in the entity's state map */
-                def bonk() { updateStateMap(Protocol.PropertyName.Collision, (proposedPos - movingBotPos).toString) }
+                def bonk(): Unit = { updateStateMap((Protocol.PropertyName.Collision, (proposedPos - movingBotPos).toString)) }
 
                 steppedOnBot.variety match {
                     case steppedOnPlayer: Bot.Player =>      // player on player -- depends...

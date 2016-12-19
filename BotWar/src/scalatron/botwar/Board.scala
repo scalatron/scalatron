@@ -4,13 +4,13 @@
 package scalatron.botwar
 
 import scalatron.core.{Simulation, EntityController}
-import Simulation.Time
+import scalatron.core.Simulation.Time
 import scala.util.Random
-import BoardParams.Perimeter
-import akka.dispatch.{Await, Future, ExecutionContext}
-import akka.util.duration._
+import scalatron.botwar.BoardParams.Perimeter
+import scala.concurrent.{Await, Future, ExecutionContext}
+import scala.concurrent.duration._
 import java.util.concurrent.TimeoutException
-
+import scala.language.postfixOps
 
 /** Contains the temporally variable aspects of the game state.
   */
@@ -24,7 +24,7 @@ case class Board(
     def getBot(id: Entity.Id) : Option[Bot] = bots.get(id)
     def botsNear(center: XY, radius: Double) : Iterable[Bot] = bots.values.filter(_.pos.distanceTo(center) <= radius)
     def botsFiltered(p: Bot => Boolean) : Iterable[Bot] = bots.values.filter(p)
-    def botsForEach(f: Bot => Unit) { bots.values.foreach(f) }
+    def botsForEach(f: Bot => Unit): Unit = { bots.values.foreach(f) }
     def botsThatAreWallsAndNonWalls : (Iterable[Bot],Iterable[Bot]) = { bots.values.partition(_.variety == Bot.Wall) }
     lazy val botsThatArePlayers = bots.values.filter(bot => bot.variety.isInstanceOf[Bot.Player])       // Optimization 2012-02-27
     def botsThatAreMasters = bots.values.filter(bot => bot.isMaster)      // generation-0 player objects
@@ -307,12 +307,13 @@ object Board
                 if(validCount >= 1) {
                     // ensure positive extent
                     val fullStepX = step.x * validCount
+                    updatedBoard =
                     if(fullStepX < 0) {
-                        updatedBoard = updatedBoard.addBot(
+                        updatedBoard.addBot(
                             XY(wallStartPos.x + fullStepX + 1, wallStartPos.y),
                             XY(-fullStepX, 1), time, Bot.Wall)
                     } else {
-                        updatedBoard = updatedBoard.addBot(
+                        updatedBoard.addBot(
                             XY(wallStartPos.x, wallStartPos.y),
                             XY(fullStepX, 1), time, Bot.Wall)
                     }
@@ -326,12 +327,13 @@ object Board
                 if(validCount >= 1) {
                     // ensure positive extent
                     val fullStepY = step.y * validCount
+                    updatedBoard =
                     if(fullStepY < 0) {
-                        updatedBoard = updatedBoard.addBot(
+                        updatedBoard.addBot(
                             XY(wallStartPos.x, wallStartPos.y + fullStepY + 1),
                             XY(1, -fullStepY), time, Bot.Wall)
                     } else {
-                        updatedBoard = updatedBoard.addBot(
+                        updatedBoard.addBot(
                             XY(wallStartPos.x, wallStartPos.y),
                             XY(1, fullStepY), time, Bot.Wall)
                     }

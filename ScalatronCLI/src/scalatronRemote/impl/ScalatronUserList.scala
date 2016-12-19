@@ -5,17 +5,17 @@ package scalatronRemote.impl
 
 import scalatronRemote.api.ScalatronRemote
 
+case class ScalatronUserList(users: Iterable[ScalatronUser],
+                             scalatron: ScalatronRemoteImpl)
+    extends ScalatronRemote.UserList {
+  override def toString = users.mkString(",")
+  override def size = users.size
+  def iterator = users.iterator
 
-case class ScalatronUserList(users: Iterable[ScalatronUser], scalatron: ScalatronRemoteImpl) extends ScalatronRemote.UserList {
-    override def toString = users.mkString(",")
-    override def size = users.size
-    def iterator = users.iterator
+  def get(name: String): Option[ScalatronUser] = users.find(_.name == name)
 
-    def get(name: String): Option[ScalatronUser] = users.find(_.name == name)
-
-    def adminUser =
-        get(ScalatronRemote.Constants.AdminUserName) match {
-            case Some(user) => user
-            case None => throw new IllegalStateException("server does not contain an Administrator user account")
-        }
+  def adminUser =
+    get(ScalatronRemote.Constants.AdminUserName).getOrElse(
+      throw new IllegalStateException(
+        "server does not contain an Administrator user account"))
 }

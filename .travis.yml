@@ -1,0 +1,24 @@
+language: scala
+
+scala:
+  - 2.12.1
+
+jdk:
+  - oraclejdk8
+
+script:
+  - sbt ++$TRAVIS_SCALA_VERSION clean coverage test
+
+branches:
+  only:
+    - master
+
+sudo: false
+
+cache:
+  directories:
+    - $HOME/.ivy2/cache
+    - $HOME/.sbt/boot
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
