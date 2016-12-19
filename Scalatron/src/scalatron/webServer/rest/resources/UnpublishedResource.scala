@@ -8,14 +8,12 @@ import org.eclipse.jetty.http.HttpStatus
 import java.io.IOError
 import scalatron.core.Scalatron
 
-
 @Produces(Array(MediaType.APPLICATION_JSON))
 @Consumes(Array(MediaType.APPLICATION_JSON))
 @Path("users/{user}/unpublished")
 class UnpublishedResource extends ResourceWithUser {
 
-
-/*
+  /*
     @PUT
     def build() = {
         if(!userSession.isLoggedOnAsUserOrAdministrator(userName)) {
@@ -76,22 +74,23 @@ class UnpublishedResource extends ResourceWithUser {
             }
         }
     }
-*/
+ */
 }
 
 object UnpublishedResource {
-    case class BuildResultDto(success: Boolean, errorCount: Int, warningCount: Int, mesgs: Array[MessageDto]) {
-        def getSuccess = success
-        def getErrorCount = errorCount
-        def getWarningCount = warningCount
-        def getMessages = mesgs
-    }
+  case class BuildResultDto(success: Boolean,
+                            errorCount: Int,
+                            warningCount: Int,
+                            mesgs: Array[MessageDto]) {
+    def getSuccess = success
+    def getErrorCount = errorCount
+    def getWarningCount = warningCount
+    def getMessages = mesgs
+  }
 
-
-    class MessageDto(l: Int, m: String, s: Int) {
-        def getLine = l
-        def getMessage = m
-        def getSeverity = s
-    }
+  class MessageDto(l: Int, m: String, s: Int) {
+    def getLine = l
+    def getMessage = m
+    def getSeverity = s
+  }
 }
-

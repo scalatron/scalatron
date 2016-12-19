@@ -1,6 +1,6 @@
 /**
- * Copyright (C) 2009-2010 the original author or authors.
- */
+  * Copyright (C) 2009-2010 the original author or authors.
+  */
 package org.fusesource.scalamd
 
 import java.lang.StringBuilder
@@ -10,22 +10,23 @@ import org.fusesource.scalamd.Markdown._
 // # Character protector
 
 /**
- * We use character protector mechanism to ensure that certain elements of markup,
- * such as inline HTML blocks, remain undamaged when processing.
- */
+  * We use character protector mechanism to ensure that certain elements of markup,
+  * such as inline HTML blocks, remain undamaged when processing.
+  */
 class Protector {
   protected var protectHash: Map[String, CharSequence] = Map()
   protected var unprotectHash: Map[CharSequence, String] = Map()
 
   /**
-   * Generates a random hash key.
-   */
-  def randomKey = (0 to keySize).foldLeft("")((s, i) =>
-    s + chars.charAt(rnd.nextInt(keySize)))
+    * Generates a random hash key.
+    */
+  def randomKey =
+    (0 to keySize).foldLeft("")((s, i) =>
+      s + chars.charAt(rnd.nextInt(keySize)))
 
   /**
-   * Adds the specified token to hash and returns the protection key.
-   */
+    * Adds the specified token to hash and returns the protection key.
+    */
   def addToken(t: CharSequence): String = unprotectHash.get(t) match {
     case Some(key) => key
     case _ =>
@@ -36,13 +37,13 @@ class Protector {
   }
 
   /**
-   * Attempts to retrieve an encoded sequence by specified `key`.
-   */
+    * Attempts to retrieve an encoded sequence by specified `key`.
+    */
   def decode(key: String): Option[CharSequence] = protectHash.get(key)
 
   /**
-   * Hash keys that are currently in use.
-   */
+    * Hash keys that are currently in use.
+    */
   def keys = protectHash.keys
 
   override def toString = protectHash.toString
@@ -51,18 +52,19 @@ class Protector {
 // # Enhanced String Builder
 
 /**
- * A simple wrapper over `StringBuilder` with utility methods.
- */
+  * A simple wrapper over `StringBuilder` with utility methods.
+  */
 class StringEx(protected var text: StringBuilder) {
 
   def this(source: CharSequence) = this(new StringBuilder(source))
 
   /**
-   * Creates a `Matcher` using specified `Pattern` and applies replacements literally
-   * (without interpreting $1, $2, etc.) by calling specified `replacementFunction`
-   * on each match.
-   */
-  def replaceAll(pattern: Pattern, replacementFunction: Matcher => CharSequence): StringEx = {
+    * Creates a `Matcher` using specified `Pattern` and applies replacements literally
+    * (without interpreting $1, $2, etc.) by calling specified `replacementFunction`
+    * on each match.
+    */
+  def replaceAll(pattern: Pattern,
+                 replacementFunction: Matcher => CharSequence): StringEx = {
     var lastIndex = 0
     val m = pattern.matcher(text)
     val sb = new StringBuilder()
@@ -77,9 +79,9 @@ class StringEx(protected var text: StringBuilder) {
   }
 
   /**
-   * Replaces all occurences of specified `string` with specified `replacement`
-   * without using regular expressions.
-   */
+    * Replaces all occurences of specified `string` with specified `replacement`
+    * without using regular expressions.
+    */
   def replaceAll(string: String, replacement: CharSequence): StringEx = {
     val result = new StringBuilder
     var startIdx = 0
@@ -96,60 +98,66 @@ class StringEx(protected var text: StringBuilder) {
     this
   }
 
-  def replaceAllFunc(pattern: Pattern, replacementFunction: Matcher => CharSequence, literally: Boolean = true): StringEx =
+  def replaceAllFunc(pattern: Pattern,
+                     replacementFunction: Matcher => CharSequence,
+                     literally: Boolean = true): StringEx =
     if (literally)
       replaceAll(pattern, replacementFunction)
     else {
-      text = new StringBuilder(pattern.matcher(text).replaceAll(replacementFunction(null).toString))
+      text = new StringBuilder(
+        pattern.matcher(text).replaceAll(replacementFunction(null).toString))
       this
     }
 
-  def replaceAll(pattern: Pattern, replacement: CharSequence, literally: Boolean = true): StringEx =
+  def replaceAll(pattern: Pattern,
+                 replacement: CharSequence,
+                 literally: Boolean = true): StringEx =
     if (literally) replaceAll(pattern, m => replacement)
     else {
-      text = new StringBuilder(pattern.matcher(text).replaceAll(replacement.toString))
+      text = new StringBuilder(
+        pattern.matcher(text).replaceAll(replacement.toString))
       this
     }
 
   /**
-   * Appends the specified character sequence.
-   */
+    * Appends the specified character sequence.
+    */
   def append(s: CharSequence): StringEx = {
     text.append(s)
     this
   }
 
   /**
-   * Prepends the specified character sequence.
-   */
+    * Prepends the specified character sequence.
+    */
   def prepend(s: CharSequence): StringEx = {
     text = new StringBuilder(s).append(text)
     this
   }
 
   /**
-   * Removes at most 4 leading spaces at the beginning of every line.
-   */
+    * Removes at most 4 leading spaces at the beginning of every line.
+    */
   def outdent(): StringEx = replaceAll(rOutdent, "")
 
   /**
-   * Provides the length of the underlying buffer.
-   */
+    * Provides the length of the underlying buffer.
+    */
   def length = text.length
 
   /**
-   * Extracts the sub-sequence from underlying buffer.
-   */
+    * Extracts the sub-sequence from underlying buffer.
+    */
   def subSequence(start: Int, end: Int) =
     text.subSequence(start, end)
 
   /**
-   * Creates a `Matcher` from specified `pattern`.
-   */
+    * Creates a `Matcher` from specified `pattern`.
+    */
   def matcher(pattern: Pattern) = pattern.matcher(text)
 
   /**
-   * Emits the content of underlying buffer.
-   */
+    * Emits the content of underlying buffer.
+    */
   override def toString = text.toString
 }

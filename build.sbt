@@ -1,8 +1,7 @@
-
 val Versions = new {
-  val Akka = "2.4.14"
+  val Akka      = "2.4.14"
   val Scalatest = "3.0.1"
-  val JGit = "4.5.0.201609210915-r"
+  val JGit      = "4.5.0.201609210915-r"
 }
 
 organization := "Scalatron"
@@ -11,7 +10,8 @@ name := "Scalatron"
 
 version := "1.4.0"
 
-lazy val targetJvm = SettingKey[String]("jvm-version", "The version of the JVM the build targets")
+lazy val targetJvm =
+  SettingKey[String]("jvm-version", "The version of the JVM the build targets")
 
 lazy val commonSettings = Seq( //Defaults.defaultSettings ++ src ++ Seq(
   scalaSource in Compile := baseDirectory.value / "src",
@@ -22,83 +22,86 @@ lazy val commonSettings = Seq( //Defaults.defaultSettings ++ src ++ Seq(
   targetJvm := "1.8",
   publishMavenStyle := false,
   parallelExecution in Test := false,
-  scalacOptions ++= Seq("-target:jvm-" + targetJvm.value, "-feature", "-deprecation", "-unchecked", "-Xlint", "-Xfatal-warnings"),
+  scalacOptions ++= Seq("-target:jvm-" + targetJvm.value,
+                        "-feature",
+                        "-deprecation",
+                        "-unchecked",
+                        "-Xlint",
+                        "-Xfatal-warnings"),
   javacOptions ++= Seq("-source", targetJvm.value, "-target", targetJvm.value),
   externalResolvers := Seq(Resolver.jcenterRepo),
   assemblyMergeStrategy in assembly := {
     case "plugin.properties" => MergeStrategy.first
-    case "about.html" => MergeStrategy.first
+    case "about.html"        => MergeStrategy.first
     case x =>
       val oldStrategy = (assemblyMergeStrategy in assembly).value
       oldStrategy(x)
-  }
-)
+  })
 
 lazy val lintingSettings = Seq(
   addCompilerPlugin("org.psywerx.hairyfotr" %% "linter" % "0.1.17"),
   scalacOptions += "-P:linter:disable:UnusedParameter"
 )
 
-lazy val all = project.
-  in(file(".")).
-  settings(commonSettings).
-  aggregate(Scalatron, ScalatronCLI, ScalaMarkdown, referenceBot, tagTeamBot)
+lazy val all = project
+  .in(file("."))
+  .settings(commonSettings)
+  .aggregate(Scalatron, ScalatronCLI, ScalaMarkdown, referenceBot, tagTeamBot)
 
-lazy val ScalatronCore = project.
-  in(file("ScalatronCore")).
-  settings(
+lazy val ScalatronCore = project
+  .in(file("ScalatronCore"))
+  .settings(
     commonSettings,
     lintingSettings,
     libraryDependencies += "com.typesafe.akka" %% "akka-actor" % Versions.Akka,
     assemblyJarName in assembly := "ScalatronCore.jar"
   )
 
-lazy val BotWar = project.
-  in(file("BotWar")).
-  dependsOn(ScalatronCore).
-  settings(
+lazy val BotWar = project
+  .in(file("BotWar"))
+  .dependsOn(ScalatronCore)
+  .settings(
     commonSettings,
     lintingSettings,
     libraryDependencies += "com.typesafe.akka" %% "akka-actor" % Versions.Akka,
     assemblyJarName in assembly := "BotWar.jar"
   )
 
-lazy val Scalatron = project.
-  in(file("Scalatron")).
-  dependsOn(ScalatronCore, BotWar).
-  settings(
+lazy val Scalatron = project
+  .in(file("Scalatron"))
+  .dependsOn(ScalatronCore, BotWar)
+  .settings(
     commonSettings,
     lintingSettings,
     libraryDependencies ++= Seq(
-      "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "com.typesafe.akka" %% "akka-actor" % Versions.Akka,
-      "org.eclipse.jetty.aggregate" % "jetty-webapp" % "7.6.21.v20160908" intransitive(),
-      "com.fasterxml.jackson.jaxrs" % "jackson-jaxrs-json-provider" % "2.8.5",
-      "com.sun.jersey" % "jersey-bundle" % "1.19.3" exclude("javax.ws.rs", "jsr311-api"),
-      "javax.servlet" % "servlet-api" % "2.5",
-      "org.eclipse.jgit" % "org.eclipse.jgit" % Versions.JGit,
-      "org.eclipse.jgit" % "org.eclipse.jgit.http.server" % Versions.JGit,
-
-      "org.scalatest" %% "scalatest" % Versions.Scalatest % Test
+      "org.scala-lang"              % "scala-compiler"               % scalaVersion.value,
+      "com.typesafe.akka"           %% "akka-actor"                  % Versions.Akka,
+      "org.eclipse.jetty.aggregate" % "jetty-webapp"                 % "7.6.21.v20160908" intransitive (),
+      "com.fasterxml.jackson.jaxrs" % "jackson-jaxrs-json-provider"  % "2.8.5",
+      "com.sun.jersey"              % "jersey-bundle"                % "1.19.3" exclude ("javax.ws.rs", "jsr311-api"),
+      "javax.servlet"               % "servlet-api"                  % "2.5",
+      "org.eclipse.jgit"            % "org.eclipse.jgit"             % Versions.JGit,
+      "org.eclipse.jgit"            % "org.eclipse.jgit.http.server" % Versions.JGit,
+      "org.scalatest"               %% "scalatest"                   % Versions.Scalatest % Test
     ),
     assemblyJarName in assembly := "Scalatron.jar" // , logLevel in assembly := Level.Debug
   )
 
-lazy val ScalatronCLI = project.
-  in(file("ScalatronCLI")).
-  settings(
+lazy val ScalatronCLI = project
+  .in(file("ScalatronCLI"))
+  .settings(
     commonSettings,
     lintingSettings,
     libraryDependencies ++= Seq(
-      "org.apache.httpcomponents" % "httpclient" % "4.5.2",
-      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4"
+      "org.apache.httpcomponents" % "httpclient"                % "4.5.2",
+      "org.scala-lang.modules"    %% "scala-parser-combinators" % "1.0.4"
     ),
     assemblyJarName in assembly := "ScalatronCLI.jar"
   )
 
-lazy val ScalaMarkdown = project.
-  in(file("ScalaMarkdown")).
-  settings(
+lazy val ScalaMarkdown = project
+  .in(file("ScalaMarkdown"))
+  .settings(
     commonSettings,
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % Versions.Scalatest % Test
@@ -106,14 +109,20 @@ lazy val ScalaMarkdown = project.
     assemblyJarName in assembly := "ScalaMarkdown.jar"
   )
 
-lazy val samples = IO.listFiles(file("Scalatron") / "samples").filter(!_.isFile).map {
-  sample: File => sample.getName -> Project(sample.getName.replace(" ", ""), sample, settings = commonSettings ++ Seq(
-    artifactName in packageBin := ((_, _, _) => "ScalatronBot.jar")
-  ))
-}.toMap
+lazy val samples = IO
+  .listFiles(file("Scalatron") / "samples")
+  .filter(!_.isFile)
+  .map { sample: File =>
+    sample.getName -> Project(sample.getName.replace(" ", ""),
+                              sample,
+                              settings = commonSettings ++ Seq(
+                                  artifactName in packageBin := ((_, _, _) => "ScalatronBot.jar")
+                                ))
+  }
+  .toMap
 
 lazy val referenceBot = samples("Example Bot 01 - Reference")
-lazy val tagTeamBot = samples("Example Bot 02 - TagTeam")
+lazy val tagTeamBot   = samples("Example Bot 02 - TagTeam")
 
 lazy val dist = taskKey[Unit]("Makes the distribution zip file")
 dist := {
@@ -146,7 +155,7 @@ dist := {
     IO.copyDirectory(scalatronDir / dirToCopy, distDir / dirToCopy)
   }
 
-  val distSamples = distDir / "samples"
+  val distSamples                = distDir / "samples"
   def sampleJar(sample: Project) = sample.base / "target/ScalatronBot.jar"
   for (sample <- samples.values; if sampleJar(sample).exists) {
     println("Copying " + sample.base)
@@ -158,7 +167,12 @@ dist := {
   IO.copyFile(sampleJar(referenceBot), distDir / "bots" / "Reference" / "ScalatronBot.jar")
 
   def runmarkdown(docDir: File, htmlDir: File) = {
-    Seq("java", "-Xmx1G", "-jar", "ScalaMarkdown/target/ScalaMarkdown.jar", docDir.getPath, htmlDir.getPath).!
+    Seq("java",
+        "-Xmx1G",
+        "-jar",
+        "ScalaMarkdown/target/ScalaMarkdown.jar",
+        docDir.getPath,
+        htmlDir.getPath).!
   }
 
   // generate HTML from Markdown, for /doc and /devdoc
@@ -176,8 +190,14 @@ dist := {
   val zipFileName = s"scalatron-${version.value}.zip"
   println("Zipping up /dist into " + zipFileName + "...")
   def zip(srcDir: File, destFile: File, prepend: String) = {
-    val allDistFiles = (srcDir ** "*").get.filter(_.isFile).map { f => (f, prepend + IO.relativize(distDir, f).get) }
+    val allDistFiles = (srcDir ** "*").get.filter(_.isFile).map { f =>
+      (f, prepend + IO.relativize(distDir, f).get)
+    }
     IO.zip(allDistFiles, destFile)
   }
   zip(distDir, file("./" + zipFileName), "Scalatron/")
 }
+
+// scalafmt is this not working fine yet in this project, due to some bug with scala 2.12.1
+// this seems to be related: https://github.com/olafurpg/scalafmt/issues/485
+//scalafmtConfig := Some(file(".scalafmt.conf"))
