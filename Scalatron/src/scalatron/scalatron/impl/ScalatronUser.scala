@@ -52,8 +52,6 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
     val localJarFilePath = localJarDirectoryPath + "/" + Plugin.JarFilename
 
     val userPluginDirectoryPath = scalatron.pluginBaseDirectoryPath + "/" + name
-    val publishedJarFilePath = userPluginDirectoryPath + "/" + Plugin.JarFilename
-    val backupJarFilePath = userPluginDirectoryPath + "/" + Plugin.BackupJarFilename
 
     val gitBaseDirectoryPath = sourceDirectoryPath + "/" + gitDirectoryName
 
@@ -295,32 +293,9 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
     //----------------------------------------------------------------------------------------------
 
     def publish() {
-        // delete the old backup.jar file
-        val backupJarFile = new File(backupJarFilePath)
-        if( backupJarFile.exists ) {
-            if( scalatron.verbose ) println("      deleting backup .jar file: " + backupJarFilePath)
-            if( !backupJarFile.delete() ) {
-                System.err.println("failed to delete backup .jar file at: %s" format backupJarFilePath)
-                throw new IllegalStateException("failed to delete backup .jar file at: %s" format backupJarFilePath)
-            }
-        }
-
-        // then move away the current .jar file
-        val publishedJarFile = new File(publishedJarFilePath)
-        if( publishedJarFile.exists ) {
-            if( scalatron.verbose ) println("      backing up current .jar file: " + publishedJarFilePath + " => " + backupJarFilePath)
-            if( !publishedJarFile.renameTo(backupJarFile) ) {
-                System.err.println("failed to rename .jar file to backup: %s" format backupJarFilePath)
-                throw new IllegalStateException("failed to rename .jar file to backup: %s" format backupJarFilePath)
-            }
-        }
-
-
-        // then copy the local .jar file
+        // copy the local .jar file
         val localJarFile = new File(localJarFilePath)
         if( localJarFile.exists ) {
-            if( scalatron.verbose ) println("      activating new .jar file: " + localJarFilePath + " => " + publishedJarFilePath)
-
             val userPluginDirectory = new File(userPluginDirectoryPath)
             if( !userPluginDirectory.exists() ) {
                 if( !userPluginDirectory.mkdirs() ) {
@@ -329,8 +304,12 @@ case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatr
                 }
                 if( scalatron.verbose ) println("created user plug-in directory for '" + name + "' at: " + userPluginDirectoryPath)
             }
+            val publishedJarFile: File = PluginDirectory(userPluginDirectory).nextFilename
+            val publishedJarFilePath = publishedJarFile.getPath
+
+            if( scalatron.verbose ) println("      activating new .jar file: " + localJarFilePath + " => " + publishedJarFilePath)
             try {
-                copyFile(localJarFilePath, publishedJarFilePath)
+                copyFile(localJarFilePath, publishedJarFile.getPath)
             } catch {
                 case t: Throwable =>
                     System.err.println("failed to copy .jar file '%s' to '%s': %s" format(localJarFilePath, publishedJarFilePath, t.toString))

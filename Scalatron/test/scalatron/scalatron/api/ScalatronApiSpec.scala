@@ -153,13 +153,13 @@ class ScalatronApiSpec extends mutable.Specification
 
                 val sortedMessages = compileResult.messages.toArray.sortBy(_.sourceFile)
                 val msg0 = sortedMessages(0)
-                assert(msg0.sourceFile == "1.scala")
+                assert(msg0.sourceFile.contains("1.scala"))
                 assert(msg0.lineAndColumn ==(1, 1))
                 assert(msg0.severity == 2)
                 assert(msg0.multiLineMessage == "expected class or object definition")
 
                 val msg1 = sortedMessages(1)
-                assert(msg1.sourceFile == "2.scala")
+                assert(msg1.sourceFile.contains("2.scala"))
                 assert(msg1.lineAndColumn ==(1, 12))
                 assert(msg1.severity == 2)
                 assert(msg1.multiLineMessage == "expected class or object definition")
@@ -182,9 +182,29 @@ class ScalatronApiSpec extends mutable.Specification
 
                 // publish the bot into the tournament plug-in directory
                 user.publish()
-                assert(new File(pluginBaseDirPath + "/ExampleUser/ScalatronBot.jar").exists())
+                assert(new File(pluginBaseDirPath + "/ExampleUser/ScalatronBot_1.jar").exists())
 
                 // ... if we now called scalatron.run, the tournament should pick up the plug-in
+
+                success
+            })
+        }
+
+        "be able to update the published jar" in {
+            runTest((scalatron: Scalatron, usersBaseDirPath: String, samplesBaseDirPath: String, pluginBaseDirPath: String, runOneStep: () => Unit) => {
+                val user = scalatron.createUser("ExampleUser", "", sourceFiles)
+                user.buildSources()
+
+                // TODO: refactor this from asserts to Specs2
+
+                // publish the bot into the tournament plug-in directory
+                user.publish()
+                assert(new File(pluginBaseDirPath + "/ExampleUser/ScalatronBot_1.jar").exists())
+
+                runOneStep()
+
+                user.publish()
+                assert(new File(pluginBaseDirPath + "/ExampleUser/ScalatronBot_2.jar").exists())
 
                 success
             })
@@ -324,7 +344,11 @@ object ScalatronApiTest
       * method, invoking it with (scalatron, usersBaseDirPath, samplesBaseDirPath, pluginBaseDirPath),
       * then shuts down the Scalatron server and deletes the temp directory.
       */
-    def runTest(test: (Scalatron, String, String, String) => Result, verbose: Boolean = false) : Result = {
+    def runTest(test: (Scalatron, String, String, String) => Result) : Result = {
+        runTest((a,b,c,d,_) => test(a,b,c,d), verbose = false)
+    }
+
+    def runTest(test: (Scalatron, String, String, String, () => Unit) => Result, verbose: Boolean = false) : Result = {
         //------------------------------------------------------------------------------------------
         // prepare environment, start server
         //------------------------------------------------------------------------------------------
@@ -344,9 +368,10 @@ object ScalatronApiTest
             val scalatron =
                 ScalatronOutward(
                     Map(
-                        ( "-users" -> usersBaseDirPath ),
-                        ( "-samples" -> samplesBaseDirPath ),
-                        ( "-plugins" -> pluginBaseDirPath )
+                        "-users" -> usersBaseDirPath,
+                        "-samples" -> samplesBaseDirPath,
+                        "-plugins" -> pluginBaseDirPath,
+                        "-steps" -> "1"
                     ),
                     actorSystem,
                     verbose
@@ -355,7 +380,7 @@ object ScalatronApiTest
             // start the server, launching the background thread(s) (e.g., compile server)
             scalatron.start()
 
-            val result = test(scalatron, usersBaseDirPath, samplesBaseDirPath, pluginBaseDirPath)
+            val result = test(scalatron, usersBaseDirPath, samplesBaseDirPath, pluginBaseDirPath, () => {scalatron.run(Map("-rounds" -> "1", "-headless" -> "yes"))})
 
             // shut down the server, terminating the background thread(s)
             scalatron.shutdown()
@@ -363,7 +388,8 @@ object ScalatronApiTest
             result
         } finally {
             // delete the temporary directory
-            FileUtil.deleteRecursively(tmpDirPath, atThisLevel = true, verbose = verbose)
+            // Currently broken on Windows
+            //FileUtil.deleteRecursively(tmpDirPath, atThisLevel = true, verbose = verbose)
         }
     }
 
