@@ -3,9 +3,9 @@ import Keys._
 import sbtassembly.AssemblyPlugin.autoImport._
 
 object build extends Build {
-  val compilerVersion = "2.11.12"
+  val compilerVersion = "2.12.12"
 
-  lazy val libAkkaActors = "com.typesafe.akka" %% "akka-actor" % "2.3.6"
+  lazy val libAkkaActors = "com.typesafe.akka" %% "akka-actor" % "2.6.8"
 
   def standardSettings = Defaults.defaultSettings ++ src ++ Seq(
     scalaVersion := compilerVersion,
@@ -70,10 +70,8 @@ object build extends Build {
         "javax.servlet" % "servlet-api" % "2.5",
         "org.eclipse.jgit" % "org.eclipse.jgit" % "1.3.0.201202151440-r",
         "org.eclipse.jgit" % "org.eclipse.jgit.http.server" % "1.3.0.201202151440-r",
-        "org.scalatest" %% "scalatest" % "2.2.4" % "test",
         "org.testng" % "testng" % "6.5.1" % "test",
         "org.specs2" %% "specs2" % "2.4.17" % "test"
-//        "org.specs2" %% "specs2-scalaz-core" % "7.0.0" % "test"
       ),
       resolvers ++= Seq(
         "JGit Repository" at "http://download.eclipse.org/jgit/maven",

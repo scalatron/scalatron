@@ -63,7 +63,7 @@ object Main {
         scalatron.shutdown()
 
         // shut down the Akka actor system
-        actorSystem.shutdown()
+        actorSystem.terminate()
     }
 
     val cmdArgList = Iterable(
