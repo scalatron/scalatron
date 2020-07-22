@@ -10,9 +10,7 @@ import tools.nsc.reporters.StoreReporter
 import scalatron.core.Scalatron
 import scala.tools.nsc.util.{BatchSourceFile, Position}
 import akka.actor.Actor
-import scala.util.parsing.input.OffsetPosition
 import java.util.Locale
-import java.io.IOException
 
 
 /** Each compile actor holds a Scala compiler instance and uses it to process CompileJob messages
@@ -109,6 +107,7 @@ case class CompileActor(verbose: Boolean) extends Actor {
 
         val settings = new Settings(error)
         detectedScalaClassPaths.foreach(settings.classpath.append)
+        detectedScalaClassPaths.foreach(settings.bootclasspath.append)
         settings.deprecation.value = true // enable detailed deprecation warnings
         settings.unchecked.value = true // enable detailed unchecked warnings
         settings.explaintypes.value = true // explain type errors

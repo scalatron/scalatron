@@ -109,6 +109,8 @@ class SandboxesResource extends ResourceWithUser {
                                     Response.ok(SandboxesResource.createSandboxResult(userName, updatedSandboxState)).build()
                                 }
                             }
+                        case _ =>
+                            Response.serverError().build()
                     }
 
                 case None =>
@@ -152,6 +154,8 @@ class SandboxesResource extends ResourceWithUser {
                 }).toArray
 
                 Response.ok(new SandboxResult(mappedEntities)).build();
+            case _ =>
+                Response.serverError().build()
         }
     }
 }

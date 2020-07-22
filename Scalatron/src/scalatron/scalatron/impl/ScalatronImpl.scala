@@ -15,7 +15,7 @@ import akka.routing.SmallestMailboxRouter
 import scalatron.scalatron.api.ScalatronOutward
 import scalatron.core.Simulation.UntypedState
 import scalatron.core._
-import akka.dispatch.ExecutionContext
+import scala.concurrent.ExecutionContext
 
 
 object ScalatronImpl

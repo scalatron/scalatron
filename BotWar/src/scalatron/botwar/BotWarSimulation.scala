@@ -4,10 +4,10 @@
 package scalatron.botwar
 
 import scala.util.Random
-import akka.dispatch.ExecutionContext
 import akka.actor.ActorSystem
 import scalatron.core.{EntityController, Simulation}
 
+import scala.concurrent.ExecutionContext
 
 /** Implementations of generic Simulation traits for the BotWar game. */
 object BotWarSimulation

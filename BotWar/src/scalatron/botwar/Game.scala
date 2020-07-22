@@ -6,9 +6,9 @@ package scalatron.botwar
 import renderer.Renderer
 import scalatron.botwar.BotWarSimulation.SimState
 import java.awt.event.{WindowEvent, WindowAdapter, KeyEvent, KeyListener}
-import akka.dispatch.ExecutionContext
 import scalatron.core._
 
+import scala.concurrent.ExecutionContext
 
 /** Implementation of the core.Game trait for the Scalatron BotWar game.
   * Since no state is held, this can be a singleton object.
