@@ -4,4 +4,4 @@ name := "Scalatron"
 
 version in Global := "1.1.0.2"
 
-scalaVersion := "2.12.12"
+scalaVersion := "2.13.2"

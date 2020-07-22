@@ -11,6 +11,7 @@ import scalatron.core.Scalatron
 import scala.tools.nsc.util.{BatchSourceFile, Position}
 import akka.actor.Actor
 import java.util.Locale
+import scala.jdk.CollectionConverters._
 
 
 /** Each compile actor holds a Scala compiler instance and uses it to process CompileJob messages
@@ -181,13 +182,13 @@ case class CompileActor(verbose: Boolean) extends Actor {
 
                 // Prepare the compilation options to be used during Java compilation
                 // We are asking the compiler to place the output files under the /out folder.
-                val compileOptions = scala.collection.JavaConversions.asJavaIterable(Iterable("-d", outputDirectoryPath))
+                val compileOptions = Iterable("-d", outputDirectoryPath).asJava
 
                 val compiler = ToolProvider.getSystemJavaCompiler
                 if(compiler==null) throw new IllegalStateException("Java Compiler not available (on this platform)")
 
                 val fileManager  = compiler.getStandardFileManager(diagnosticListener, null, null)
-                val fileObjects = fileManager.getJavaFileObjectsFromStrings(scala.collection.JavaConversions.asJavaIterable(javaFilePathList))
+                val fileObjects = fileManager.getJavaFileObjectsFromStrings(javaFilePathList.asJava)
                 val task = compiler.getTask(null, fileManager, diagnosticListener, compileOptions, null, fileObjects)
                 val javaCompilationSuccessful = task.call()
 
@@ -298,8 +299,8 @@ case class CompileActor(verbose: Boolean) extends Actor {
                         info.msg,
                         info.severity.id))
                 val hasErrors = compilerGlobal.reporter.hasErrors
-                val errorCount = compilerGlobal.reporter.ERROR.count
-                val warningCount = compilerGlobal.reporter.WARNING.count
+                val errorCount = compilerGlobal.reporter.errorCount
+                val warningCount = compilerGlobal.reporter.warningCount
 
                 compilerGlobal.reporter.reset() // clear all errors before next compilation
 

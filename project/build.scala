@@ -3,12 +3,13 @@ import Keys._
 import sbtassembly.AssemblyPlugin.autoImport._
 
 object build extends Build {
-  val compilerVersion = "2.12.12"
+  val compilerVersion = "2.13.2"
 
   lazy val libAkkaActors = "com.typesafe.akka" %% "akka-actor" % "2.6.8"
 
   def standardSettings = Defaults.defaultSettings ++ src ++ Seq(
     scalaVersion := compilerVersion,
+    scalacOptions := Seq("-language:postfixOps"),
     assemblyMergeStrategy in assembly := {
       case "plugin.properties" => MergeStrategy.first
       case "about.html"        => MergeStrategy.first
@@ -71,7 +72,7 @@ object build extends Build {
         "org.eclipse.jgit" % "org.eclipse.jgit" % "1.3.0.201202151440-r",
         "org.eclipse.jgit" % "org.eclipse.jgit.http.server" % "1.3.0.201202151440-r",
         "org.testng" % "testng" % "6.5.1" % "test",
-        "org.specs2" %% "specs2" % "2.4.17" % "test"
+        "org.specs2" %% "specs2-core" % "4.10.0" % "test"
       ),
       resolvers ++= Seq(
         "JGit Repository" at "http://download.eclipse.org/jgit/maven",
@@ -88,7 +89,7 @@ object build extends Build {
     settings = standardSettings ++ Seq(
       libraryDependencies ++= Seq(
         "org.apache.httpcomponents" % "httpclient" % "4.1.3",
-        "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.6"
+        "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2"
       )
     ) ++ Seq(jarName in assembly := "ScalatronCLI.jar")
   )
@@ -102,7 +103,7 @@ object build extends Build {
       resourceDirectory in Test <<= baseDirectory / "test/resources"
     ) ++ Seq(
       libraryDependencies ++= Seq(
-        "org.specs2" %% "specs2" % "2.4.17" % "test",
+        "org.specs2" %% "specs2-core" % "4.10.0" % "test",
         "commons-io" % "commons-io" % "2.3",
         "org.apache.commons" % "commons-lang3" % "3.1"
       )
