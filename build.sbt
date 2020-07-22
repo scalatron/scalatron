@@ -13,7 +13,7 @@ def standardSettings = Defaults.coreDefaultSettings ++ src ++ Seq(
   version in Global := "1.1.0.2",
   scalaVersion := "2.13.2",
   scalaVersion := compilerVersion,
-  scalacOptions := Seq("-language:postfixOps"),
+  scalacOptions := Seq("-language:postfixOps", "-target:jvm-1.8"),
   assemblyMergeStrategy in assembly := {
     case "plugin.properties" => MergeStrategy.first
     case "about.html"        => MergeStrategy.first
@@ -64,10 +64,6 @@ lazy val main = (project in file("Scalatron"))
         "org.eclipse.jgit" % "org.eclipse.jgit.http.server" % "1.3.0.201202151440-r",
         "org.testng" % "testng" % "6.5.1" % "test",
         "org.specs2" %% "specs2-core" % "4.10.0" % "test"
-      ),
-      resolvers ++= Seq(
-        "JGit Repository" at "http://download.eclipse.org/jgit/maven",
-        "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases"
       )
     ) ++ Seq(
       assembly / assemblyJarName := "Scalatron.jar" // , logLevel in assembly := Level.Debug
