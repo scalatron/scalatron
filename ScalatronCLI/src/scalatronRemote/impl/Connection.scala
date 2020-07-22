@@ -7,7 +7,7 @@ import org.apache.http.client.HttpClient
 import org.apache.http.client.utils.URIUtils
 
 import org.apache.http.util.EntityUtils
-import util.parsing.json.JSON
+import scala.util.parsing.json.JSON
 import org.apache.http.entity.StringEntity
 import org.apache.http.HttpStatus
 import scalatronRemote.impl.Connection.{HttpFailureCodeException, JsonMimeType}
