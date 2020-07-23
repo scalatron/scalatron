@@ -26,13 +26,14 @@ jobs:
       matrix:
         java: [openjdk@1.8]
         artifact: [scalatron.zip]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: olafurpg/setup-scala@v7
         with:
           java-version: ${{ matrix.java }}
       - run: sbt dist
-      - uses: actions/upload-artifact@master
+      - uses: actions/upload-artifact@v2
         with:
           name: ${{ matrix.artifact }}
           path: ./scalatron-*\.zip
