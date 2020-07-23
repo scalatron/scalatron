@@ -1,0 +1,38 @@
+name: CI
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '*'
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [openjdk@1.8]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: olafurpg/setup-scala@v7
+        with:
+          java-version: ${{ matrix.java }}
+      - run: sbt test
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [openjdk@1.8]
+        artifact: [scalatron.zip]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: olafurpg/setup-scala@v7
+        with:
+          java-version: ${{ matrix.java }}
+      - run: sbt dist
+      - uses: actions/upload-artifact@master
+        with:
+          name: ${{ matrix.artifact }}
+          path: ./scalatron-*\.zip
