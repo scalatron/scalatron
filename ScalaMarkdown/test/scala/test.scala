@@ -3,100 +3,105 @@
  */
 package org.fusesource.scalamd.test
 
-import org.specs.Specification
+import org.specs2._
 import org.fusesource.scalamd.Markdown
 import org.apache.commons.lang3.StringUtils
-import org.specs.matcher.Matcher
 import org.apache.commons.io.IOUtils
+import org.specs2.matcher.{Expectable, MatchResult, MatchSuccess, Matcher}
 
-object MarkdownSpec extends Specification {
+object MarkdownSpec extends mutable.Specification {
 
   val beFine = new Matcher[String] {
-    def apply(name: => String) = {
-      val textFile = this.getClass.getResourceAsStream("/" + name + ".text")
-      val htmlFile = this.getClass.getResourceAsStream("/" + name + ".html")
+    override def apply[S <: String](name: Expectable[S]): MatchResult[S] = {
+      val textFile = this.getClass.getResourceAsStream("/" + name.value + ".text")
+      val htmlFile = this.getClass.getResourceAsStream("/" + name.value + ".html")
       val text = normalize(Markdown(IOUtils.toString(textFile, "ISO-8859-1")))
       val expectedHtml = normalize(IOUtils.toString(htmlFile, "ISO-8859-1"))
       val diffIndex = StringUtils.indexOfDifference(text, expectedHtml)
       val diff = StringUtils.difference(text, expectedHtml)
-      (diffIndex == -1,
-          "\"" + name + "\" is fine",
-          "\"" + name + "\" fails at " + diffIndex + ": " + StringUtils.abbreviate(diff, 32))
+      val success = MatchSuccess(
+        "\"" + name.value + "\" is fine",
+        "\"" + name.value + "\" fails at " + diffIndex + ": " + StringUtils.abbreviate(diff, 32),
+        name
+      )
+      if (diffIndex == -1) {
+        success
+      } else {
+        success.negate
+      }
     }
   }
 
   def normalize(s: String) : String = s.trim.replace(sys.props("line.separator"),"\n")
 
-  def process = addToSusVerb("process")
-
-  "MarkdownProcessor" should process {
-    "Images" in {
+  "MarkdownProcessor" should {
+    "process Images" in {
       "Images" must beFine
     }
-    "TOC" in {
+    "process TOC" in {
       "TOC" must beFine
     }
-    "Amps and angle encoding" in {
+    "process Amps and angle encoding" in {
       "Amps and angle encoding" must beFine
     }
-    "Auto links" in {
+    "process Auto links" in {
       "Auto links" must beFine
     }
-    "Backslash escapes" in {
+    "process Backslash escapes" in {
       "Backslash escapes" must beFine
     }
-    "Blockquotes with code blocks" in {
+    "process Blockquotes with code blocks" in {
       "Blockquotes with code blocks" must beFine
     }
-    "Hard-wrapped paragraphs with list-like lines" in {
+    "process Hard-wrapped paragraphs with list-like lines" in {
       "Hard-wrapped paragraphs with list-like lines" must beFine
     }
-    "Horizontal rules" in {
+    "process Horizontal rules" in {
       "Horizontal rules" must beFine
     }
-    "Inline HTML (Advanced)" in {
+    "process Inline HTML (Advanced)" in {
       "Inline HTML (Advanced)" must beFine
     }
-    "Inline HTML (Simple)" in {
+    "process Inline HTML (Simple)" in {
       "Inline HTML (Simple)" must beFine
     }
-    "Inline HTML comments" in {
+    "process Inline HTML comments" in {
       "Inline HTML comments" must beFine
     }
-    "Links, inline style" in {
+    "process Links, inline style" in {
       "Links, inline style" must beFine
     }
-    "Links, reference style" in {
+    "process Links, reference style" in {
       "Links, reference style" must beFine
     }
-    "Literal quotes in titles" in {
+    "process Literal quotes in titles" in {
       "Literal quotes in titles" must beFine
     }
-    "Nested blockquotes" in {
+    "process Nested blockquotes" in {
       "Nested blockquotes" must beFine
     }
-    "Ordered and unordered lists" in {
+    "process Ordered and unordered lists" in {
       "Ordered and unordered lists" must beFine
     }
-    "Strong and em together" in {
+    "process Strong and em together" in {
       "Strong and em together" must beFine
     }
-    "Tabs" in {
+    "process Tabs" in {
       "Tabs" must beFine
     }
-    "Tidyness" in {
+    "process Tidyness" in {
       "Tidyness" must beFine
     }
-    "SmartyPants" in {
+    "process SmartyPants" in {
       "SmartyPants" must beFine
     }
-    "Markdown inside inline HTML" in {
+    "process Markdown inside inline HTML" in {
       "Markdown inside inline HTML" must beFine
     }
-    "Spans inside headers" in {
+    "process Spans inside headers" in {
       "Spans inside headers" must beFine
     }
-    "Macros" in {
+    "process Macros" in {
       "Macros" must beFine
     }
   }

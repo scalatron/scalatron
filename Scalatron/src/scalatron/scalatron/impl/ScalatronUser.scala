@@ -8,11 +8,8 @@ package scalatron.scalatron.impl
 import java.io._
 import scala.collection.JavaConverters._
 
-import akka.util.duration._
 import akka.pattern.ask
 import akka.util.Timeout
-import akka.dispatch.Await
-
 
 import scalatron.scalatron.impl.FileUtil._
 import ConfigFile.loadConfigFile
@@ -31,6 +28,8 @@ import org.eclipse.jgit.lib.RepositoryCache.FileKey
 import org.eclipse.jgit.util.FS
 import scalatron.core._
 
+import scala.concurrent.{Await, Future, ExecutionContext}
+import scala.concurrent.duration._
 
 case class ScalatronUser(name: String, scalatron: ScalatronImpl) extends Scalatron.User {
     require(scalatron.isUserNameValid(name))

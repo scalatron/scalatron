@@ -3,13 +3,12 @@ package scalatron.webServer.rest.resources
 import javax.ws.rs._
 import core.{Response, MediaType}
 import scalatron.core.Scalatron.SandboxState
-import collection.JavaConversions
-import collection.JavaConversions.JMapWrapper
 import scalatron.webServer.rest.UserSession
 import UserSession.SandboxAttributeKey
 import org.eclipse.jetty.http.HttpStatus
 import scalatron.core.Scalatron
 import scalatron.webServer.rest.resources.SandboxesResource.CommandParser
+import scala.jdk.CollectionConverters._
 
 
 @Produces(Array(MediaType.APPLICATION_JSON))
@@ -27,7 +26,7 @@ class SandboxesResource extends ResourceWithUser {
                         userSession -= SandboxAttributeKey
 
                         // extract the arguments, like Map("-x" -> 50, "-y" -> 50)
-                        val argMap = JMapWrapper(startConfig.getConfig).toMap
+                        val argMap = startConfig.getConfig.asScala.toMap
                         val sandbox = user.createSandbox(argMap)
                         val state = sandbox.initialState
                         userSession += SandboxAttributeKey -> state
@@ -109,6 +108,8 @@ class SandboxesResource extends ResourceWithUser {
                                     Response.ok(SandboxesResource.createSandboxResult(userName, updatedSandboxState)).build()
                                 }
                             }
+                        case _ =>
+                            Response.serverError().build()
                     }
 
                 case None =>
@@ -146,12 +147,14 @@ class SandboxesResource extends ResourceWithUser {
                         e.id,
                         e.name,
                         e.isMaster,
-                        SandboxesResource.InputCommand(opcode, JavaConversions.mapAsJavaMap(params)),
+                        SandboxesResource.InputCommand(opcode, params.asJava),
                         SandboxesResource.extractOutput(e.mostRecentControlFunctionOutput),
                         e.debugOutput)
                 }).toArray
 
                 Response.ok(new SandboxResult(mappedEntities)).build();
+            case _ =>
+                Response.serverError().build()
         }
     }
 }
@@ -204,7 +207,7 @@ object SandboxesResource {
                 e.id,
                 e.name,
                 e.isMaster,
-                SandboxesResource.InputCommand(opcode, JavaConversions.mapAsJavaMap(params)),
+                SandboxesResource.InputCommand(opcode, params.asJava),
                 extractOutput(e.mostRecentControlFunctionOutput),
                 e.debugOutput)
         }).toArray
@@ -221,7 +224,7 @@ object SandboxesResource {
         in.map(e => {
             val op = e._1
             val params = e._2
-            SandboxesResource.InputCommand(op, JavaConversions.mapAsJavaMap(params.toMap))
+            SandboxesResource.InputCommand(op, params.toMap.asJava)
         }).toArray
 
 

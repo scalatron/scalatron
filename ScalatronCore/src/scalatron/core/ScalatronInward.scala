@@ -1,8 +1,8 @@
 package scalatron.core
 
-import akka.dispatch.ExecutionContext
 import akka.actor.ActorSystem
 
+import scala.concurrent.ExecutionContext
 
 /** This is the "inward" API that Scalatron exposes towards the game plug-ins it loads.
   * It is distinct from the "outward" API that Scalatron exposes towards the main function.

@@ -1,7 +1,7 @@
 package scalatron.scalatron.impl
 
 import java.util.concurrent.{ThreadPoolExecutor, ThreadFactory, LinkedBlockingQueue, TimeUnit}
-import akka.dispatch.ExecutionContext
+import scala.concurrent.ExecutionContext
 import java.security.Permission
 import java.io.FilePermission
 import java.lang.reflect.ReflectPermission

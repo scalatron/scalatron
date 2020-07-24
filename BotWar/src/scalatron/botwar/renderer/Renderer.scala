@@ -6,11 +6,11 @@ package scalatron.botwar.renderer
 import scalatron.botwar.Display.RenderTarget
 
 import scalatron.botwar._
-import akka.util.Duration
 import java.awt.Color
-import akka.dispatch.{ExecutionContext, Await, Future}
 import scalatron.core.{ScalatronInward, PermanentConfig}
 
+import scala.concurrent.{Await, Future, ExecutionContext}
+import scala.concurrent.duration.Duration
 
 object Renderer {
     /** A table of high-contrast colors that we'll use to assemble player color combinations. */
