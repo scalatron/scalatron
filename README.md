@@ -5,7 +5,7 @@ This is the source code for Scalatron, a multi-player programming game in which 
 (written in Scala) against each other. It is an educational resource for groups of programmers or individuals that
 want to learn more about the Scala programming language or want to hone their Scala programming skills. 
 
-For more information, [visit the Scalatron web site here on Github](http://scalatron.github.com).
+For more information, [visit the Scalatron web site here on Github](http://scalatron.github.io).
 
 To stay current, follow Scalatron on Twitter at [@scalatron](http://twitter.com/scalatron).
 
